@@ -10,6 +10,7 @@
 import os
 from flask import Flask
 from typing import Union
+from flask_pymongo import PyMongo
 # +--------------------------------------------------------------------------------------------------------------------+
 
 
@@ -21,25 +22,18 @@ def create_app(test_config: Union[bool, None] = None) -> Flask:
         MONGO_URI=os.environ['MONGO_URI']
     )
 
-    if test_config is None:
-        # Load the instance config, if it exists, when not testing
-        app.config.from_pyfile('config.py', silent=True)
-    else:
-        # Load the test config if passed in
-        app.config.from_mapping(test_config)
-    
-
-    # Ensure the instance folder exists
+    # Ensure the instance folder exists |------------------------------------------------------------------------------|
     try:
         os.makedirs(app.instance_path)
     except OSError:
         pass
+    # |----------------------------------------------------------------------------------------------------------------|
     
     # A simple page that say hello |-----------------------------------------------------------------------------------|
+    print("Hello Route")
     @app.route('/hello')
     def hello() -> str:
-        return "Hello, World!"
+        return os.environ["MONGO_URI"]
     # |----------------------------------------------------------------------------------------------------------------|
 
     return app
-
