@@ -10,6 +10,8 @@
 import os
 from flask import Flask
 from typing import Union
+
+from .database.crud import create
 # +--------------------------------------------------------------------------------------------------------------------+
 
 
@@ -43,11 +45,9 @@ def create_app(test_config: Union[bool, None] = None) -> Flask:
         return os.environ["MONGO_URI"]
     # |----------------------------------------------------------------------------------------------------------------|
 
-    from . import db
-
     @app.route("/db")
     def testing() -> str:
-        return db.get_db().list_database_names()
-
+        response = create.database(name="testing")
+        return response[0]
 
     return app
