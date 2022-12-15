@@ -27,6 +27,9 @@ def log(func: Callable[..., Any]) -> Callable[..., Callable[[str], tuple]]:
         # |------------------------------------------------------------------------------------------------------------|
 
         get_db().LOG.MAINLOG.insert_one(log)    # input in LOG database
+        if func.__name__ != "database":
+            get_db()[kwargs['database']]['LOG'].insert_one(log)
+
         return val
     return wrapper
 
@@ -47,6 +50,30 @@ class create(object):
             "datetime": ["UTC", datetime.datetime.utcnow()],
             "command": f"Hello, I'm {database_name}",
             })
+        # |------------------------------------------------------------------------------------------------------------|
+
+        return "Create", HTTP_201_CREATED
+    
+    @log
+    @staticmethod
+    def collection(database: str, name: str) -> tuple[str, int]:
+        database_name = database.lower()        # lowercase database
+        collection_name = name.lower()          # lowercase collection
+
+        # datbase and collection search |------------------------------------------------------------------------------|
+        if database_name not in get_db().list_database_names():
+            return "Forbidden", HTTP_403_FORBIDDEN
+        
+        if collection_name in get_db()[database_name].list_collection_names():
+            return "Forbidden", HTTP_403_FORBIDDEN
+        # |------------------------------------------------------------------------------------------------------------|
+
+        # Create collection |------------------------------------------------------------------------------------------|
+        get_db()[database_name][collection_name].insert_one({
+            "user": "root",
+            "datetime": ["UTC", datetime.datetime.utcnow()],
+            "command": f"Hello, I'm {collection_name}",
+        })
         # |------------------------------------------------------------------------------------------------------------|
 
         return "Create", HTTP_201_CREATED

@@ -47,7 +47,7 @@ def create_app(test_config: Union[bool, None] = None) -> Flask:
 
     @app.route("/db")
     def testing() -> str:
-        response = create.database(name="testing")
+        response = create.collection(database="testing", name="hello")
         return response[0]
 
     return app
