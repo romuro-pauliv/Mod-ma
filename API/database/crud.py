@@ -8,10 +8,17 @@
 # imports +------------------------------------------------------------------------------------------------------------+
 from .db import get_db
 from .status import *
-from typing import Callable, Any
+from typing import Callable, Any, Union
 from bson.objectid import ObjectId
+from bson import json_util
 import datetime
+import json
 # +--------------------------------------------------------------------------------------------------------------------+
+
+
+def parse_json(data: Union[list, dict]) -> json.loads:
+    return json.loads(json_util.dumps(data))
+
 
 def log(func: Callable[..., Any]) -> Callable[..., Callable[[str], tuple]]:
     def wrapper(*args, **kwargs) -> Callable[[str], tuple]:
@@ -42,7 +49,7 @@ class create(object):
 
         # database search |--------------------------------------------------------------------------------------------|
         if database_name in get_db().list_database_names():
-            return "Forbidden", HTTP_403_FORBIDDEN
+            return "FORBIDDEN", HTTP_403_FORBIDDEN
         # |------------------------------------------------------------------------------------------------------------|
         
         # Create database |--------------------------------------------------------------------------------------------|
@@ -53,7 +60,7 @@ class create(object):
             })
         # |------------------------------------------------------------------------------------------------------------|
 
-        return "Create", HTTP_201_CREATED
+        return "CREATE", HTTP_201_CREATED
     
     @log
     @staticmethod
@@ -63,10 +70,10 @@ class create(object):
 
         # datbase and collection search |------------------------------------------------------------------------------|
         if database_name not in get_db().list_database_names():
-            return "Forbidden", HTTP_403_FORBIDDEN
+            return "FORBIDDEN", HTTP_403_FORBIDDEN
         
         if collection_name in get_db()[database_name].list_collection_names():
-            return "Forbidden", HTTP_403_FORBIDDEN
+            return "FORBIDDEN", HTTP_403_FORBIDDEN
         # |------------------------------------------------------------------------------------------------------------|
 
         # Create collection |------------------------------------------------------------------------------------------|
@@ -77,20 +84,20 @@ class create(object):
         })
         # |------------------------------------------------------------------------------------------------------------|
 
-        return "Create", HTTP_201_CREATED
+        return "CREATE", HTTP_201_CREATED
 
     @log
     @staticmethod
-    def document(database: str, collection: str, document: dict) -> tuple[list, int]:
+    def document(database: str, collection: str, document: dict) -> tuple[Union[list, str], int]:
         database_name: str = database.lower()       # lowercase database
         collection_name: str = collection.lower()   # lowercase collection
 
         # database and collection search |-----------------------------------------------------------------------------|
         if database_name not in get_db().list_database_names():
-            return "Forbidden", HTTP_403_FORBIDDEN
+            return "FORBIDDEN", HTTP_403_FORBIDDEN
         
         if collection_name not in get_db()[database_name].list_collection_names():
-            return "Forbidden", HTTP_403_FORBIDDEN
+            return "FORBIDDEN", HTTP_403_FORBIDDEN
         # |------------------------------------------------------------------------------------------------------------|
 
         id_str: str = str(ObjectId())
@@ -104,4 +111,60 @@ class create(object):
         total_document.update(document)
         get_db()[database_name][collection_name].insert_one(total_document)
 
-        return ["Create", total_document['_id']], HTTP_201_CREATED
+        return ["CREATE", total_document['_id']], HTTP_201_CREATED
+    
+
+class read(object):
+    def database() -> list[str]:
+        return get_db().list_database_names()
+    
+    def collection(database: str) -> tuple[Union[list, str], int]:
+        if database.lower() in get_db().list_database_names():
+            return get_db()[database.lower()].list_collection_names(), HTTP_200_OK
+        else:
+            return 'NOT FOUND', HTTP_404_NOT_FOUND
+    
+    def all_document(database: str, collection: str) -> tuple[Union[str, list[dict]], int]:
+        documents_list: list = []
+
+        if database.lower() not in get_db().list_database_names():
+            return 'NOT FOUND', HTTP_404_NOT_FOUND
+        
+        if collection.lower() not in get_db()[database.lower()].list_collection_names():
+            return 'NOT FOUND', HTTP_404_NOT_FOUND
+
+        for document in get_db()[database.lower()][collection.lower()].find({}):
+                documents_list.append(document)
+        return parse_json(documents_list), HTTP_200_OK
+
+
+class update(object):
+    def document(database: str, collection: str, _id: str, new_values: dict) -> None:
+        if database.lower() not in get_db().list_database_names():
+            return "NOT FOUND", HTTP_404_NOT_FOUND
+        
+        if collection.lower() not in get_db()[database.lower()].list_collection_names():
+            return "NOT FOUND", HTTP_404_NOT_FOUND
+        
+        find_document = parse_json(get_db()[database.lower()][collection.lower()].find({'_id': _id}))
+        try:
+            if find_document[0]['_id'] == _id:
+                filter: dict = {'_id': _id}
+
+                
+
+        except IndexError:
+            return 'NOT FOUND', HTTP_404_NOT_FOUND
+
+        updating: dict = {"$set": new_values}
+
+
+class drop(object):
+    def document(database: str, collection: str, _id: str) -> tuple[str, int]:
+        find_document = parse_json(get_db()[database.lower()][collection.lower()].find({'_id': _id}))
+        try:
+            if find_document[0]['_id'] == _id:
+                get_db()[database.lower()][collection.lower()].delete_one({'_id': _id})
+            return 'ACCEPTED', HTTP_202_ACCEPTED
+        except IndexError:
+            return 'NOT FOUND', HTTP_404_NOT_FOUND 

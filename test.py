@@ -1,3 +1,3 @@
-from bson.objectid import ObjectId
+test = {}
 
-print(type(str(ObjectId())))
+print(test['_id'])

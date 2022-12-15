@@ -11,7 +11,7 @@ import os
 from flask import Flask
 from typing import Union
 
-from .database.crud import create
+from .database.crud import create, read, drop
 # +--------------------------------------------------------------------------------------------------------------------+
 
 
@@ -40,18 +40,16 @@ def create_app(test_config: Union[bool, None] = None) -> Flask:
     # |----------------------------------------------------------------------------------------------------------------|
     
     # A simple page that say hello |-----------------------------------------------------------------------------------|
-    @app.route('/hello')
-    def hello() -> str:
-        return os.environ["MONGO_URI"]
+    @app.route("/create/document")
+    def create_test() -> tuple:
+
+        doc: dict[str, any] = {
+            "mode": "modo",
+            "method": "method"
+        }
+
+        return create.document(database='testing', collection='hello', document=doc)
     # |----------------------------------------------------------------------------------------------------------------|
 
-    @app.route("/db")
-    def testing() -> str:
-        doc = {
-            "hello": "world",
-            "testing": "hello"
-        }
-        response = create.document(database="testing", collection="hello", document=doc)
-        return response[0]
 
     return app
