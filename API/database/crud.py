@@ -16,13 +16,28 @@ import json
 # +--------------------------------------------------------------------------------------------------------------------+
 
 
+class ExceptionPass(Exception):
+    pass
+
+
 def parse_json(data: Union[list, dict]) -> json.loads:
     return json.loads(json_util.dumps(data))
 
 
-def log(func: Callable[..., Any]) -> Callable[..., Callable[[str], tuple]]:
+def field_validation(input: dict[str, Any]) -> tuple[str, int]:
+    denied_fields: list[str] = ["_id", "date", "user"]
+    try:
+        for field, _ in input.items():
+            if field in denied_fields:
+                raise ExceptionPass
+    except ExceptionPass:
+        return "FORBIDDEN", HTTP_403_FORBIDDEN
+    return "OK", HTTP_200_OK
+
+
+def log_create(func: Callable[..., Any]) -> Callable[..., Callable[[str], tuple]]:
     def wrapper(*args, **kwargs) -> Callable[[str], tuple]:
-        val = func(*args, **kwargs)
+        val: Callable[[str], tuple] = func(*args, **kwargs)
 
         # BSON LOG |---------------------------------------------------------------------------------------------------|
         log: dict = {
@@ -41,11 +56,56 @@ def log(func: Callable[..., Any]) -> Callable[..., Callable[[str], tuple]]:
         return val
     return wrapper
 
+
+def log_update(func: Callable[..., Any]) -> Callable[..., Callable[[str], tuple]]:
+    def wrapper(*args, **kwargs) -> Callable[[str], tuple]:
+        val: Callable[[str], tuple[str, int]] = func(*args, **kwargs)
+        # BSON LOG |---------------------------------------------------------------------------------------------------|
+        log: dict = {
+            "user": "root",
+            "date": ["UTC", datetime.datetime.utcnow()],
+            "command": f"UPDATE A {func.__name__.upper()}",
+            "name": args[2],
+            "code": val[1]
+        }
+        # |------------------------------------------------------------------------------------------------------------|
+
+        # INPUT LOG |--------------------------------------------------------------------------------------------------|
+        get_db()[args[0]].LOG.insert_one(log)
+        get_db().LOG.MAINLOG.insert_one(log)
+        # |------------------------------------------------------------------------------------------------------------|
+
+        return val
+    return wrapper
+
+
+def log_delete(func: Callable[..., Any]) -> Callable[..., Callable[[str], tuple[str, int]]]:
+    def wrapper(*args, **kwargs) -> Callable[[str], tuple[str, int]]:
+        val: Callable[[str], tuple[str, int]] = func(*args, **kwargs)
+        
+        #BSON |--------------------------------------------------------------------------------------------------------|
+        log: dict = {
+            "user": "root",
+            "date": ["UTC", datetime.datetime.utcnow()],
+            "command": f"DELETE A {func.__name__.upper()}",
+            "name": args[2],
+            "code": val[1]
+        }
+        # |------------------------------------------------------------------------------------------------------------|
+
+        # INPUT LOG |--------------------------------------------------------------------------------------------------|
+        get_db()[args[0]].LOG.insert_one(log)
+        get_db().LOG.MAINLOG.insert_one(log)
+        # |------------------------------------------------------------------------------------------------------------|
+
+        return val
+    return wrapper
+
 class create(object):
-    @log
+    @log_create
     @staticmethod
     def database(name: str) -> tuple[str, int]:
-        database_name = name.lower()            # lowercase database
+        database_name: str = name.lower()            # lowercase database
 
         # database search |--------------------------------------------------------------------------------------------|
         if database_name in get_db().list_database_names():
@@ -62,11 +122,11 @@ class create(object):
 
         return "CREATE", HTTP_201_CREATED
     
-    @log
+    @log_create
     @staticmethod
     def collection(database: str, name: str) -> tuple[str, int]:
-        database_name = database.lower()        # lowercase database
-        collection_name = name.lower()          # lowercase collection
+        database_name: str = database.lower()        # lowercase database
+        collection_name: str = name.lower()          # lowercase collection
 
         # datbase and collection search |------------------------------------------------------------------------------|
         if database_name not in get_db().list_database_names():
@@ -86,7 +146,7 @@ class create(object):
 
         return "CREATE", HTTP_201_CREATED
 
-    @log
+    @log_create
     @staticmethod
     def document(database: str, collection: str, document: dict) -> tuple[Union[list, str], int]:
         database_name: str = database.lower()       # lowercase database
@@ -100,9 +160,14 @@ class create(object):
             return "FORBIDDEN", HTTP_403_FORBIDDEN
         # |------------------------------------------------------------------------------------------------------------|
 
+        # fields validation |------------------------------------------------------------------------------------------|
+        if field_validation(document)[1] == 403:
+            return "FORBIDDEN", HTTP_403_FORBIDDEN
+        # |------------------------------------------------------------------------------------------------------------|
+
         id_str: str = str(ObjectId())
 
-        total_document = {
+        total_document: dict[str, Any] = {
             "_id": id_str,
             "user": "root",
             "datetime": ['UTC', datetime.datetime.utcnow()]
@@ -115,10 +180,10 @@ class create(object):
     
 
 class read(object):
-    def database() -> list[str]:
-        return get_db().list_database_names()
+    def database() -> tuple[list[str], int]:
+        return get_db().list_database_names(), HTTP_200_OK
     
-    def collection(database: str) -> tuple[Union[list, str], int]:
+    def collection(database: str) -> tuple[Union[list[str], str], int]:
         if database.lower() in get_db().list_database_names():
             return get_db()[database.lower()].list_collection_names(), HTTP_200_OK
         else:
@@ -139,29 +204,38 @@ class read(object):
 
 
 class update(object):
-    def document(database: str, collection: str, _id: str, new_values: dict) -> None:
+    @log_update
+    def document(database: str, collection: str, _id: str, new_values: dict) -> tuple[str, int]:
+        # search database and collection |-----------------------------------------------------------------------------|
         if database.lower() not in get_db().list_database_names():
             return "NOT FOUND", HTTP_404_NOT_FOUND
         
         if collection.lower() not in get_db()[database.lower()].list_collection_names():
             return "NOT FOUND", HTTP_404_NOT_FOUND
+        # |------------------------------------------------------------------------------------------------------------|
+
+        # Find document and convert to parse_json
+        find_document: dict = parse_json(get_db()[database.lower()][collection.lower()].find({'_id': _id}))
         
-        find_document = parse_json(get_db()[database.lower()][collection.lower()].find({'_id': _id}))
         try:
+            # The method serves to filter only the document that not contain ObjectId(). Case the user input the _id
+            # refer to ObjectId() (ex.: LOG documents), a exception is called. 
             if find_document[0]['_id'] == _id:
-                filter: dict = {'_id': _id}
-
-                
-
+                if field_validation(new_values)[1] == 200:
+                    filter: dict = {"_id": _id}
+                    updating: dict = {"$set": new_values}
+                    get_db()[database.lower()][collection.lower()].update_one(filter, updating)
+                    return "CREATED", HTTP_201_CREATED
+                else:
+                    return "FORBIDDEN", HTTP_403_FORBIDDEN
         except IndexError:
             return 'NOT FOUND', HTTP_404_NOT_FOUND
 
-        updating: dict = {"$set": new_values}
-
 
 class drop(object):
+    @log_delete
     def document(database: str, collection: str, _id: str) -> tuple[str, int]:
-        find_document = parse_json(get_db()[database.lower()][collection.lower()].find({'_id': _id}))
+        find_document: dict = parse_json(get_db()[database.lower()][collection.lower()].find({'_id': _id}))
         try:
             if find_document[0]['_id'] == _id:
                 get_db()[database.lower()][collection.lower()].delete_one({'_id': _id})

@@ -11,7 +11,7 @@ import os
 from flask import Flask
 from typing import Union
 
-from .database.crud import create, read, drop
+from .database.crud import create, read, update, drop 
 # +--------------------------------------------------------------------------------------------------------------------+
 
 
@@ -40,15 +40,9 @@ def create_app(test_config: Union[bool, None] = None) -> Flask:
     # |----------------------------------------------------------------------------------------------------------------|
     
     # A simple page that say hello |-----------------------------------------------------------------------------------|
-    @app.route("/create/document")
-    def create_test() -> tuple:
-
-        doc: dict[str, any] = {
-            "mode": "modo",
-            "method": "method"
-        }
-
-        return create.document(database='testing', collection='hello', document=doc)
+    @app.route("/delete/document")
+    def delete_test() -> str:
+        return drop.document("testing", "hello", "639b6dcba90d189636218670")[0]
     # |----------------------------------------------------------------------------------------------------------------|
 
 
