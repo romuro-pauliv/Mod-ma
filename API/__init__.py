@@ -11,7 +11,7 @@ import os
 from flask import Flask
 from typing import Union
 
-from .database.crud import create
+from .database.crud import create, read, update, drop 
 # +--------------------------------------------------------------------------------------------------------------------+
 
 
@@ -40,14 +40,10 @@ def create_app(test_config: Union[bool, None] = None) -> Flask:
     # |----------------------------------------------------------------------------------------------------------------|
     
     # A simple page that say hello |-----------------------------------------------------------------------------------|
-    @app.route('/hello')
-    def hello() -> str:
-        return os.environ["MONGO_URI"]
+    @app.route("/delete/document")
+    def delete_test() -> str:
+        return drop.document("testing", "hello", "639b6dcba90d189636218670")[0]
     # |----------------------------------------------------------------------------------------------------------------|
 
-    @app.route("/db")
-    def testing() -> str:
-        response = create.database(name="testing")
-        return response[0]
 
     return app
