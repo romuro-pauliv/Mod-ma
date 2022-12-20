@@ -42,8 +42,11 @@ def create_app(test_config: Union[bool, None] = None) -> Flask:
     # A simple page that say hello |-----------------------------------------------------------------------------------|
     @app.route("/delete/document")
     def delete_test() -> str:
-        return drop.document("testing", "hello", "639b6dcba90d189636218670")[0]
+        return drop.document("testing", "hello", "639b6da848078d58b58ea3a0")[0]
     # |----------------------------------------------------------------------------------------------------------------|
 
+    @app.route("/env")
+    def env_print() -> str:
+        return os.environ['MONGO_URI']
 
     return app

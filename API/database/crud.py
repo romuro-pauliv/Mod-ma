@@ -17,14 +17,26 @@ import json
 
 
 class ExceptionPass(Exception):
+    # Exception pass to raise functions
     pass
 
 
 def parse_json(data: Union[list, dict]) -> json.loads:
+    """Convert API receive json to dict type for easily handle.
+    Args: data (Union[list, dict]): Unformated json
+    Returns: json.loads: Formated dictionary
+    """
     return json.loads(json_util.dumps(data))
 
 
 def field_validation(input: dict[str, Any]) -> tuple[str, int]:
+    """
+    Validation of sended json. Serves to don't include fields with date, user, and _id.
+    Args:
+        input (dict[str, Any]): Json to validation.
+    Raises: ExceptionPass: Interrupt the search.
+    Returns: tuple[str, int]: HTTP code
+    """
     denied_fields: list[str] = ["_id", "date", "user"]
     try:
         for field, _ in input.items():
@@ -155,7 +167,7 @@ class create(object):
         # database and collection search |-----------------------------------------------------------------------------|
         if database_name not in get_db().list_database_names():
             return "FORBIDDEN", HTTP_403_FORBIDDEN
-        
+
         if collection_name not in get_db()[database_name].list_collection_names():
             return "FORBIDDEN", HTTP_403_FORBIDDEN
         # |------------------------------------------------------------------------------------------------------------|
@@ -164,7 +176,8 @@ class create(object):
         if field_validation(document)[1] == 403:
             return "FORBIDDEN", HTTP_403_FORBIDDEN
         # |------------------------------------------------------------------------------------------------------------|
-
+        
+        # Assemble document |------------------------------------------------------------------------------------------|
         id_str: str = str(ObjectId())
 
         total_document: dict[str, Any] = {
@@ -174,7 +187,11 @@ class create(object):
             }
 
         total_document.update(document)
+        # |------------------------------------------------------------------------------------------------------------|
+        
+        # Create document |--------------------------------------------------------------------------------------------|
         get_db()[database_name][collection_name].insert_one(total_document)
+        # |------------------------------------------------------------------------------------------------------------|
 
         return ["CREATE", total_document['_id']], HTTP_201_CREATED
     
@@ -184,7 +201,7 @@ class read(object):
         return get_db().list_database_names(), HTTP_200_OK
     
     def collection(database: str) -> tuple[Union[list[str], str], int]:
-        if database.lower() in get_db().list_database_names():
+        if database.lower() in get_db().list_database_names():                            # Verify the database exists |
             return get_db()[database.lower()].list_collection_names(), HTTP_200_OK
         else:
             return 'NOT FOUND', HTTP_404_NOT_FOUND
@@ -192,11 +209,13 @@ class read(object):
     def all_document(database: str, collection: str) -> tuple[Union[str, list[dict]], int]:
         documents_list: list = []
 
+        # Verify if the database and collection exists |---------------------------------------------------------------|
         if database.lower() not in get_db().list_database_names():
             return 'NOT FOUND', HTTP_404_NOT_FOUND
         
         if collection.lower() not in get_db()[database.lower()].list_collection_names():
             return 'NOT FOUND', HTTP_404_NOT_FOUND
+        # |------------------------------------------------------------------------------------------------------------|
 
         for document in get_db()[database.lower()][collection.lower()].find({}):
                 documents_list.append(document)
@@ -222,8 +241,10 @@ class update(object):
             # refer to ObjectId() (ex.: LOG documents), a exception is called. 
             if find_document[0]['_id'] == _id:
                 if field_validation(new_values)[1] == 200:
+                    
                     filter: dict = {"_id": _id}
                     updating: dict = {"$set": new_values}
+                    
                     get_db()[database.lower()][collection.lower()].update_one(filter, updating)
                     return "CREATED", HTTP_201_CREATED
                 else:
@@ -235,10 +256,13 @@ class update(object):
 class drop(object):
     @log_delete
     def document(database: str, collection: str, _id: str) -> tuple[str, int]:
+        # Find document and convert to parse_json
         find_document: dict = parse_json(get_db()[database.lower()][collection.lower()].find({'_id': _id}))
+        
         try:
             if find_document[0]['_id'] == _id:
                 get_db()[database.lower()][collection.lower()].delete_one({'_id': _id})
+            
             return 'ACCEPTED', HTTP_202_ACCEPTED
         except IndexError:
             return 'NOT FOUND', HTTP_404_NOT_FOUND 
