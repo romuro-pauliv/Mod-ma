@@ -10,8 +10,6 @@
 import os
 from flask import Flask
 from typing import Union
-
-from .database.crud import create, read, update, drop 
 # +--------------------------------------------------------------------------------------------------------------------+
 
 
@@ -39,10 +37,9 @@ def create_app(test_config: Union[bool, None] = None) -> Flask:
         pass
     # |----------------------------------------------------------------------------------------------------------------|
     
-    # A simple page that say hello |-----------------------------------------------------------------------------------|
-    @app.route("/delete/document")
-    def delete_test() -> str:
-        return drop.document("testing", "hello", "639b6da848078d58b58ea3a0")[0]
+    # Test area |------------------------------------------------------------------------------------------------------|
+    from .routes import auth
+    app.register_blueprint(auth.bp)
     # |----------------------------------------------------------------------------------------------------------------|
 
     @app.route("/env")
@@ -50,3 +47,4 @@ def create_app(test_config: Union[bool, None] = None) -> Flask:
         return os.environ['MONGO_URI']
 
     return app
+
