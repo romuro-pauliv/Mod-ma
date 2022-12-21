@@ -1,8 +1,19 @@
 
+# +--------------------------------------------------------------------------------------------------------------------|
+# |                                                                                                 API.routes.auth.py |
+# |                                                                                             Author: Pauliv, Rômulo |
+# |                                                                                          email: romulopauliv@bk.ru |
+# |                                                                                                    encoding: UTF-8 |
+# +--------------------------------------------------------------------------------------------------------------------|
+
+# + imports +----------------------------------------------------------------------------------------------------------+
 from flask import Blueprint
+from API.crud import read
+# +--------------------------------------------------------------------------------------------------------------------+
 
-bp = Blueprint('test', __name__, url_prefix='/test')
 
-@bp.route("/test")
+bp = Blueprint('auth', __name__, url_prefix='/auth')
+
+@bp.route("/login")
 def test() -> dict[str]:
-    return {"hello": "world"}
+    return read.all_document('testing', 'hello')
