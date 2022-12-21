@@ -13,6 +13,7 @@ from typing import Union, Any, Callable
 from .status import *
 from bson.objectid import ObjectId
 import datetime
+import string
 # +--------------------------------------------------------------------------------------------------------------------+
 
 # Validation function to verify if not exists equals values |----------------------------------------------------------|
