@@ -220,6 +220,26 @@ class read(object):
         for document in get_db()[database.lower()][collection.lower()].find({}):
                 documents_list.append(document)
         return parse_json(documents_list), HTTP_200_OK
+    
+    def search_document_for_field_value(
+        database: str, collection: str, field_value: dict[str, Any]) -> tuple[Union[str, list[dict]], int]:
+        documents_list: list = []
+
+        # Verify if the database and collection exists |---------------------------------------------------------------|
+        if database.lower() not in get_db().list_database_names():
+            return "NOT FOUND", HTTP_404_NOT_FOUND
+        
+        if collection.lower() not in get_db()[database.lower()].list_collection_names():
+            return 'NOT FOUND', HTTP_404_NOT_FOUND
+        # |------------------------------------------------------------------------------------------------------------|
+
+        for document in get_db()[database.lower()][collection.lower()].find(field_value):
+            documents_list.append(document)
+        
+        if documents_list == []:
+            return 'NOT FOUND', HTTP_404_NOT_FOUND
+        else:
+            return parse_json(documents), HTTP_200_OK
 
 
 class update(object):
