@@ -14,6 +14,7 @@ from .status import *
 from bson.objectid import ObjectId
 import datetime
 import string
+from re import fullmatch
 # +--------------------------------------------------------------------------------------------------------------------+
 
 # Validation function to verify if not exists equals values |----------------------------------------------------------|
@@ -61,16 +62,46 @@ def password_validation(passwd: str) -> tuple[str, int]:
     return "PASSWORD VALID", HTTP_202_ACCEPTED
 # |--------------------------------------------------------------------------------------------------------------------|
 
+# Username validation |------------------------------------------------------------------------------------------------|
+def username_validation(username: str) -> tuple[str, int]:
+    if len(username) >= 4:
+        for _char in username:
+            if _char in "!\"#$%&'()*+,./:;<=>?@[\]^`{|}~":
+                return str("CHARACTER [" + _char +  "] NOT ALLOWED"), HTTP_400_BAD_REQUEST
+    else:
+        return "YOUR USERNAME MUST BE MORE THAN 4 CHARACTERS", HTTP_400_BAD_REQUEST
+    return "USERNAME VALID", HTTP_202_ACCEPTED
+# |--------------------------------------------------------------------------------------------------------------------|
+
+# Email validation |---------------------------------------------------------------------------------------------------|
+def email_validation(email: str) -> tuple[str, int]:
+    regex: str = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+    return ("VALID EMAIL", HTTP_202_ACCEPTED) if fullmatch(regex, email) else ("INVALID EMAIL", HTTP_400_BAD_REQUEST)
+# |--------------------------------------------------------------------------------------------------------------------|
+
+
 class PassException(Exception):
     pass
 
 
 def register(email: str, username: str, password: str) -> tuple[str, int]:
 
+    # Username validation |--------------------------------------------------------------------------------------------|
+    usernm_valid: tuple[str, int] = username_validation(username)
+    if usernm_valid[1] == HTTP_400_BAD_REQUEST:
+        return usernm_valid
+    # |----------------------------------------------------------------------------------------------------------------|
+
     # Password validation |--------------------------------------------------------------------------------------------|
     passwd_valid: tuple[str, int] = password_validation(password)
     if passwd_valid[1] == HTTP_400_BAD_REQUEST:
         return passwd_valid
+    # |----------------------------------------------------------------------------------------------------------------|
+
+    # Email validation |-----------------------------------------------------------------------------------------------|
+    email_valid: tuple[str, int] = email_validation(email)
+    if email_valid[1] == HTTP_400_BAD_REQUEST:
+        return email_valid
     # |----------------------------------------------------------------------------------------------------------------|
 
     # Validation in database to verify if not exists the same username or email in datbase |---------------------------|
