@@ -17,6 +17,11 @@ import string
 from re import fullmatch
 # +--------------------------------------------------------------------------------------------------------------------+
 
+
+class PassException(Exception):
+    pass
+
+
 # Validation function to verify if not exists equals values |----------------------------------------------------------|
 def search_argument(field: str, value: Any) -> bool:
     document: list = []
@@ -80,31 +85,20 @@ def email_validation(email: str) -> tuple[str, int]:
 # |--------------------------------------------------------------------------------------------------------------------|
 
 
-class PassException(Exception):
-    pass
-
-
 def register(email: str, username: str, password: str) -> tuple[str, int]:
 
-    # Username validation |--------------------------------------------------------------------------------------------|
-    usernm_valid: tuple[str, int] = username_validation(username)
-    if usernm_valid[1] == HTTP_400_BAD_REQUEST:
-        return usernm_valid
+    # Username, password, and email validation |-----------------------------------------------------------------------|
+    func_list: list[Callable[[str], tuple[str, int]]] = [
+        username_validation, password_validation, email_validation
+    ]
+    func_input: list[str] = [username, password, email]
+    for n, func in enumerate(func_list):
+        func_validation: tuple[str, int] = func(func_input[n])
+        if func_validation[1] == HTTP_400_BAD_REQUEST:
+            return func_validation
     # |----------------------------------------------------------------------------------------------------------------|
 
-    # Password validation |--------------------------------------------------------------------------------------------|
-    passwd_valid: tuple[str, int] = password_validation(password)
-    if passwd_valid[1] == HTTP_400_BAD_REQUEST:
-        return passwd_valid
-    # |----------------------------------------------------------------------------------------------------------------|
-
-    # Email validation |-----------------------------------------------------------------------------------------------|
-    email_valid: tuple[str, int] = email_validation(email)
-    if email_valid[1] == HTTP_400_BAD_REQUEST:
-        return email_valid
-    # |----------------------------------------------------------------------------------------------------------------|
-
-    # Validation in database to verify if not exists the same username or email in datbase |---------------------------|
+    # Validation in database to verify if not exists the same username or email in database |--------------------------|
     fields: list = ['email', 'username']
     values: list = [email, username]
     try:
