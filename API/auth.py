@@ -6,7 +6,6 @@
 # +--------------------------------------------------------------------------------------------------------------------|
 
 # +--------------------------------------------------------------------------------------------------------------------+
-from .crud import create, read
 from werkzeug.security import check_password_hash, generate_password_hash
 from .db import get_db
 from typing import Union, Any, Callable
@@ -15,6 +14,7 @@ from bson.objectid import ObjectId
 import datetime
 import string
 from re import fullmatch
+import base64
 # +--------------------------------------------------------------------------------------------------------------------+
 
 
@@ -85,8 +85,8 @@ def email_validation(email: str) -> tuple[str, int]:
 # |--------------------------------------------------------------------------------------------------------------------|
 
 
+# REGISTER |===========================================================================================================|
 def register(email: str, username: str, password: str) -> tuple[str, int]:
-
     # Username, password, and email validation |-----------------------------------------------------------------------|
     func_list: list[Callable[[str], tuple[str, int]]] = [
         username_validation, password_validation, email_validation
@@ -122,3 +122,43 @@ def register(email: str, username: str, password: str) -> tuple[str, int]:
     # |----------------------------------------------------------------------------------------------------------------|
     get_db().USERS.REGISTER.insert_one(json_package)    # REGISTER COMPLETE
     return "CREATED", HTTP_201_CREATED
+# |====================================================================================================================|
+
+# | find password |----------------------------------------------------------------------------------------------------|
+def find_password(username: str) -> tuple[str, int]:
+    document: list = []
+    for doc in get_db().USERS.REGISTER.find({"username": username}):
+        document.append(doc)
+    try:
+        if document[0]:
+            return document[0]['password'], HTTP_200_OK
+    except IndexError:
+        return "INCORRECT USERNAME/PASSWORD", HTTP_400_BAD_REQUEST
+# |--------------------------------------------------------------------------------------------------------------------|
+
+# LOGIN |==============================================================================================================|
+def login(username: str, password: str) -> tuple[str, int]:
+    # find password |--------------------------------------------------------------------------------------------------|
+    passwd: tuple[str, int] = find_password(username)
+    if passwd[1] == HTTP_400_BAD_REQUEST:
+        return passwd
+    # |----------------------------------------------------------------------------------------------------------------|
+
+    # check password |-------------------------------------------------------------------------------------------------|
+    if not check_password_hash(passwd[0], password):
+        return "INCORRECT USERNAME/PASSWORD", HTTP_400_BAD_REQUEST
+    # |----------------------------------------------------------------------------------------------------------------|
+
+    return "SUCCESSFULLY", HTTP_202_ACCEPTED
+# |====================================================================================================================|
+
+# read base64 |--------------------------------------------------------------------------------------------------------|
+def read_authentication(header_auth: str) -> list[str]:
+    auth: list[str] = header_auth.split()[1]
+    login_data: list[str] = base64.b64decode(auth).decode().split(":")
+    try:
+        if login_data[1]:
+            return login_data
+    except IndexError:
+        return "BAD REQUEST", HTTP_400_BAD_REQUEST
+# |--------------------------------------------------------------------------------------------------------------------|
