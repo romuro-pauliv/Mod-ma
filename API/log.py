@@ -9,6 +9,7 @@
 from .db import get_db
 from typing import Union, Any, Callable
 import datetime
+from flask import request
 # |--------------------------------------------------------------------------------------------------------------------|
 
 
@@ -97,7 +98,8 @@ class LogAuth(object):
             log: dict[str, Any] = {
                 "user": "root",
                 "date": ["UTC", datetime.datetime.utcnow()],
-                "command": f"ROUTE {func.__name__}",
+                "command": f"{func.__name__}",
+                "addr": request.remote_addr,
                 "code": val[1]
             }
             # |--------------------------------------------------------------------------------------------------------|

@@ -16,6 +16,7 @@ import string
 from re import fullmatch
 import base64
 import jwt
+from flask import request, current_app
 # +--------------------------------------------------------------------------------------------------------------------+
 
 
@@ -169,11 +170,11 @@ def read_authentication(header_auth: str) -> list[str]:
 
 
 # TOKEN |==============================================================================================================|
-def token_generate(username: str, key_api: str) -> dict[str]:
+def token_generate(ip_addr: str, key_api: str) -> dict[str]:
     # pack assembly |--------------------------------------------------------------------------------------------------|
     encode_dict: dict[str, Union[str, datetime.datetime]] = {
-        "hash": generate_password_hash(username),
-        "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+        "hash": generate_password_hash(ip_addr),
+        "exp": datetime.datetime.utcnow() + datetime.timedelta(seconds=40)
     }
     # |----------------------------------------------------------------------------------------------------------------|
     
@@ -181,24 +182,46 @@ def token_generate(username: str, key_api: str) -> dict[str]:
     token: str = jwt.encode(payload=encode_dict, key=key_api, algorithm="HS256")
     # |----------------------------------------------------------------------------------------------------------------|
 
-    return {
-        "token": token, "token expiration time [UTC]": encode_dict["exp"].strftime("%m/%d/%Y %H:%M:%S")
-    }
+    return {"token": token, "token expiration time [UTC]": encode_dict["exp"].strftime("%m/%d/%Y %H:%M:%S")}
 # |====================================================================================================================|
 
 # TOKEN AUTHENTICATION |===============================================================================================|
-def token_authentication(token: dict[str], username: str, key_api: str) -> tuple[str, int]:
+def token_authentication(token: str, ip_addr: str, key_api: str) -> tuple[str, int]:
+    try:
+        try:
+            token: str = token.split()[1]
+        except IndexError:
+            return "BAD REQUEST", HTTP_400_BAD_REQUEST
+    except AttributeError:
+        return "BAD REQUEST", HTTP_400_BAD_REQUEST
     # decode token |---------------------------------------------------------------------------------------------------|
     try:
-        decode_token: dict = jwt.decode(token['token'], key_api, ['HS256'])
+        try:
+            decode_token: dict = jwt.decode(token, key_api, ['HS256'])
+        except jwt.exceptions.DecodeError:
+            return "INVALID TOKEN", HTTP_400_BAD_REQUEST
     except jwt.exceptions.ExpiredSignatureError:
         return "EXPIRED TOKEN", HTTP_403_FORBIDDEN
     # |----------------------------------------------------------------------------------------------------------------|
 
     # username hash validation |---------------------------------------------------------------------------------------|
-    if not check_password_hash(decode_token['hash'], username):
+    if not check_password_hash(decode_token['hash'], ip_addr):
         return "INVALID TOKEN", HTTP_403_FORBIDDEN
     # |----------------------------------------------------------------------------------------------------------------|
 
     return "VALID TOKEN", HTTP_200_OK
+# |====================================================================================================================|
+
+# REQUIRED TOKEN |=====================================================================================================|
+def required_token(func: Callable[..., Any]) -> Callable[..., tuple[str, int] | Any]:
+    def wrapper(*args, **kwargs) -> tuple[str, int] | Any:
+        # token authentication |-------------------------------------------------------------------------------------------|
+        token: str = request.headers.get("Authorization")
+        ip: str = request.remote_addr
+        token_auth: tuple[str, int] = token_authentication(token, ip, current_app.config["SECRET_KEY"])
+        if token_auth[1] != HTTP_200_OK:
+            return token_auth
+    # |----------------------------------------------------------------------------------------------------------------|
+        return func(*args, **kwargs)
+    return wrapper
 # |====================================================================================================================|

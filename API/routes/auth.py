@@ -34,8 +34,7 @@ def REGISTER() -> tuple[str, int]:
 # Login route |--------------------------------------------------------------------------------------------------------|
 @bp.route("/login", methods=['POST'])
 @LogAuth.login_route
-def LOGIN() -> tuple[str, int]:
-    
+def LOGIN() -> tuple[dict, int]:
     # decode auth base64 |---------------------------------------------------------------------------------------------|
     auth_list: auth_list_typing = read_authentication(request.headers.get("Authorization"))
     if auth_list[1] == HTTP_400_BAD_REQUEST:
@@ -47,6 +46,5 @@ def LOGIN() -> tuple[str, int]:
     if login_db[1] == HTTP_403_FORBIDDEN:
         return login_db
     # |----------------------------------------------------------------------------------------------------------------|
-
-    return token_generate(auth_list[0], key_api=current_app.config['SECRET_KEY']), HTTP_202_ACCEPTED
+    return token_generate(request.remote_addr, current_app.config['SECRET_KEY']), HTTP_202_ACCEPTED
 # |--------------------------------------------------------------------------------------------------------------------|
