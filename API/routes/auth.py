@@ -10,8 +10,8 @@
 from flask import Blueprint, request
 from API.auth import register, login, read_authentication
 from API.status import *
-import base64
 from typing import Union
+from API.log import LogAuth
 # +--------------------------------------------------------------------------------------------------------------------+
 
 # | type hint |--------------------------------------------------------------------------------------------------------|
@@ -33,6 +33,7 @@ def REGISTER() -> tuple[str, int]:
 
 # Login route |--------------------------------------------------------------------------------------------------------|
 @bp.route("/login", methods=['POST'])
+@LogAuth.login_route
 def LOGIN() -> tuple[str, int]:
     auth_list: auth_list_typing = read_authentication(request.headers.get("Authorization"))
     if auth_list[1] == HTTP_400_BAD_REQUEST:

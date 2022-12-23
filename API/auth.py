@@ -154,11 +154,14 @@ def login(username: str, password: str) -> tuple[str, int]:
 
 # read base64 |--------------------------------------------------------------------------------------------------------|
 def read_authentication(header_auth: str) -> list[str]:
-    auth: list[str] = header_auth.split()[1]
-    login_data: list[str] = base64.b64decode(auth).decode().split(":")
     try:
-        if login_data[1]:
-            return login_data
-    except IndexError:
+        auth: list[str] = header_auth.split()[1]
+        login_data: list[str] = base64.b64decode(auth).decode().split(":")
+        try:
+            if login_data[1]:
+                return login_data
+        except IndexError:
+            return "BAD REQUEST", HTTP_400_BAD_REQUEST
+    except AttributeError:
         return "BAD REQUEST", HTTP_400_BAD_REQUEST
 # |--------------------------------------------------------------------------------------------------------------------|

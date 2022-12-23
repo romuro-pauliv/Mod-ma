@@ -13,6 +13,7 @@ from bson.objectid import ObjectId
 from bson import json_util
 import datetime
 import json
+from .log import LogDB
 # +--------------------------------------------------------------------------------------------------------------------+
 
 
@@ -47,74 +48,8 @@ def field_validation(input: dict[str, Any]) -> tuple[str, int]:
     return "OK", HTTP_200_OK
 
 
-def log_create(func: Callable[..., Any]) -> Callable[..., Callable[[str], tuple]]:
-    def wrapper(*args, **kwargs) -> Callable[[str], tuple]:
-        val: Callable[[str], tuple] = func(*args, **kwargs)
-
-        # BSON LOG |---------------------------------------------------------------------------------------------------|
-        log: dict = {
-            "user": "root",
-            "date": ["UTC", datetime.datetime.utcnow()],
-            "command": f"CREATE A {func.__name__.upper()}",
-            "name": kwargs['name'].lower() if func.__name__ != "document" else val[0][1],
-            "code": val[1] 
-        }
-        # |------------------------------------------------------------------------------------------------------------|
-
-        get_db().LOG.MAINLOG.insert_one(log)    # input in LOG database
-        if func.__name__ != "database":
-            get_db()[kwargs['database']]['LOG'].insert_one(log)
-
-        return val
-    return wrapper
-
-
-def log_update(func: Callable[..., Any]) -> Callable[..., Callable[[str], tuple]]:
-    def wrapper(*args, **kwargs) -> Callable[[str], tuple]:
-        val: Callable[[str], tuple[str, int]] = func(*args, **kwargs)
-        # BSON LOG |---------------------------------------------------------------------------------------------------|
-        log: dict = {
-            "user": "root",
-            "date": ["UTC", datetime.datetime.utcnow()],
-            "command": f"UPDATE A {func.__name__.upper()}",
-            "name": args[2],
-            "code": val[1]
-        }
-        # |------------------------------------------------------------------------------------------------------------|
-
-        # INPUT LOG |--------------------------------------------------------------------------------------------------|
-        get_db()[args[0]].LOG.insert_one(log)
-        get_db().LOG.MAINLOG.insert_one(log)
-        # |------------------------------------------------------------------------------------------------------------|
-
-        return val
-    return wrapper
-
-
-def log_delete(func: Callable[..., Any]) -> Callable[..., Callable[[str], tuple[str, int]]]:
-    def wrapper(*args, **kwargs) -> Callable[[str], tuple[str, int]]:
-        val: Callable[[str], tuple[str, int]] = func(*args, **kwargs)
-        
-        #BSON |--------------------------------------------------------------------------------------------------------|
-        log: dict = {
-            "user": "root",
-            "date": ["UTC", datetime.datetime.utcnow()],
-            "command": f"DELETE A {func.__name__.upper()}",
-            "name": args[2],
-            "code": val[1]
-        }
-        # |------------------------------------------------------------------------------------------------------------|
-
-        # INPUT LOG |--------------------------------------------------------------------------------------------------|
-        get_db()[args[0]].LOG.insert_one(log)
-        get_db().LOG.MAINLOG.insert_one(log)
-        # |------------------------------------------------------------------------------------------------------------|
-
-        return val
-    return wrapper
-
 class create(object):
-    @log_create
+    @LogDB.log_create
     @staticmethod
     def database(name: str) -> tuple[str, int]:
         database_name: str = name.lower()            # lowercase database
@@ -134,7 +69,7 @@ class create(object):
 
         return "CREATE", HTTP_201_CREATED
     
-    @log_create
+    @LogDB.log_create
     @staticmethod
     def collection(database: str, name: str) -> tuple[str, int]:
         database_name: str = database.lower()        # lowercase database
@@ -158,7 +93,7 @@ class create(object):
 
         return "CREATE", HTTP_201_CREATED
 
-    @log_create
+    @LogDB.log_create
     @staticmethod
     def document(database: str, collection: str, document: dict) -> tuple[Union[list, str], int]:
         database_name: str = database.lower()       # lowercase database
@@ -239,11 +174,12 @@ class read(object):
         if documents_list == []:
             return 'NOT FOUND', HTTP_404_NOT_FOUND
         else:
-            return parse_json(documents), HTTP_200_OK
+            return parse_json(documents_list), HTTP_200_OK
 
 
 class update(object):
-    @log_update
+    @LogDB.log_update
+    @staticmethod
     def document(database: str, collection: str, _id: str, new_values: dict) -> tuple[str, int]:
         # search database and collection |-----------------------------------------------------------------------------|
         if database.lower() not in get_db().list_database_names():
@@ -274,7 +210,8 @@ class update(object):
 
 
 class drop(object):
-    @log_delete
+    @LogDB.log_delete
+    @staticmethod
     def document(database: str, collection: str, _id: str) -> tuple[str, int]:
         # Find document and convert to parse_json
         find_document: dict = parse_json(get_db()[database.lower()][collection.lower()].find({'_id': _id}))
