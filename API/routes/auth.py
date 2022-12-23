@@ -7,8 +7,8 @@
 # +--------------------------------------------------------------------------------------------------------------------|
 
 # + imports +----------------------------------------------------------------------------------------------------------+
-from flask import Blueprint, request
-from API.auth import register, login, read_authentication
+from flask import Blueprint, request, current_app
+from API.auth import register, login, read_authentication, token_generate
 from API.status import *
 from typing import Union
 from API.log import LogAuth
@@ -35,8 +35,18 @@ def REGISTER() -> tuple[str, int]:
 @bp.route("/login", methods=['POST'])
 @LogAuth.login_route
 def LOGIN() -> tuple[str, int]:
+    
+    # decode auth base64 |---------------------------------------------------------------------------------------------|
     auth_list: auth_list_typing = read_authentication(request.headers.get("Authorization"))
     if auth_list[1] == HTTP_400_BAD_REQUEST:
         return auth_list
-    return login(username=auth_list[0], password=auth_list[1])
+    # |----------------------------------------------------------------------------------------------------------------|
+
+    # Verify in database the user/password |---------------------------------------------------------------------------|
+    login_db: tuple[str, int] = login(username=auth_list[0], password=auth_list[1])
+    if login_db[1] == HTTP_403_FORBIDDEN:
+        return login_db
+    # |----------------------------------------------------------------------------------------------------------------|
+
+    return token_generate(auth_list[0], key_api=current_app.config['SECRET_KEY']), HTTP_202_ACCEPTED
 # |--------------------------------------------------------------------------------------------------------------------|

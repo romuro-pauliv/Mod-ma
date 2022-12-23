@@ -88,7 +88,7 @@ class LogDB(object):
 
 class LogAuth(object):
     def login_route(func: Callable[..., Any]) -> Callable[[None], tuple[str, int]]:
-        def as_wrapper(*args, **kwargs) -> Callable[[None], tuple[str, int]]:
+        def wrapper(*args, **kwargs) -> Callable[[None], tuple[str, int]]:
             # | Execute wrapper function |-----------------------------------------------------------------------------|
             val: Callable[[None], tuple[str, int]] = func(*args, **kwargs)
             # |--------------------------------------------------------------------------------------------------------|
@@ -98,7 +98,6 @@ class LogAuth(object):
                 "user": "root",
                 "date": ["UTC", datetime.datetime.utcnow()],
                 "command": f"ROUTE {func.__name__}",
-                "name": val[0],
                 "code": val[1]
             }
             # |--------------------------------------------------------------------------------------------------------|
@@ -108,4 +107,4 @@ class LogAuth(object):
             get_db().USERS.LOG.insert_one(log)
             # |--------------------------------------------------------------------------------------------------------|
             return val
-        return as_wrapper
+        return wrapper

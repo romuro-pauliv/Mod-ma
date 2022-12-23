@@ -15,6 +15,7 @@ import datetime
 import string
 from re import fullmatch
 import base64
+import jwt
 # +--------------------------------------------------------------------------------------------------------------------+
 
 
@@ -34,7 +35,7 @@ def search_argument(field: str, value: Any) -> bool:
         return True
 # |--------------------------------------------------------------------------------------------------------------------|
 
-# Password Validation |------------------------------------------------------------------------------------------------|
+# Password validation |------------------------------------------------------------------------------------------------|
 def password_validation(passwd: str) -> tuple[str, int]:
     type_char: list[str] = ['lowercase', 'uppercase', 'digits', 'punctuation']
 
@@ -133,20 +134,20 @@ def find_password(username: str) -> tuple[str, int]:
         if document[0]:
             return document[0]['password'], HTTP_200_OK
     except IndexError:
-        return "INCORRECT USERNAME/PASSWORD", HTTP_400_BAD_REQUEST
+        return "INCORRECT USERNAME/PASSWORD", HTTP_403_FORBIDDEN
 # |--------------------------------------------------------------------------------------------------------------------|
 
 # LOGIN |==============================================================================================================|
 def login(username: str, password: str) -> tuple[str, int]:
     # find password |--------------------------------------------------------------------------------------------------|
     passwd: tuple[str, int] = find_password(username)
-    if passwd[1] == HTTP_400_BAD_REQUEST:
+    if passwd[1] == HTTP_403_FORBIDDEN:
         return passwd
     # |----------------------------------------------------------------------------------------------------------------|
 
     # check password |-------------------------------------------------------------------------------------------------|
     if not check_password_hash(passwd[0], password):
-        return "INCORRECT USERNAME/PASSWORD", HTTP_400_BAD_REQUEST
+        return "INCORRECT USERNAME/PASSWORD", HTTP_403_FORBIDDEN
     # |----------------------------------------------------------------------------------------------------------------|
 
     return "SUCCESSFULLY", HTTP_202_ACCEPTED
@@ -165,3 +166,39 @@ def read_authentication(header_auth: str) -> list[str]:
     except AttributeError:
         return "BAD REQUEST", HTTP_400_BAD_REQUEST
 # |--------------------------------------------------------------------------------------------------------------------|
+
+
+# TOKEN |==============================================================================================================|
+def token_generate(username: str, key_api: str) -> dict[str]:
+    # pack assembly |--------------------------------------------------------------------------------------------------|
+    encode_dict: dict[str, Union[str, datetime.datetime]] = {
+        "hash": generate_password_hash(username),
+        "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+    }
+    # |----------------------------------------------------------------------------------------------------------------|
+    
+    # token encode |---------------------------------------------------------------------------------------------------|
+    token: str = jwt.encode(payload=encode_dict, key=key_api, algorithm="HS256")
+    # |----------------------------------------------------------------------------------------------------------------|
+
+    return {
+        "token": token, "token expiration time [UTC]": encode_dict["exp"].strftime("%m/%d/%Y %H:%M:%S")
+    }
+# |====================================================================================================================|
+
+# TOKEN AUTHENTICATION |===============================================================================================|
+def token_authentication(token: dict[str], username: str, key_api: str) -> tuple[str, int]:
+    # decode token |---------------------------------------------------------------------------------------------------|
+    try:
+        decode_token: dict = jwt.decode(token['token'], key_api, ['HS256'])
+    except jwt.exceptions.ExpiredSignatureError:
+        return "EXPIRED TOKEN", HTTP_403_FORBIDDEN
+    # |----------------------------------------------------------------------------------------------------------------|
+
+    # username hash validation |---------------------------------------------------------------------------------------|
+    if not check_password_hash(decode_token['hash'], username):
+        return "INVALID TOKEN", HTTP_403_FORBIDDEN
+    # |----------------------------------------------------------------------------------------------------------------|
+
+    return "VALID TOKEN", HTTP_200_OK
+# |====================================================================================================================|
