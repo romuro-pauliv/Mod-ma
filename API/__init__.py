@@ -29,13 +29,6 @@ def create_app(test_config: Union[bool, None] = None) -> Flask:
         # load the test config if passed in
         app.config.from_mapping(test_config)
     # |----------------------------------------------------------------------------------------------------------------|
-
-    # Ensure the instance folder exists |------------------------------------------------------------------------------|
-    try:
-        os.makedirs(app.instance_path)
-    except OSError:
-        pass
-    # |----------------------------------------------------------------------------------------------------------------|
     
     # auth blueprint |-------------------------------------------------------------------------------------------------|
     from .routes import auth
@@ -46,11 +39,6 @@ def create_app(test_config: Union[bool, None] = None) -> Flask:
     from .routes import create
     app.register_blueprint(create.bp)
     # |----------------------------------------------------------------------------------------------------------------|
-
-    # test route |
-    @app.route('/')
-    def hello() -> str:
-        return "Hello, World!"
 
     return app
 

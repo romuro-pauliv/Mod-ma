@@ -223,7 +223,7 @@ def token_authentication(token: str, ip_addr: str, key_api: str) -> tuple[str, i
 # REQUIRED TOKEN |=====================================================================================================|
 def required_token(func: Callable[..., Any]) -> Callable[..., tuple[str, int] | Any]:
     def wrapper(*args, **kwargs) -> tuple[str, int] | Any:
-        # token authentication |-------------------------------------------------------------------------------------------|
+        # token authentication |---------------------------------------------------------------------------------------|
         token: str = request.headers.get("Authorization")
         ip: str = request.remote_addr
         token_auth: tuple[str, int] = token_authentication(token, ip, current_app.config["SECRET_KEY"])

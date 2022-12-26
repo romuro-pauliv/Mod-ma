@@ -33,7 +33,7 @@ def encode_login(username: str, password: str) -> str:
 def test_real_register() -> None:
     # test register (CREATED) |----------------------------------------------------------------------------------------|
     headers: dict[str] = {
-        "Register": encode_register("user_test", "123!Admin", "admin@admin.com")
+        "Register": encode_register("user_test", "123!Admin", "usertest@usertest.com")
     }
     return_requests = requests.post(url_api, headers=headers)
     # |----------------------------------------------------------------------------------------------------------------|
@@ -120,7 +120,7 @@ def test_error_password_validation_ascii() -> None:
 def test_error_username_in_use() -> None:
     # test register (FORBIDDEN) |--------------------------------------------------------------------------------------|
     headers: dict[str] = {
-        "Register": encode_register("user_test", "123!Admin", "usertest@usertest.com")
+        "Register": encode_register("user_test", "123!Admin", "ttt@ttt.com")
     }
     return_request = requests.post(url_api, headers=headers)
     # |----------------------------------------------------------------------------------------------------------------|
@@ -134,7 +134,7 @@ def test_error_username_in_use() -> None:
 def test_error_email_in_use() -> None:
     # test register (FORBIDDEN) |--------------------------------------------------------------------------------------|
     headers: dict[str] = {
-        "Register": encode_register("test_test", "123!Admin", "admin@admin.com")
+        "Register": encode_register("test_test", "123!Admin", "usertest@usertest.com")
     }
     return_request = requests.post(url_api, headers=headers)
     # |----------------------------------------------------------------------------------------------------------------|
