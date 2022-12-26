@@ -1,9 +1,21 @@
-token: str = None
+import base64
 
-try:
+test: bytes = b'Basic YWRtaW46MTIzNA=='
+
+
+def read_authentication(header_auth: bytes) -> list[str]:
     try:
-        real_token: list[str] = token.split()[1]
+        try:
+            auth: str = header_auth.split()[1]
+            login_data: list[str] = base64.b64decode(auth).decode().split(":")
+            
+            if login_data[1]:
+                return login_data
+        
+        except AttributeError:
+            return "BAD REQUEST", 400
     except IndexError:
-        print("INDEX ERROR")
-except AttributeError:
-    print("ATTRIBUTE ERROR")
+        return "BAD REQUEST", 400
+
+
+print(read_authentication(test))

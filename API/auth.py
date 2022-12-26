@@ -157,9 +157,9 @@ def login(username: str, password: str) -> tuple[str, int]:
 # read base64 |--------------------------------------------------------------------------------------------------------|
 def read_authentication(header_auth: str) -> list[str]:
     try:
-        auth: list[str] = header_auth.split()[1]
-        login_data: list[str] = base64.b64decode(auth).decode().split(":")
         try:
+            auth: str = header_auth.split()[1]
+            login_data: list[str] = base64.b64decode(auth).decode().split(":")
             if login_data[1]:
                 return login_data
         except IndexError:
@@ -174,7 +174,7 @@ def token_generate(ip_addr: str, key_api: str) -> dict[str]:
     # pack assembly |--------------------------------------------------------------------------------------------------|
     encode_dict: dict[str, Union[str, datetime.datetime]] = {
         "hash": generate_password_hash(ip_addr),
-        "exp": datetime.datetime.utcnow() + datetime.timedelta(seconds=40)
+        "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=5)
     }
     # |----------------------------------------------------------------------------------------------------------------|
     
