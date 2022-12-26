@@ -47,5 +47,10 @@ def create_app(test_config: Union[bool, None] = None) -> Flask:
     app.register_blueprint(create.bp)
     # |----------------------------------------------------------------------------------------------------------------|
 
+    # test route |
+    @app.route('/')
+    def hello() -> str:
+        return "Hello, World!"
+
     return app
 

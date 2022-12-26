@@ -25,10 +25,10 @@ bp = Blueprint('auth', __name__, url_prefix='/auth')
 # Register route |-----------------------------------------------------------------------------------------------------|
 @bp.route("/register", methods=['POST'])
 def REGISTER() -> tuple[str, int]:
-    username_request: str = request.json["username"]
-    password_request: str = request.json['password']
-    email_request: str = request.json['email']
-    return register(email_request, username_request, password_request)
+    register_list: auth_list_typing = read_authentication(request.headers.get("Register"), "register")
+    if register_list[1] == HTTP_400_BAD_REQUEST:
+        return register_list
+    return register(register_list[2], register_list[0], register_list[1])
 # |--------------------------------------------------------------------------------------------------------------------|
 
 # Login route |--------------------------------------------------------------------------------------------------------|
@@ -36,7 +36,7 @@ def REGISTER() -> tuple[str, int]:
 @LogAuth.login_route
 def LOGIN() -> tuple[dict, int]:
     # decode auth base64 |---------------------------------------------------------------------------------------------|
-    auth_list: auth_list_typing = read_authentication(request.headers.get("Authorization"))
+    auth_list: auth_list_typing = read_authentication(request.headers.get("Authorization"), "login")
     if auth_list[1] == HTTP_400_BAD_REQUEST:
         return auth_list
     # |----------------------------------------------------------------------------------------------------------------|
