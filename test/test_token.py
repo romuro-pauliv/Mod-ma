@@ -21,7 +21,7 @@ url_api_login: str = 'http://127.0.0.1:5000/auth/login'
 url_api_test: str = 'http://127.0.0.1:5000/create/test'
 # |--------------------------------------------------------------------------------------------------------------------|
 
-
+# PRE FUNCTION |=======================================================================================================|
 def encode_64(username: str, password: str) -> str:
     encode_str: bytes = f"{username}:{password}".encode()
     return f"Basic {base64.b64encode(encode_str).decode()}"
@@ -35,6 +35,7 @@ def login(username: str, password: str) -> None:
     return_request = requests.post(url_api_login, headers=headers)
     # |----------------------------------------------------------------------------------------------------------------|
     return json.loads(return_request.text)["token"]
+# |====================================================================================================================|
 
 
 def test_real_token() -> None:
@@ -80,7 +81,7 @@ def test_expired_signature_token() -> None:
     assert return_request.status_code == 403
 
 
-def test_invalid_token_add_added_wrong_string() -> None:
+def test_invalid_token_added_wrong_string() -> None:
     # token (BAD REQUEST) |--------------------------------------------------------------------------------------------|
     token: str = login("admin", "123!Admin")
     token: str = token + "a"
