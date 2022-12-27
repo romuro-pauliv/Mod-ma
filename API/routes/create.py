@@ -16,7 +16,7 @@ from API.auth import required_token
 bp = Blueprint('create', __name__, url_prefix='/create')
 
 # Create database |----------------------------------------------------------------------------------------------------|
-@bp.route('/database', methods=['POST'])
+@bp.route('/test', methods=['POST'])
 @required_token
 def database() -> tuple[str, int]:
     return 'TEST OK', HTTP_202_ACCEPTED

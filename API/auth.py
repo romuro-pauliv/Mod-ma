@@ -182,7 +182,7 @@ def token_generate(ip_addr: str, key_api: str) -> dict[str]:
     # pack assembly |--------------------------------------------------------------------------------------------------|
     encode_dict: dict[str, Union[str, datetime.datetime]] = {
         "hash": generate_password_hash(ip_addr),
-        "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=5)
+        "exp": datetime.datetime.utcnow() + datetime.timedelta(seconds=20)
     }
     # |----------------------------------------------------------------------------------------------------------------|
     
