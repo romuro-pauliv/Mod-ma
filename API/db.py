@@ -80,3 +80,28 @@ class create(object):
         # |------------------------------------------------------------------------------------------------------------|
 
         return 'CREATE', HTTP_201_CREATED
+    
+    @staticmethod
+    def collection(database: str, name: str) -> tuple[str, int]:
+        database_name: str = database.lower()       # lowercase database
+        collection_name: str = name.lower()         # lowercase collection
+
+        # database and collection search |-----------------------------------------------------------------------------|
+        if database_name not in get_db().list_database_names():
+            return "FORBIDDEN", HTTP_403_FORBIDDEN
+        
+        if collection_name in get_db()[database_name].list_collection_names():
+            return "FORBIDDEN", HTTP_403_FORBIDDEN
+        # |------------------------------------------------------------------------------------------------------------|
+
+        # Create collection |------------------------------------------------------------------------------------------|
+        document: dict[str] = {
+            "user": "root",
+            "datetime": ['UTC', datetime.datetime.utcnow()],
+            "command": f"Hello, I'm {collection_name}"
+        }
+        get_db()[database_name][collection_name].insert_one(document)
+        get_db()[database_name].LOG.insert_one(document)
+        # |------------------------------------------------------------------------------------------------------------|
+
+        return "CREATE", HTTP_201_CREATED

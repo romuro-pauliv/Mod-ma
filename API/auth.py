@@ -73,7 +73,7 @@ def password_validation(passwd: str) -> tuple[str, int]:
 def username_validation(username: str) -> tuple[str, int]:
     if len(username) >= 4:
         for _char in username:
-            if _char in "!\"#$%&'()*+,./:;<=>?@[\]^`{|}~":
+            if _char in "!\"#$%&'()*+,./:;<=>?@[\]^`{|}~ \t\n\r\x0b\x0c":
                 return str("CHARACTER [" + _char +  "] NOT ALLOWED"), HTTP_400_BAD_REQUEST
     else:
         return "YOUR USERNAME MUST BE MORE THAN 4 CHARACTERS", HTTP_400_BAD_REQUEST
@@ -231,5 +231,8 @@ def required_token(func: Callable[..., Any]) -> Callable[..., tuple[str, int] | 
             return token_auth
     # |----------------------------------------------------------------------------------------------------------------|
         return func(*args, **kwargs)
+
+    # Renaming the function name:
+    wrapper.__name__ = func.__name__
     return wrapper
 # |====================================================================================================================|
