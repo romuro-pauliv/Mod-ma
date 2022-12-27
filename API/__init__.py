@@ -36,8 +36,8 @@ def create_app(test_config: Union[bool, None] = None) -> Flask:
     # |----------------------------------------------------------------------------------------------------------------|
 
     # create blueprint |-----------------------------------------------------------------------------------------------|
-    from .routes import create
-    app.register_blueprint(create.bp)
+    from .routes import test
+    app.register_blueprint(test.bp)
     # |----------------------------------------------------------------------------------------------------------------|
 
     return app
