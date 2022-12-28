@@ -101,7 +101,6 @@ class create(object):
             "command": f"Hello, I'm {collection_name}"
         }
         get_db()[database_name][collection_name].insert_one(document)
-        get_db()[database_name].LOG.insert_one(document)
         # |------------------------------------------------------------------------------------------------------------|
 
         return "CREATE", HTTP_201_CREATED

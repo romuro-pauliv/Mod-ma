@@ -13,7 +13,10 @@ from typing import Callable, Any
 # |--------------------------------------------------------------------------------------------------------------------|
 
 
-def name_validation(name: str) -> tuple[str, int]:
+def string_validation(name: str) -> tuple[str, int]:
+    if not isinstance(name, str):
+        return "ONLY STRING ARE ALLOWED", HTTP_400_BAD_REQUEST
+
     if len(name) >= 4:
         # Ponctuation test |-------------------------------------------------------------------------------------------|
         for _char in name:
@@ -24,7 +27,7 @@ def name_validation(name: str) -> tuple[str, int]:
         return "THE INFORMED NAME MUST BE MORE THAN 4 CHARACTERS", HTTP_400_BAD_REQUEST
     return "VALID NAME", HTTP_202_ACCEPTED
 
-def request_json(fields: list[str]) -> tuple[str, int]:
+def json_fields_validation(fields: list[str]) -> tuple[str, int]:
     for i in fields:
         try:
             if request.json[i]:
@@ -35,18 +38,41 @@ def request_json(fields: list[str]) -> tuple[str, int]:
 
 class Model(object):
     @staticmethod
-    def create_database(func: Callable[..., Any]) -> None:
+    def create_database(func: Callable[..., Any]) -> Callable[..., Callable[..., tuple[str, int]]]:
         def wrapper(*args, **kwargs) -> Callable[..., tuple[str, int]]:
+
             # json validation |------------------------------------------------------------------------------------|
-            valid_json = request_json(["database"])
+            valid_json = json_fields_validation(["database"])
             if valid_json[1] != HTTP_202_ACCEPTED:
                 return valid_json
                 
-            valid_name = name_validation(request.json["database"])
+            valid_name = string_validation(request.json["database"])
             if valid_name[1] != HTTP_202_ACCEPTED:
                 return valid_name
             # |----------------------------------------------------------------------------------------------------|
             
+            return func(*args, **kwargs)
+        
+        wrapper.__name__ = func.__name__
+        return wrapper
+    
+    @staticmethod
+    def create_collection(func: Callable[..., Any]) -> Callable[..., Callable[..., tuple[str, int]]]:
+        def wrapper(*args, **kwargs) -> Callable[..., tuple[str, int]]:
+            
+            fields: list[str] = ["database", "collection"]
+
+            # json validation |----------------------------------------------------------------------------------------|
+            valid_json = json_fields_validation(fields)
+            if valid_json[1] != HTTP_202_ACCEPTED:
+                return valid_json
+            
+            for field in fields:
+                valid_name = string_validation(request.json[field])
+                if valid_name[1] != HTTP_202_ACCEPTED:
+                    return valid_name
+            # |--------------------------------------------------------------------------------------------------------|
+
             return func(*args, **kwargs)
         
         wrapper.__name__ = func.__name__

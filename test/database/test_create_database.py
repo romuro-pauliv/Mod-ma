@@ -1,5 +1,5 @@
 # +--------------------------------------------------------------------------------------------------------------------|
-# |                                                                                           test.test_create_crud.py |
+# |                                                                              test.database.test_create_database.py |
 # |                                                                                             Author: Pauliv, Rômulo |
 # |                                                                                          email: romulopauliv@bk.ru |
 # |                                                                                                    encoding: UTF-8 |
@@ -184,5 +184,25 @@ def test_characters_not_allowed_create_database() -> None:
         assert return_request.text == str("CHARACTER [" + _char + "] NOT ALLOWED")
         assert return_request.status_code == 400
 
-    
-    
+
+def test_no_string_value_database() -> None:
+    # LOGIN AND TOKEN |------------------------------------------------------------------------------------------------|
+    headers: dict[str] = {
+        "Authorization": encode_login("admin", "123!Admin")
+    }
+    token: str = json.loads(requests.post(url_api_login, headers=headers).text)['token']
+    # |----------------------------------------------------------------------------------------------------------------|
+
+    # create database request |----------------------------------------------------------------------------------------|
+    headers: dict[str] = {
+        "Authorization": f"Token {token}",
+    }
+    json_send: dict[str] = {
+        "database": [1, "testing", "test"]
+    }
+    return_request = requests.post(url_api_create_database, headers=headers, json=json_send)
+    # |----------------------------------------------------------------------------------------------------------------|
+
+    # tests |----------------------------------------------------------------------------------------------------------|
+    assert return_request.text == "ONLY STRING ARE ALLOWED"
+    assert return_request.status_code == 400
