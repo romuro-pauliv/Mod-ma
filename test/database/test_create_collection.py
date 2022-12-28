@@ -1,5 +1,5 @@
 # +--------------------------------------------------------------------------------------------------------------------|
-# |                                                                              test.database.test_create_database.py |
+# |                                                                            test.database.test_create_collection.py |
 # |                                                                                             Author: Pauliv, Rômulo |
 # |                                                                                          email: romulopauliv@bk.ru |
 # |                                                                                                    encoding: UTF-8 |

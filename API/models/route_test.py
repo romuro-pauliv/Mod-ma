@@ -27,6 +27,18 @@ def string_validation(name: str) -> tuple[str, int]:
         return "THE INFORMED NAME MUST BE MORE THAN 4 CHARACTERS", HTTP_400_BAD_REQUEST
     return "VALID NAME", HTTP_202_ACCEPTED
 
+
+def dictionary_validation(dictionary: dict[str, Any]) -> tuple[str, int]:
+    if not isinstance(dictionary, dict):
+        return "ONLY DICTIONARY ARE ALLOWED", HTTP_400_BAD_REQUEST
+    
+    for key in dictionary.keys():
+        if len(key) < 4:
+            return "THE INFORMED FIELD MUST BE MORE THAN 4 CHARACTERS", HTTP_400_BAD_REQUEST
+    
+    return "VALID DICT", HTTP_202_ACCEPTED
+
+
 def json_fields_validation(fields: list[str]) -> tuple[str, int]:
     for i in fields:
         try:
@@ -36,12 +48,13 @@ def json_fields_validation(fields: list[str]) -> tuple[str, int]:
             return "BAD REQUEST", HTTP_400_BAD_REQUEST
     return "VALID FIELD", HTTP_202_ACCEPTED
 
+
 class Model(object):
     @staticmethod
     def create_database(func: Callable[..., Any]) -> Callable[..., Callable[..., tuple[str, int]]]:
         def wrapper(*args, **kwargs) -> Callable[..., tuple[str, int]]:
 
-            # json validation |------------------------------------------------------------------------------------|
+            # json validation |----------------------------------------------------------------------------------------|
             valid_json = json_fields_validation(["database"])
             if valid_json[1] != HTTP_202_ACCEPTED:
                 return valid_json
@@ -49,7 +62,7 @@ class Model(object):
             valid_name = string_validation(request.json["database"])
             if valid_name[1] != HTTP_202_ACCEPTED:
                 return valid_name
-            # |----------------------------------------------------------------------------------------------------|
+            # |--------------------------------------------------------------------------------------------------------|
             
             return func(*args, **kwargs)
         
@@ -76,4 +89,32 @@ class Model(object):
             return func(*args, **kwargs)
         
         wrapper.__name__ = func.__name__
+        return wrapper
+    
+    @staticmethod
+    def create_document(func: Callable[..., Any]) -> Callable[..., Callable[..., tuple[str | dict, int]]]:
+        def wrapper(*args, **kwargs) -> Callable[..., tuple[str | dict, int]]:
+
+            fields: list[str] = ["database", "collection", "document"]
+
+            # json validation |----------------------------------------------------------------------------------------|
+            valid_json = json_fields_validation(fields)
+            if valid_json[1] != HTTP_202_ACCEPTED:
+                return valid_json
+            
+            for field in fields[0:1]:
+                valid_name = string_validation(request.json[field])
+                if valid_name[1] != HTTP_202_ACCEPTED:
+                    return valid_name
+            # |--------------------------------------------------------------------------------------------------------|
+
+            # dict validation |----------------------------------------------------------------------------------------|
+            valid_dict: dict[str, Any] = dictionary_validation(request.json['document'])
+            if valid_dict[1] != HTTP_202_ACCEPTED:
+                return valid_dict
+            # |--------------------------------------------------------------------------------------------------------|
+
+            return func(*args, **kwargs)
+        
+        wrapper.__name__ == func.__name__
         return wrapper

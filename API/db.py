@@ -11,7 +11,10 @@ from API.status import *
 from flask import current_app, g
 from pymongo import MongoClient
 from typing import Union, Any
+
+from bson.objectid import ObjectId
 from bson import json_util
+
 import datetime
 import json
 # |--------------------------------------------------------------------------------------------------------------------|
@@ -104,3 +107,40 @@ class create(object):
         # |------------------------------------------------------------------------------------------------------------|
 
         return "CREATE", HTTP_201_CREATED
+    
+
+    @staticmethod
+    def document(database: str, collection: str, document: str) -> tuple[str, int]:
+        database_name: str = database.lower()       # lowercase database
+        collection_name: str = collection.lower()   # lowercase collection
+
+        # database and collection search |-----------------------------------------------------------------------------|
+        if database_name not in get_db().list_database_names():
+            return "FORBIDDEN", HTTP_403_FORBIDDEN
+        
+        if collection_name not in get_db()[database_name].list_collection_names():
+            return "FORBIDDEN", HTTP_403_FORBIDDEN
+        # |------------------------------------------------------------------------------------------------------------|
+
+        # fields validation |------------------------------------------------------------------------------------------|
+        if field_validation(document)[1] == HTTP_403_FORBIDDEN:
+            return "FORBIDDEN", HTTP_403_FORBIDDEN
+        # |------------------------------------------------------------------------------------------------------------|
+
+        # Assemble document |------------------------------------------------------------------------------------------|
+        id_str: str = str(ObjectId())
+
+        total_document: dict[str, str | list] = {
+            "_id": id_str,
+            "user": "root",
+            "datetime": ['UTC', datetime.datetime.utcnow()],
+        }
+
+        total_document.update(document)
+        # |------------------------------------------------------------------------------------------------------------|
+
+        # Create document |--------------------------------------------------------------------------------------------|
+        get_db()[database_name][collection_name].insert_one(total_document)
+        # |------------------------------------------------------------------------------------------------------------|
+
+        return {"info": "CREATE", "document_id": id_str}, HTTP_201_CREATED
