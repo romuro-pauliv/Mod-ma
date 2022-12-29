@@ -46,5 +46,5 @@ def LOGIN() -> tuple[dict, int]:
     if login_db[1] == HTTP_403_FORBIDDEN:
         return login_db
     # |----------------------------------------------------------------------------------------------------------------|
-    return token_generate(request.remote_addr, current_app.config['SECRET_KEY']), HTTP_202_ACCEPTED
+    return token_generate(request.remote_addr, auth_list[0], current_app.config['SECRET_KEY']), HTTP_202_ACCEPTED
 # |--------------------------------------------------------------------------------------------------------------------|

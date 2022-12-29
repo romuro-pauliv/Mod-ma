@@ -178,10 +178,11 @@ def read_authentication(header_auth: str, _method: str) -> list[str]:
 
 
 # TOKEN |==============================================================================================================|
-def token_generate(ip_addr: str, key_api: str) -> dict[str]:
+def token_generate(ip_addr: str, username: str, key_api: str) -> dict[str]:
     # pack assembly |--------------------------------------------------------------------------------------------------|
     encode_dict: dict[str, Union[str, datetime.datetime]] = {
         "hash": generate_password_hash(ip_addr),
+        "username": username,
         "exp": datetime.datetime.utcnow() + datetime.timedelta(seconds=20)
     }
     # |----------------------------------------------------------------------------------------------------------------|
@@ -212,7 +213,7 @@ def token_authentication(token: str, ip_addr: str, key_api: str) -> tuple[str, i
         return "EXPIRED TOKEN", HTTP_403_FORBIDDEN
     # |----------------------------------------------------------------------------------------------------------------|
 
-    # username hash validation |---------------------------------------------------------------------------------------|
+    # ip hash validation |---------------------------------------------------------------------------------------------|
     if not check_password_hash(decode_token['hash'], ip_addr):
         return "INVALID TOKEN", HTTP_403_FORBIDDEN
     # |----------------------------------------------------------------------------------------------------------------|
@@ -236,3 +237,12 @@ def required_token(func: Callable[..., Any]) -> Callable[..., tuple[str, int] | 
     wrapper.__name__ = func.__name__
     return wrapper
 # |====================================================================================================================|
+
+# GET USERNAME PER TOKEN |---------------------------------------------------------------------------------------------|
+def get_username_per_token(token: str) -> None:
+    # Only useful with the required_token decorator. Without the decorator, it is possible that many exceptions will be
+    # generated because the token validation is in the decorator.
+    token: str = token.split()[1]
+    decode_token: dict = jwt.decode(token, current_app.config["SECRET_KEY"], ['HS256'])
+    return decode_token['username']
+    
