@@ -63,8 +63,10 @@ def field_validation(document: dict[str, Any]) -> tuple[str, int]:
 
 
 class create(object):
-    @staticmethod
-    def database(name: str) -> tuple[str, int]:
+    def __init__(self, username: str) -> None:
+        self.username: str = username
+
+    def database(self, name: str) -> tuple[str, int]:
         database_name: str = name.lower()
 
         # database search |--------------------------------------------------------------------------------------------|
@@ -74,7 +76,7 @@ class create(object):
 
         # Create database |--------------------------------------------------------------------------------------------|
         document: dict[str, str | list] = {
-            "user": 'root',
+            "user": self.username,
             "datetime": ['UTC', datetime.datetime.utcnow()],
             "command": f"Hello, I'm {database_name}"
         }
@@ -84,8 +86,7 @@ class create(object):
 
         return 'CREATE', HTTP_201_CREATED
     
-    @staticmethod
-    def collection(database: str, name: str) -> tuple[str, int]:
+    def collection(self, database: str, name: str) -> tuple[str, int]:
         database_name: str = database.lower()       # lowercase database
         collection_name: str = name.lower()         # lowercase collection
 
@@ -99,7 +100,7 @@ class create(object):
 
         # Create collection |------------------------------------------------------------------------------------------|
         document: dict[str] = {
-            "user": "root",
+            "user": self.username,
             "datetime": ['UTC', datetime.datetime.utcnow()],
             "command": f"Hello, I'm {collection_name}"
         }
@@ -108,9 +109,7 @@ class create(object):
 
         return "CREATE", HTTP_201_CREATED
     
-
-    @staticmethod
-    def document(database: str, collection: str, document: str) -> tuple[str, int]:
+    def document(self, database: str, collection: str, document: str) -> tuple[str, int]:
         database_name: str = database.lower()       # lowercase database
         collection_name: str = collection.lower()   # lowercase collection
 
@@ -132,7 +131,7 @@ class create(object):
 
         total_document: dict[str, str | list] = {
             "_id": id_str,
-            "user": "root",
+            "user": self.username,
             "datetime": ['UTC', datetime.datetime.utcnow()],
         }
 
