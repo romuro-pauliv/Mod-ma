@@ -12,6 +12,7 @@ from .status import *
 
 from flask import request
 from typing import Callable, Any, Union
+from functools import wraps
 # |--------------------------------------------------------------------------------------------------------------------|
 
 
@@ -20,6 +21,7 @@ class IAM(object):
     def check_permission(method: str, structure: list | str) -> Callable:
         
         def inner(func: Callable[..., Any]) -> Callable:
+            @wraps(func)
             def involved(*args, **kwargs) -> Callable[..., Any]:
                 # GET USERNAME |---------------------------------------------------------------------------------------|
                 username: str = get_username_per_token(request.headers.get("Authorization"))
@@ -44,6 +46,7 @@ class IAM(object):
                     else:
                         return "BAD REQUEST - STRUCTURE", HTTP_400_BAD_REQUEST
                 return "BAD REQUEST", HTTP_400_BAD_REQUEST
+            
             involved.__name__ == func.__name__
             return involved
         return inner
