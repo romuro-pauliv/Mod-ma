@@ -204,9 +204,9 @@ def token_authentication(token: str, ip_addr: str, key_api: str) -> tuple[str, i
         try:
             token: str = token.split()[1]
         except IndexError:
-            return "BAD REQUEST", HTTP_400_BAD_REQUEST
+            return "BAD REQUEST - COLON ERROR", HTTP_400_BAD_REQUEST
     except AttributeError:
-        return "BAD REQUEST", HTTP_400_BAD_REQUEST
+        return "BAD REQUEST - NO DATA", HTTP_400_BAD_REQUEST
     # decode token |---------------------------------------------------------------------------------------------------|
     try:
         try:
@@ -219,7 +219,7 @@ def token_authentication(token: str, ip_addr: str, key_api: str) -> tuple[str, i
 
     # ip hash validation |---------------------------------------------------------------------------------------------|
     if not check_password_hash(decode_token['hash'], ip_addr):
-        return "INVALID TOKEN", HTTP_403_FORBIDDEN
+        return "IP ADDRESS DOES NOT MATCH", HTTP_403_FORBIDDEN
     # |----------------------------------------------------------------------------------------------------------------|
 
     return "VALID TOKEN", HTTP_200_OK

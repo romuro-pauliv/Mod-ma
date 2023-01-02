@@ -6,7 +6,9 @@
 # +--------------------------------------------------------------------------------------------------------------------|
 
 # | imports |----------------------------------------------------------------------------------------------------------|
+import json
 import base64
+import requests
 from pymongo import MongoClient
 # |--------------------------------------------------------------------------------------------------------------------|
 
@@ -14,6 +16,7 @@ from pymongo import MongoClient
 root_route: str = "http://127.0.0.1:5000"
 login_route: str = "/auth/login"
 register_route: str = "/auth/register"
+test_token_route: str = "/tests/test-token"
 # |====================================================================================================================|
 
 # MONGO CLIENT |=======================================================================================================|
@@ -30,4 +33,9 @@ def header_base64_login(username: str, password: str) -> str:
 def header_base64_register(username: str, password: str, email: str) -> str:
     encode_register: bytes = f"{username}:{password}:{email}".encode()
     return f"Basic {base64.b64encode(encode_register).decode()}"
+
+
+def token_return(username: str, password: str) -> str:
+    header: dict[str] = {"Authorization": header_base64_login(username, password)}
+    return json.loads(requests.post(f"{root_route}{login_route}", headers=header).text)['token']
 # |--------------------------------------------------------------------------------------------------------------------|
