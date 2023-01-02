@@ -58,7 +58,7 @@ def field_validation(document: dict[str, Any]) -> tuple[str, int]:
             if field in denied_fields:
                 raise ExceptionPass
     except ExceptionPass:
-        return "FORBIDDEN", HTTP_403_FORBIDDEN
+        return "FORBIDDEN - FIELD VALIDATION", HTTP_403_FORBIDDEN
     return "OK", HTTP_200_OK
 
 
@@ -71,7 +71,7 @@ class create(object):
 
         # database search |--------------------------------------------------------------------------------------------|
         if database_name in get_db().list_database_names():
-            return "FORBIDDEN", HTTP_403_FORBIDDEN
+            return "FORBIDDEN - DATABASE NAME IN USE", HTTP_403_FORBIDDEN
         # |------------------------------------------------------------------------------------------------------------|
 
         # Create database |--------------------------------------------------------------------------------------------|
@@ -92,10 +92,10 @@ class create(object):
 
         # database and collection search |-----------------------------------------------------------------------------|
         if database_name not in get_db().list_database_names():
-            return "FORBIDDEN", HTTP_403_FORBIDDEN
+            return "FORBIDDEN - DATABASE NOT EXISTS", HTTP_403_FORBIDDEN
         
         if collection_name in get_db()[database_name].list_collection_names():
-            return "FORBIDDEN", HTTP_403_FORBIDDEN
+            return "FORBIDDEN - COLLECTION NAME IN USE", HTTP_403_FORBIDDEN
         # |------------------------------------------------------------------------------------------------------------|
 
         # Create collection |------------------------------------------------------------------------------------------|
@@ -115,15 +115,15 @@ class create(object):
 
         # database and collection search |-----------------------------------------------------------------------------|
         if database_name not in get_db().list_database_names():
-            return "FORBIDDEN", HTTP_403_FORBIDDEN
+            return "FORBIDDEN - DATABASE NOT EXISTS", HTTP_403_FORBIDDEN
         
         if collection_name not in get_db()[database_name].list_collection_names():
-            return "FORBIDDEN", HTTP_403_FORBIDDEN
+            return "FORBIDDEN - COLLECTIOn NOT EXISTS", HTTP_403_FORBIDDEN
         # |------------------------------------------------------------------------------------------------------------|
 
         # fields validation |------------------------------------------------------------------------------------------|
         if field_validation(document)[1] == HTTP_403_FORBIDDEN:
-            return "FORBIDDEN", HTTP_403_FORBIDDEN
+            return "FORBIDDEN - FIELD VALIDATION", HTTP_403_FORBIDDEN
         # |------------------------------------------------------------------------------------------------------------|
 
         # Assemble document |------------------------------------------------------------------------------------------|
