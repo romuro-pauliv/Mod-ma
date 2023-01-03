@@ -118,7 +118,7 @@ class create(object):
             return "FORBIDDEN - DATABASE NOT EXISTS", HTTP_403_FORBIDDEN
         
         if collection_name not in get_db()[database_name].list_collection_names():
-            return "FORBIDDEN - COLLECTIOn NOT EXISTS", HTTP_403_FORBIDDEN
+            return "FORBIDDEN - COLLECTION NOT EXISTS", HTTP_403_FORBIDDEN
         # |------------------------------------------------------------------------------------------------------------|
 
         # fields validation |------------------------------------------------------------------------------------------|

@@ -30,7 +30,7 @@ def string_validation(name: str) -> tuple[str, int]:
 
 def dictionary_validation(dictionary: dict[str, Any]) -> tuple[str, int]:
     if not isinstance(dictionary, dict):
-        return "ONLY DICTIONARY ARE ALLOWED", HTTP_400_BAD_REQUEST
+        return "ONLY JSON ARE ALLOWED", HTTP_400_BAD_REQUEST
     
     for key in dictionary.keys():
         if len(key) < 4:

@@ -59,6 +59,11 @@ def test_create_collection() -> tuple[str, int]:
 @required_token
 @Model.create_document
 def test_create_document() -> tuple[str, int]:
+
+    # GET USERNAME AND JSON RESPONSE |---------------------------------------------------------------------------------|
+    srnm: str = get_username_per_token(request.headers.get("Authorization"))
     response: dict[str, str | dict] = request.json
-    return create.document(response['database'], response['collection'], response['document'])
+    # |----------------------------------------------------------------------------------------------------------------|
+
+    return create(srnm).document(response['database'], response['collection'], response['document'])
 
