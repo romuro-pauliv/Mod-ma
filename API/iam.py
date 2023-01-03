@@ -11,7 +11,7 @@ from .auth import get_username_per_token
 from .status import *
 
 from flask import request
-from typing import Callable, Any, Union
+from typing import Callable, Any
 from functools import wraps
 # |--------------------------------------------------------------------------------------------------------------------|
 

@@ -45,7 +45,7 @@ def json_fields_validation(fields: list[str]) -> tuple[str, int]:
             if request.json[i]:
                 pass
         except KeyError:
-            return "BAD REQUEST", HTTP_400_BAD_REQUEST
+            return "BAD REQUEST - KEY ERROR", HTTP_400_BAD_REQUEST
     return "VALID FIELD", HTTP_202_ACCEPTED
 
 
