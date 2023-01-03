@@ -11,7 +11,10 @@ from API.status import *
 from flask import current_app, g
 from pymongo import MongoClient
 from typing import Union, Any
+
+from bson.objectid import ObjectId
 from bson import json_util
+
 import datetime
 import json
 # |--------------------------------------------------------------------------------------------------------------------|
@@ -55,23 +58,25 @@ def field_validation(document: dict[str, Any]) -> tuple[str, int]:
             if field in denied_fields:
                 raise ExceptionPass
     except ExceptionPass:
-        return "FORBIDDEN", HTTP_403_FORBIDDEN
+        return "FORBIDDEN - FIELD VALIDATION", HTTP_403_FORBIDDEN
     return "OK", HTTP_200_OK
 
 
 class create(object):
-    @staticmethod
-    def database(name: str) -> tuple[str, int]:
+    def __init__(self, username: str) -> None:
+        self.username: str = username
+
+    def database(self, name: str) -> tuple[str, int]:
         database_name: str = name.lower()
 
         # database search |--------------------------------------------------------------------------------------------|
         if database_name in get_db().list_database_names():
-            return "FORBIDDEN", HTTP_403_FORBIDDEN
+            return "FORBIDDEN - DATABASE NAME IN USE", HTTP_403_FORBIDDEN
         # |------------------------------------------------------------------------------------------------------------|
 
         # Create database |--------------------------------------------------------------------------------------------|
         document: dict[str, str | list] = {
-            "user": 'root',
+            "user": self.username,
             "datetime": ['UTC', datetime.datetime.utcnow()],
             "command": f"Hello, I'm {database_name}"
         }
@@ -80,3 +85,61 @@ class create(object):
         # |------------------------------------------------------------------------------------------------------------|
 
         return 'CREATE', HTTP_201_CREATED
+    
+    def collection(self, database: str, name: str) -> tuple[str, int]:
+        database_name: str = database.lower()       # lowercase database
+        collection_name: str = name.lower()         # lowercase collection
+
+        # database and collection search |-----------------------------------------------------------------------------|
+        if database_name not in get_db().list_database_names():
+            return "FORBIDDEN - DATABASE NOT EXISTS", HTTP_403_FORBIDDEN
+        
+        if collection_name in get_db()[database_name].list_collection_names():
+            return "FORBIDDEN - COLLECTION NAME IN USE", HTTP_403_FORBIDDEN
+        # |------------------------------------------------------------------------------------------------------------|
+
+        # Create collection |------------------------------------------------------------------------------------------|
+        document: dict[str] = {
+            "user": self.username,
+            "datetime": ['UTC', datetime.datetime.utcnow()],
+            "command": f"Hello, I'm {collection_name}"
+        }
+        get_db()[database_name][collection_name].insert_one(document)
+        # |------------------------------------------------------------------------------------------------------------|
+
+        return "CREATE", HTTP_201_CREATED
+    
+    def document(self, database: str, collection: str, document: str) -> tuple[str, int]:
+        database_name: str = database.lower()       # lowercase database
+        collection_name: str = collection.lower()   # lowercase collection
+
+        # database and collection search |-----------------------------------------------------------------------------|
+        if database_name not in get_db().list_database_names():
+            return "FORBIDDEN - DATABASE NOT EXISTS", HTTP_403_FORBIDDEN
+        
+        if collection_name not in get_db()[database_name].list_collection_names():
+            return "FORBIDDEN - COLLECTION NOT EXISTS", HTTP_403_FORBIDDEN
+        # |------------------------------------------------------------------------------------------------------------|
+
+        # fields validation |------------------------------------------------------------------------------------------|
+        if field_validation(document)[1] == HTTP_403_FORBIDDEN:
+            return "FORBIDDEN - FIELD VALIDATION", HTTP_403_FORBIDDEN
+        # |------------------------------------------------------------------------------------------------------------|
+
+        # Assemble document |------------------------------------------------------------------------------------------|
+        id_str: str = str(ObjectId())
+
+        total_document: dict[str, str | list] = {
+            "_id": id_str,
+            "user": self.username,
+            "datetime": ['UTC', datetime.datetime.utcnow()],
+        }
+
+        total_document.update(document)
+        # |------------------------------------------------------------------------------------------------------------|
+
+        # Create document |--------------------------------------------------------------------------------------------|
+        get_db()[database_name][collection_name].insert_one(total_document)
+        # |------------------------------------------------------------------------------------------------------------|
+
+        return {"info": "CREATE", "document_id": id_str}, HTTP_201_CREATED

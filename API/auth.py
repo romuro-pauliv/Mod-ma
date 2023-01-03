@@ -17,6 +17,7 @@ from re import fullmatch
 import base64
 import jwt
 from flask import request, current_app
+import binascii
 # +--------------------------------------------------------------------------------------------------------------------+
 
 
@@ -73,7 +74,7 @@ def password_validation(passwd: str) -> tuple[str, int]:
 def username_validation(username: str) -> tuple[str, int]:
     if len(username) >= 4:
         for _char in username:
-            if _char in "!\"#$%&'()*+,./:;<=>?@[\]^`{|}~":
+            if _char in "!\"#$%&'()*+,./:;<=>?@[\]^`{|}~ \t\n\r\x0b\x0c":
                 return str("CHARACTER [" + _char +  "] NOT ALLOWED"), HTTP_400_BAD_REQUEST
     else:
         return "YOUR USERNAME MUST BE MORE THAN 4 CHARACTERS", HTTP_400_BAD_REQUEST
@@ -158,30 +159,34 @@ def login(username: str, password: str) -> tuple[str, int]:
 def read_authentication(header_auth: str, _method: str) -> list[str]:
     try:
         try:
-            auth: str = header_auth.split()[1]
-            login_data: list[str] = base64.b64decode(auth).decode().split(":")
-            
-            if _method == "login":
-                if len(login_data) > 2:
-                    return "BAD REQUEST", HTTP_400_BAD_REQUEST
-            if _method == "register":
-                if len(login_data) > 3:
-                    return "CHARACTER [:] NOT ALLOWED", HTTP_400_BAD_REQUEST
+            try:
+                auth: str = header_auth.split()[1]
+                login_data: list[str] = base64.b64decode(auth).decode().split(":")
 
-            if login_data[1]:
-                return login_data
-        except IndexError:
-            return "BAD REQUEST", HTTP_400_BAD_REQUEST
-    except AttributeError:
-        return "BAD REQUEST", HTTP_400_BAD_REQUEST
+                if _method == "login":
+                    if len(login_data) > 2:
+                        return "BAD REQUEST - COLON ERROR", HTTP_400_BAD_REQUEST
+                if _method == "register":
+                    if len(login_data) > 3:
+                        return "CHARACTER [:] NOT ALLOWED", HTTP_400_BAD_REQUEST
+
+                if login_data[1]:
+                    return login_data
+            except IndexError:
+                return "BAD REQUEST - NO COLON IDENTIFY", HTTP_400_BAD_REQUEST
+        except AttributeError:
+            return "BAD REQUEST - NO DATA", HTTP_400_BAD_REQUEST
+    except binascii.Error:
+        return "BAD REQUEST - BINASCII ERROR", HTTP_400_BAD_REQUEST
 # |--------------------------------------------------------------------------------------------------------------------|
 
 
 # TOKEN |==============================================================================================================|
-def token_generate(ip_addr: str, key_api: str) -> dict[str]:
+def token_generate(ip_addr: str, username: str, key_api: str) -> dict[str]:
     # pack assembly |--------------------------------------------------------------------------------------------------|
     encode_dict: dict[str, Union[str, datetime.datetime]] = {
         "hash": generate_password_hash(ip_addr),
+        "username": username,
         "exp": datetime.datetime.utcnow() + datetime.timedelta(seconds=20)
     }
     # |----------------------------------------------------------------------------------------------------------------|
@@ -199,9 +204,9 @@ def token_authentication(token: str, ip_addr: str, key_api: str) -> tuple[str, i
         try:
             token: str = token.split()[1]
         except IndexError:
-            return "BAD REQUEST", HTTP_400_BAD_REQUEST
+            return "BAD REQUEST - COLON ERROR", HTTP_400_BAD_REQUEST
     except AttributeError:
-        return "BAD REQUEST", HTTP_400_BAD_REQUEST
+        return "BAD REQUEST - NO DATA", HTTP_400_BAD_REQUEST
     # decode token |---------------------------------------------------------------------------------------------------|
     try:
         try:
@@ -212,9 +217,9 @@ def token_authentication(token: str, ip_addr: str, key_api: str) -> tuple[str, i
         return "EXPIRED TOKEN", HTTP_403_FORBIDDEN
     # |----------------------------------------------------------------------------------------------------------------|
 
-    # username hash validation |---------------------------------------------------------------------------------------|
+    # ip hash validation |---------------------------------------------------------------------------------------------|
     if not check_password_hash(decode_token['hash'], ip_addr):
-        return "INVALID TOKEN", HTTP_403_FORBIDDEN
+        return "IP ADDRESS DOES NOT MATCH", HTTP_403_FORBIDDEN
     # |----------------------------------------------------------------------------------------------------------------|
 
     return "VALID TOKEN", HTTP_200_OK
@@ -231,5 +236,17 @@ def required_token(func: Callable[..., Any]) -> Callable[..., tuple[str, int] | 
             return token_auth
     # |----------------------------------------------------------------------------------------------------------------|
         return func(*args, **kwargs)
+
+    # Renaming the function name:
+    wrapper.__name__ = func.__name__
     return wrapper
 # |====================================================================================================================|
+
+# GET USERNAME PER TOKEN |---------------------------------------------------------------------------------------------|
+def get_username_per_token(token: str) -> None:
+    # Only useful with the required_token decorator. Without the decorator, it is possible that many exceptions will be
+    # generated because the token validation is in the decorator.
+    token: str = token.split()[1]
+    decode_token: dict = jwt.decode(token, current_app.config["SECRET_KEY"], ['HS256'])
+    return decode_token['username']
+    
