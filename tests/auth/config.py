@@ -16,13 +16,11 @@ from pymongo import MongoClient
 root_route: str = "http://127.0.0.1:5000"
 login_route: str = "/auth/login"
 register_route: str = "/auth/register"
-create_database_route: str = "/tests/test-create-database"
-create_collection_route: str = "/tests/test-create-collection"
-create_document_route: str = "/tests/test-create-document"
+test_token_route: str = "/tests/test-token"
 # |====================================================================================================================|
 
 # MONGO CLIENT |=======================================================================================================|
-mongo = MongoClient()
+mongo = MongoClient("")
 # |====================================================================================================================|
 
 
