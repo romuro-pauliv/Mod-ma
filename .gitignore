@@ -3,3 +3,4 @@ instance/
 .env
 __pycache__/
 .coverage
+path.json
