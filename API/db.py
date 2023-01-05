@@ -68,6 +68,11 @@ class create(object):
 
     def database(self, name: str) -> tuple[str, int]:
         database_name: str = name.lower()
+        
+        # Forbidden names |--------------------------------------------------------------------------------------------|
+        if name in ["command", "datetime", "database", "collection", "documents", "admin", "local"]:
+            return "FORBIDDEN - NAME NOT ALLOWED", HTTP_403_FORBIDDEN
+        # |------------------------------------------------------------------------------------------------------------|
 
         # database search |--------------------------------------------------------------------------------------------|
         if database_name in get_db().list_database_names():
