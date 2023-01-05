@@ -19,7 +19,8 @@ import datetime
 
 class Privileges(object):
     def __init__(self, PAM: str) -> None:
-        self.mongo = get_db()
+        self.pam = PAM
+        self.mongo = get_db
         self.methods: dict[str, list[str]] = {
             "create": [PAM],
             "read": [PAM],
@@ -33,7 +34,7 @@ class Privileges(object):
             ]
     
     def get_all_users(self) -> list[str]:
-        users_object: cursor.Cursor = self.mongo.USERS.REGISTER.find({})
+        users_object: cursor.Cursor = self.mongo().USERS.REGISTER.find({})
         usernames: list[str] = []
         for users in users_object:
             usernames.append(users['username'])
@@ -55,24 +56,24 @@ class Privileges(object):
             "documents": self.methods,
         }
         # |============================================================================================================|
-        for db_name in self.mongo.list_database_names():
+        for db_name in self.mongo().list_database_names():
             if db_name not in ["admin", "local"]:
                 privileges[db_name]: dict[str, dict] = {}
 
-                for coll_name in self.mongo[db_name].list_collection_names():
+                for coll_name in self.mongo()[db_name].list_collection_names():
                     privileges[db_name][coll_name] = self.methods
         # |============================================================================================================|
 
         # Insert in database |=========================================================================================|
-        self.mongo.USERS.PRIVILEGES.insert_one(privileges)
+        self.mongo().USERS.PRIVILEGES.insert_one(privileges)
     
-    def update(self) -> dict[str]:
+    def update(self) -> None:
         # GET PRIVILEGES JSON |========================================================================================|
-        for dt in self.mongo.USERS.PRIVILEGES.find({"command": "privileges"}):
+        for dt in self.mongo().USERS.PRIVILEGES.find({"command": "privileges"}):
             real_privileges: dict = dt        
         # |============================================================================================================|
 
-        mongo_db_list: list[str] = self.mongo.list_database_names()
+        mongo_db_list: list[str] = self.mongo().list_database_names()
 
         # GET NEW DB |=================================================================================================|
         # REGISTERED DB |----------------------------------------------------------------------------------------------|
@@ -87,7 +88,7 @@ class Privileges(object):
                     real_privileges[db]: dict[str, dict] = {}             # Register the new db
                 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                     
-                for coll in self.mongo[db].list_collection_names():       # Iteration of the list from the existing coll
+                for coll in self.mongo()[db].list_collection_names():     # Iteration of the list from the existing coll
                         
                     # REGISTERED COLLECTIONS |-------------------------------------------------------------------------|
                     registered_coll: list[str] = self.get_keys(real_privileges[db])
@@ -111,23 +112,71 @@ class Privileges(object):
             if db in mongo_db_list:
                 registered_coll: list[str] = self.get_keys(real_privileges[db])
                 for coll in registered_coll:
-                    if coll not in self.mongo[db].list_collection_names():   # Compares real coll with registered
+                    if coll not in self.mongo()[db].list_collection_names():   # Compares real coll with registered
                         del real_privileges[db][coll]                        # Register the delete coll
         # |============================================================================================================|
 
         # DELETE OLDERS PRIVILEGES |===================================================================================|
-        self.mongo.USERS.PRIVILEGES.delete_one({"command": "privileges"})
+        self.mongo().USERS.PRIVILEGES.delete_one({"command": "privileges"})
         # |============================================================================================================|
 
         # Insert in database |=========================================================================================|
         del real_privileges['_id']
-        self.mongo.USERS.PRIVILEGES.insert_one(real_privileges)
+        self.mongo().USERS.PRIVILEGES.insert_one(real_privileges)
 
+    class Add(object):
+        def __init__(self) -> None:
+            self.privileges = Privileges("admin")
+        
+        def database(self, func: Callable[..., Any]) -> Callable:
+            @wraps(func)
+            def involved(*args, **kwargs) -> Callable[..., Any]:
+                val: tuple[str, int] = func(*args, **kwargs)
+
+                if val[1] == HTTP_201_CREATED:
+                    # GET PRIVILEGES JSON |========================================================================|
+                    for dt in self.privileges.mongo().USERS.PRIVILEGES.find({"command": "privileges"}):
+                        real_privileges: dict = dt
+                    # |============================================================================================|
+
+                    username: str = get_username_per_token(request.headers.get("Authorization"))
+                    
+                    # STRUCTURE OF ARRAY PRIVILEGES USERNAME |=====================================================|
+                    if username == self.privileges.pam:
+                        input_usernames_privileges: str = [username]
+                    else:
+                        input_usernames_privileges: list[str] = [self.privileges.pam, username]
+                    # |============================================================================================|
+
+                    db_name: str = request.json["database"]
+                        
+                    # STRUCTURE OF UPDATE |========================================================================|
+                    real_privileges[db_name]: dict[str, dict[str]] = {}
+                    for coll in self.privileges.mongo()[db_name].list_collection_names():
+                        real_privileges[db_name][coll]: dict[str] = {
+                            "create": input_usernames_privileges,
+                            "read": input_usernames_privileges,
+                            "update": input_usernames_privileges,
+                            "delete": input_usernames_privileges
+                        }
+                    # |============================================================================================|
+                        
+                    # DELETE OLDERS PRIVILEGES |===================================================================|
+                    self.privileges.mongo().USERS.PRIVILEGES.delete_one({"command":"privileges"})
+                    # |============================================================================================|
+
+                    # Insert in database |=========================================================================|
+                    del real_privileges['_id']
+                    self.privileges.mongo().USERS.PRIVILEGES.insert_one(real_privileges)
+
+                return val
+            involved.__name__ == func.__name__
+            return involved
+            
 
 class IAM(object):
     @staticmethod
     def check_permission(method: str, structure: list | str) -> Callable:
-        
         def inner(func: Callable[..., Any]) -> Callable:
             @wraps(func)
             def involved(*args, **kwargs) -> Callable[..., Any]:
@@ -139,6 +188,7 @@ class IAM(object):
                 privileges: dict = get_db().USERS.PRIVILEGES.find_one({"command": "privileges"})
                 # |----------------------------------------------------------------------------------------------------|
 
+                # DATABASE, COLLECTION AND DOCUMENT |------------------------------------------------------------------|
                 if isinstance(structure, str):
                     if structure in ["database", "collection", "document"]:
                         if username in privileges[structure][method]:
@@ -147,7 +197,9 @@ class IAM(object):
                             return "REQUIRE PRIVILEGES", HTTP_403_FORBIDDEN
                     else:
                         return "BAD REQUEST - STRUCTURE", HTTP_400_BAD_REQUEST
+                # |----------------------------------------------------------------------------------------------------|
                 else:
+                # SPECIFIC COLLECTION |--------------------------------------------------------------------------------|
                     if len(structure) == 2:
                         if username in privileges[structure[0]][structure[1]][method]:
                             return func(*args, **kwargs)
@@ -155,8 +207,7 @@ class IAM(object):
                             return "REQUIRE PRIVILEGES", HTTP_403_FORBIDDEN
                     else:
                         return "BAD REQUEST - STRUCTURE", HTTP_400_BAD_REQUEST
-                return "BAD REQUEST", HTTP_400_BAD_REQUEST
-            
+                # |----------------------------------------------------------------------------------------------------|            
             involved.__name__ == func.__name__
             return involved
         return inner
