@@ -47,6 +47,7 @@ def test_create_database() -> tuple[str, int]:
 @required_token
 @Model.create_collection
 @IAM.check_permission("create", "collection")
+@privileges_add.collection
 def test_create_collection() -> tuple[str, int]:
 
     # GET USERNAME AND JSON RESPONSE |---------------------------------------------------------------------------------|
