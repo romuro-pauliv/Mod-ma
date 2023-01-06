@@ -152,12 +152,15 @@ class Privileges(object):
                     # STRUCTURE OF UPDATE |============================================================================|
                     real_privileges[db_name]: dict[str, dict[str]] = {}
                     for coll in self.privileges.mongo()[db_name].list_collection_names():
-                        real_privileges[db_name][coll]: dict[str, list[str]] = {
-                            "create": input_usernames_privileges,
-                            "read": input_usernames_privileges,
-                            "update": input_usernames_privileges,
-                            "delete": input_usernames_privileges
-                        }
+                        if coll == "LOG":
+                            real_privileges[db_name][coll]: dict[str, list[str]] = self.privileges.methods
+                        else:
+                            real_privileges[db_name][coll]: dict[str, list[str]] = {
+                                "create": input_usernames_privileges,
+                                "read": input_usernames_privileges,
+                                "update": input_usernames_privileges,
+                                "delete": input_usernames_privileges
+                            }
                     # |================================================================================================|
                         
                     # DELETE OLDERS PRIVILEGES |=======================================================================|
