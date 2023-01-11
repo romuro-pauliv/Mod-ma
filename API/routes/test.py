@@ -11,12 +11,13 @@ from API.status import *
 from API.auth import required_token, get_username_per_token
 from API.db import create
 from API.models.route_test import Model
-from API.iam import IAM
+from API.iam import IAM, Privileges
 
 from flask import Blueprint, request
 # |--------------------------------------------------------------------------------------------------------------------|
 
 bp = Blueprint('test', __name__, url_prefix='/tests')
+privileges_add = Privileges("admin").Add()
 
 # test token |---------------------------------------------------------------------------------------------------------|
 @bp.route('/test-token', methods=['POST'])
@@ -30,6 +31,7 @@ def test_token() -> tuple[str, int]:
 @required_token
 @Model.create_database
 @IAM.check_permission("create", "database")
+@privileges_add.database
 def test_create_database() -> tuple[str, int]:
     
     # GET USERNAME AND DATABASE NAME |---------------------------------------------------------------------------------|
@@ -45,6 +47,7 @@ def test_create_database() -> tuple[str, int]:
 @required_token
 @Model.create_collection
 @IAM.check_permission("create", "collection")
+@privileges_add.collection
 def test_create_collection() -> tuple[str, int]:
 
     # GET USERNAME AND JSON RESPONSE |---------------------------------------------------------------------------------|
@@ -58,6 +61,7 @@ def test_create_collection() -> tuple[str, int]:
 @bp.route("/test-create-document", methods=["POST"])
 @required_token
 @Model.create_document
+@IAM.check_permission("create", "especific")
 def test_create_document() -> tuple[str, int]:
 
     # GET USERNAME AND JSON RESPONSE |---------------------------------------------------------------------------------|

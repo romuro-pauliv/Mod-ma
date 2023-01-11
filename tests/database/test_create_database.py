@@ -186,3 +186,22 @@ def test_no_string_value_name_database() -> None:
     assert rtn.text == "ONLY STRING ARE ALLOWED"
     assert rtn.status_code == 400
 
+
+# |====================================================================================================================|
+# | FORBIDDEN NAME |===================================================================================================|
+# |====================================================================================================================|
+def test_create_database_with_forbidden_name() -> None:
+    token: str = token_return("admin", "123!Admin")
+    # + header +
+    header: dict[str] = {"Authorization": f"Token {token}"}
+
+    for db_name in ["command", "datetime", "database", "collection", "documents", "admin", "local"]:
+        # + json +
+        json_body: dict[str] = {"database": db_name}
+
+        # + request +
+        rtn = requests.post(f"{root_route}{create_database_route}", headers=header, json=json_body)
+
+        # + tests +
+        assert rtn.text == "FORBIDDEN - NAME NOT ALLOWED"
+        assert rtn.status_code == 403
