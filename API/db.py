@@ -148,3 +148,17 @@ class create(object):
         # |------------------------------------------------------------------------------------------------------------|
 
         return {"info": "CREATE", "document_id": id_str}, HTTP_201_CREATED
+
+
+class read(object):
+    def __init__(self, username: str) -> None:
+        self.usename: str = username
+    
+    def database(self) -> tuple[list[str], int]:
+        return get_db().list_database_names(), HTTP_200_OK
+    
+    def collection(self, database: str) -> tuple[list[str] | str, int]:
+        if database in get_db().list_database_names():
+            return get_db()[database].list_collection_names(), HTTP_200_OK
+        else:
+            return "NOT FOUND", HTTP_404_NOT_FOUND
