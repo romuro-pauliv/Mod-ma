@@ -61,6 +61,7 @@ def test_create_collection() -> tuple[str, int]:
 @bp.route("/test-create-document", methods=["POST"])
 @required_token
 @Model.create_document
+@IAM.check_permission("create", "especific")
 def test_create_document() -> tuple[str, int]:
 
     # GET USERNAME AND JSON RESPONSE |---------------------------------------------------------------------------------|

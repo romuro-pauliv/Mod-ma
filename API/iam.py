@@ -232,26 +232,24 @@ class IAM(object):
                 privileges: dict = get_db().USERS.PRIVILEGES.find_one({"command": "privileges"})
                 # |----------------------------------------------------------------------------------------------------|
 
-                # DATABASE, COLLECTION AND DOCUMENT |------------------------------------------------------------------|
-                if isinstance(structure, str):
-                    if structure in ["database", "collection", "document"]:
-                        if username in privileges[structure][method]:
-                            return func(*args, **kwargs)
-                        else:
-                            return "REQUIRE PRIVILEGES", HTTP_403_FORBIDDEN
+                # DATABASE, COLLECTION |-------------------------------------------------------------------------------|
+                if structure in ["database", "collection"]:
+                    if username in privileges[structure][method]:
+                        return func(*args, **kwargs)
                     else:
-                        return "BAD REQUEST - STRUCTURE", HTTP_400_BAD_REQUEST
+                        return "REQUIRE PRIVILEGES", HTTP_403_FORBIDDEN
+                # |----------------------------------------------------------------------------------------------------|
+                # SPECIFIC COLLECTION |--------------------------------------------------------------------------------|
+                elif structure == "especific":
+                    rst_json: dict[str] = request.json
+                    if username in privileges[rst_json['database']][rst_json['collection']][method]:
+                        return func(*args, **kwargs)
+                    else:
+                        return "REQUIRE PRIVILEGES", HTTP_403_FORBIDDEN
                 # |----------------------------------------------------------------------------------------------------|
                 else:
-                # SPECIFIC COLLECTION |--------------------------------------------------------------------------------|
-                    if len(structure) == 2:
-                        if username in privileges[structure[0]][structure[1]][method]:
-                            return func(*args, **kwargs)
-                        else:
-                            return "REQUIRE PRIVILEGES", HTTP_403_FORBIDDEN
-                    else:
-                        return "BAD REQUEST - STRUCTURE", HTTP_400_BAD_REQUEST
-                # |----------------------------------------------------------------------------------------------------|            
+                    return "BAD REQUEST - STRUCTURE", HTTP_400_BAD_REQUEST            
+            
             involved.__name__ == func.__name__
             return involved
         return inner
