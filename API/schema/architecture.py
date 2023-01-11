@@ -43,4 +43,14 @@ def create_architecture() -> None:
         coll_list: list[str] = get_db()[db].list_collection_names()
         for coll in schema_db[db]:
             prompt_collection("create",coll, db, get_db) if coll not in coll_list else prompt_collection("exists", coll)
+        
+    user_count: int = get_db().USERS.REGISTER.count_documents({"username": "admin"})
+    if user_count == 0:
+        prompt_admin_user(mode="create",
+                          username="admin",
+                          passwd=json_dt['password'],
+                          func=get_db)
+        prompt_assemble_privileges("admin", get_db)
+    else:
+         prompt_admin_user("exists", "admin")
 # |====================================================================================================================|
