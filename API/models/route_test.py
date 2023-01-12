@@ -10,6 +10,7 @@ from API.status import *
 
 from flask import request
 from typing import Callable, Any
+from functools import wraps
 # |--------------------------------------------------------------------------------------------------------------------|
 
 
@@ -52,6 +53,7 @@ def json_fields_validation(fields: list[str]) -> tuple[str, int]:
 class Model(object):
     @staticmethod
     def create_database(func: Callable[..., Any]) -> Callable[..., Callable[..., tuple[str, int]]]:
+        @wraps(func)
         def wrapper(*args, **kwargs) -> Callable[..., tuple[str, int]]:
 
             # json validation |----------------------------------------------------------------------------------------|
@@ -66,11 +68,11 @@ class Model(object):
             
             return func(*args, **kwargs)
         
-        wrapper.__name__ = func.__name__
         return wrapper
     
     @staticmethod
     def create_collection(func: Callable[..., Any]) -> Callable[..., Callable[..., tuple[str, int]]]:
+        @wraps(func)
         def wrapper(*args, **kwargs) -> Callable[..., tuple[str, int]]:
             
             fields: list[str] = ["database", "collection"]
@@ -88,11 +90,11 @@ class Model(object):
 
             return func(*args, **kwargs)
         
-        wrapper.__name__ = func.__name__
         return wrapper
     
     @staticmethod
     def create_document(func: Callable[..., Any]) -> Callable[..., Callable[..., tuple[str | dict, int]]]:
+        @wraps(func)
         def wrapper(*args, **kwargs) -> Callable[..., tuple[str | dict, int]]:
 
             fields: list[str] = ["database", "collection", "document"]
@@ -116,5 +118,49 @@ class Model(object):
 
             return func(*args, **kwargs)
         
-        wrapper.__name__ == func.__name__
+        return wrapper
+    
+
+    @staticmethod
+    def read_collection(func: Callable[..., Any]) -> Callable[..., Callable[..., tuple[list[str] | str, int]]]:
+        @wraps(func)
+        def wrapper(*args, **kwargs) -> Callable[..., tuple[list[str] | str, int]]:
+
+            fields: list[str] = ["database"]
+
+            # json validation |----------------------------------------------------------------------------------------|
+            valid_json = json_fields_validation(fields)
+            if valid_json[1] != HTTP_202_ACCEPTED:
+                return valid_json
+            # \--------------------------------------------------------------------------------------------------------|
+
+            return func(*args, **kwargs)
+        
+        return wrapper
+    
+
+    @staticmethod
+    def read_document(func: Callable[..., Any]) -> Callable[..., Callable[..., tuple[list[dict] | str, int]]]:
+        @wraps(func)
+        def wrapper(*args, **kwargs) -> Callable[..., tuple[list[dict] | str, int]]:
+
+            fields: list[str] = ["database", "collection", "filter"]
+
+            # json validation |----------------------------------------------------------------------------------------|
+            valid_json = json_fields_validation(fields)
+            if valid_json[1] != HTTP_202_ACCEPTED:
+                return valid_json
+            # |--------------------------------------------------------------------------------------------------------|
+
+            # dictionary validation |----------------------------------------------------------------------------------|
+            response: dict = request.json
+            if not isinstance(response, dict):
+                return "ONLY JSON ARE ALLOWED", HTTP_400_BAD_REQUEST
+            
+            if not isinstance(response['filter'], dict):
+                return "ONLY JSON FILTER ARE ALLOWED", HTTP_400_BAD_REQUEST
+            # |--------------------------------------------------------------------------------------------------------|
+
+            return func(*args, **kwargs)
+        
         return wrapper

@@ -13,8 +13,7 @@ from config import *
 # | INTIAL CONFIG TO TEST |============================================================================================|
 def test_pre_test_delete_users_login() -> None:
     admin_user: dict[str] = mongo.USERS.REGISTER.find({"username":"admin"})
-    usertest_user: dict[str] = mongo.USERS.REGISTER.find({"username":"user_test"})
-
+    
     for document in admin_user:
         try:
             if document['username'] == "admin":

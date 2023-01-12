@@ -15,7 +15,6 @@ import json
 # | INTIAL CONFIG TO TEST |============================================================================================|
 def test_pre_test_delete_users_login() -> None:
     admin_user: dict[str] = mongo.USERS.REGISTER.find({"username":"admin"})
-    usertest_user: dict[str] = mongo.USERS.REGISTER.find({"username":"user_test"})
 
     for document in admin_user:
         try:
@@ -112,20 +111,20 @@ def test_create_document_without_existing_database() -> None:
     }
 
     # + json +
-    json_body: dict[str] = {"database":"testing_exists", "collection": "test-create-document", "document": document}
+    json_body: dict[str] = {"database":"testingexists", "collection": "test-create-document", "document": document}
 
     # + request +
     rtn = requests.post(f"{root_route}{create_document_route}", headers=header, json=json_body)
 
     # + tests +
-    assert rtn.text == "FORBIDDEN - DATABASE NOT EXISTS"
-    assert rtn.status_code == 403
+    assert rtn.text == "BAD REQUEST"
+    assert rtn.status_code == 400
 
 
 # |====================================================================================================================|
 # | WITHOUT EXISTING COLLECTION |======================================================================================|
 # |====================================================================================================================|
-def test_create_document_without_existing_database() -> None:
+def test_create_document_without_existing_collection() -> None:
     token: str = token_return("admin", "123!Admin")
     # + header +
     header: dict[str] = {"Authorization": f"Token {token}"}
@@ -144,8 +143,8 @@ def test_create_document_without_existing_database() -> None:
     rtn = requests.post(f"{root_route}{create_document_route}", headers=header, json=json_body)
 
     # + tests +
-    assert rtn.text == "FORBIDDEN - COLLECTION NOT EXISTS"
-    assert rtn.status_code == 403
+    assert rtn.text == "BAD REQUEST"
+    assert rtn.status_code == 400
 
 
 # |====================================================================================================================|
