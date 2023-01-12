@@ -242,10 +242,13 @@ class IAM(object):
                 # SPECIFIC COLLECTION |--------------------------------------------------------------------------------|
                 elif structure == "especific":
                     rst_json: dict[str] = request.json
-                    if username in privileges[rst_json['database']][rst_json['collection']][method]:
-                        return func(*args, **kwargs)
-                    else:
-                        return "REQUIRE PRIVILEGES", HTTP_403_FORBIDDEN
+                    try:
+                        if username in privileges[rst_json['database']][rst_json['collection']][method]:
+                            return func(*args, **kwargs)
+                        else:
+                            return "REQUIRE PRIVILEGES", HTTP_403_FORBIDDEN
+                    except KeyError:
+                        return "BAD REQUEST", HTTP_400_BAD_REQUEST
                 # |----------------------------------------------------------------------------------------------------|
                 else:
                     return "BAD REQUEST - STRUCTURE", HTTP_400_BAD_REQUEST            
