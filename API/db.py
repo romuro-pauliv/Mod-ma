@@ -162,3 +162,19 @@ class read(object):
             return get_db()[database].list_collection_names(), HTTP_200_OK
         else:
             return "NOT FOUND", HTTP_404_NOT_FOUND
+    
+    def document(self, database: str, collection: str, filter: dict[str]) -> tuple[dict[str, Any], int]:
+
+        # Verify if the database and collection exists |---------------------------------------------------------------|
+        if database not in get_db().list_database_names():
+            return "DATABASE NOT FOUND", HTTP_404_NOT_FOUND
+        
+        if collection not in get_db()[database].list_collection_names():
+            return "COLLECTION NOT FOUND", HTTP_404_NOT_FOUND
+        # |------------------------------------------------------------------------------------------------------------|
+
+        document_list: list[dict[str, Any]] = []
+        for document in get_db()[database][collection].find(filter):
+            document_list.append(document)
+        
+        return parse_json(document_list), HTTP_200_OK

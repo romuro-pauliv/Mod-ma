@@ -137,3 +137,30 @@ class Model(object):
             return func(*args, **kwargs)
         
         return wrapper
+    
+
+    @staticmethod
+    def read_document(func: Callable[..., Any]) -> Callable[..., Callable[..., tuple[list[dict] | str, int]]]:
+        @wraps(func)
+        def wrapper(*args, **kwargs) -> Callable[..., tuple[list[dict] | str, int]]:
+
+            fields: list[str] = ["database", "collection", "filter"]
+
+            # json validation |----------------------------------------------------------------------------------------|
+            valid_json = json_fields_validation(fields)
+            if valid_json[1] != HTTP_202_ACCEPTED:
+                return valid_json
+            # |--------------------------------------------------------------------------------------------------------|
+
+            # dictionary validation |----------------------------------------------------------------------------------|
+            response: dict = request.json
+            if not isinstance(response, dict):
+                return "ONLY JSON ARE ALLOWED", HTTP_400_BAD_REQUEST
+            
+            if not isinstance(response['filter'], dict):
+                return "ONLY JSON FILTER ARE ALLOWED", HTTP_400_BAD_REQUEST
+            # |--------------------------------------------------------------------------------------------------------|
+
+            return func(*args, **kwargs)
+        
+        return wrapper

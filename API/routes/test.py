@@ -106,3 +106,17 @@ def test_read_collection() -> tuple[list[str] | str, int]:
     response: dict[str] = request.json
     # |----------------------------------------------------------------------------------------------------------------|
     return read(srnm).collection(response['database'])
+
+# |====================================================================================================================|
+# | TEST READ DOCUMENT |===============================================================================================|
+# |====================================================================================================================|
+@bp.route("/test-read-document", methods=["GET"])
+@required_token
+@Model.read_document
+@IAM.check_permission("read", "especific")
+def test_read_document() -> tuple[list[dict] | str, int]:
+    # GET USERNAME AND JSON REQUEST |----------------------------------------------------------------------------------|
+    srnm: str = get_username_per_token(request.headers.get("Authorization"))
+    response: dict[str] = request.json
+    # |----------------------------------------------------------------------------------------------------------------|
+    return read(srnm).document(response['database'], response['collection'], response['filter'])
