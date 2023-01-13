@@ -12,6 +12,7 @@ import os
 
 from commands.exit_ import close
 from commands.auth import auth
+from commands.read import read
 
 from data.command_name import *
 # |--------------------------------------------------------------------------------------------------------------------|
@@ -49,12 +50,24 @@ class exec(object):
                 os.system("clear")
                 self.prefix: str = "|> "
             # |========================================================================================================|
+    
+    def commands_read(self, cmd: str) -> None:
+        # DATABASE |===================================================================================================|
+        if cmd == COMMAND_READ_DATABASE:
+            read.database(self.token)
+        # |============================================================================================================|
+
+        # COLLECTION |=================================================================================================|
+        if cmd == COMMAND_READ_COLLECTION:
+            read.collection(self.token)
+        # |============================================================================================================|
 
     def init(self) -> None:
         while True:
             command: str = input(self.prefix)
 
             self.commands_auth(command)
+            self.commands_read(command)
 
             if command == COMMAND_EXIT:
                 close()
