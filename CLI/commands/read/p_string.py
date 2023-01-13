@@ -34,8 +34,7 @@ def unsuccessful(response: str, status_code: int) -> None:
     print(line_status_code), print("| " + Fore.RED + response + space + Style.RESET_ALL + "|"), print(line)
 
 
-def database_list(data: str) -> None:
-    data: list[str] = json.loads(data)
+def best_print(data: list[str]) -> None:
     bigger_len: int = 0
     for db in data:
         if len(db) > bigger_len:
@@ -49,5 +48,11 @@ def database_list(data: str) -> None:
     print(f"|{bar}|")
 
 
+def database_list(data: str) -> None:
+    data: list[str] = json.loads(data)
+    best_print(data)
+
+
 def collection_list(data: str) -> None:
-    print(data)
+    data: list[str] = json.loads(data)
+    best_print(data)
