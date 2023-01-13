@@ -7,8 +7,8 @@
 
 # | Imports |----------------------------------------------------------------------------------------------------------|
 from commands.auth.tools_ import *
-from route import *
-from http_status import *
+from routes.route import *
+from data.http_status import *
 from commands.auth.p_string import *
 
 import requests

@@ -13,7 +13,7 @@ import os
 from commands.exit_ import close
 from commands.auth import auth
 
-from command_name import *
+from data.command_name import *
 # |--------------------------------------------------------------------------------------------------------------------|
 
 
