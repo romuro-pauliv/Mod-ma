@@ -8,6 +8,7 @@
 # | imports |----------------------------------------------------------------------------------------------------------|
 from typing import Union
 from colorama import Fore, Style
+import os
 
 from commands.exit_ import close
 from commands.auth import auth
@@ -25,13 +26,10 @@ class exec(object):
     def update_prefix(self) -> None:
         if self.username is not None:
             self.prefix: str = str(Fore.MAGENTA + f"@{self.username}" + Style.RESET_ALL + " |> ")
-
-    def init(self) -> None:
-        while True:
-            command: str = input(self.prefix)
-
+        
+    def commands_auth(self, cmd: str) -> None:
             # | LOGIN |================================================================================================|
-            if command == COMMAND_LOGIN:
+            if cmd == COMMAND_LOGIN:
                 val: Union[dict[str], None] = auth.login()
                 if isinstance(val, dict):
                     self.username: str = val["username"]
@@ -40,9 +38,23 @@ class exec(object):
             # |========================================================================================================|
             
             # | REGISTER |=============================================================================================|
-            if command == COMMAND_REGISTER:
+            if cmd == COMMAND_REGISTER:
                 auth.register()
             # |========================================================================================================|
+
+            # | LOGOUT |===============================================================================================|
+            if cmd == COMMAND_LOGOUT:
+                self.username: None = None
+                self.token: None = None
+                os.system("clear")
+                self.prefix: str = "|> "
+            # |========================================================================================================|
+
+    def init(self) -> None:
+        while True:
+            command: str = input(self.prefix)
+
+            self.commands_auth(command)
 
             if command == COMMAND_EXIT:
                 close()
