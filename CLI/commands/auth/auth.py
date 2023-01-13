@@ -26,8 +26,11 @@ def login() -> dict[str]:
     header: dict[str] = {"Authorization": header_base64_login(username, password)}
 
     # + request +
-    rtn = requests.post(f"{ROUTE_ROOT}{ROUTE_LOGIN}", headers=header)
-    
+    try:
+        rtn = requests.post(f"{ROUTE_ROOT}{ROUTE_LOGIN}", headers=header)
+    except requests.exceptions.ConnectionError:
+        return connection_error()
+
     # + sys +
     if rtn.status_code == HTTP_202_ACCEPTED:
         os.system("clear")

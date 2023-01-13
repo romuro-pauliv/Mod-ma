@@ -20,3 +20,14 @@ def unsuccessful_login(response: str, status_code: int) -> None:
 
     space: str = " "*(len(line) - 3 - len(response))
     print(line_status_code), print("| " + Fore.RED + response + space + Style.RESET_ALL + "|"), print(line)
+
+
+def connection_error() -> None:
+    line_status_code: str = str("| " +  Fore.RED + 'NET' + Style.RESET_ALL 
+    + " |==========================================================|")    
+    line: str = "|================================================================|"
+    
+    response: str = "CHECK YOUR INTERNET CONNECTION OR MODMA URL"
+    space: str = " "*(len(line) - 3 - len(response))
+
+    print(line_status_code), print("| " + Fore.RED + response + space + Style.RESET_ALL + "|"), print(line)

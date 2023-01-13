@@ -31,14 +31,13 @@ class exec(object):
             command: str = input(self.prefix)
 
             if command == COMMAND_LOGIN:
-                val: dict[str] = auth.login()
-                self.username: str = val["username"]
-                self.token: str = val['token']
-                self.update_prefix()
-            
-            if command == "--token":
-                print(self.token)
+                val: Union[dict[str], None] = auth.login()
 
+                if isinstance(val, dict):
+                    self.username: str = val["username"]
+                    self.token: str = val['token']
+                    self.update_prefix()
+            
 
             if command == COMMAND_EXIT:
                 close()
