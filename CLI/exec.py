@@ -30,14 +30,19 @@ class exec(object):
         while True:
             command: str = input(self.prefix)
 
+            # | LOGIN |================================================================================================|
             if command == COMMAND_LOGIN:
                 val: Union[dict[str], None] = auth.login()
-
                 if isinstance(val, dict):
                     self.username: str = val["username"]
                     self.token: str = val['token']
                     self.update_prefix()
+            # |========================================================================================================|
             
+            # | REGISTER |=============================================================================================|
+            if command == COMMAND_REGISTER:
+                auth.register()
+            # |========================================================================================================|
 
             if command == COMMAND_EXIT:
                 close()

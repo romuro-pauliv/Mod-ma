@@ -34,7 +34,30 @@ def login() -> dict[str]:
     # + sys +
     if rtn.status_code == HTTP_202_ACCEPTED:
         os.system("clear")
-        login_successfully("LOGIN SUCCESSFULLY", rtn.status_code)
+        successfully("LOGIN SUCCESSFULLY", rtn.status_code)
         return {"username": username, "token": json.loads(rtn.text)["token"]}
     else:
-        unsuccessful_login(rtn.text, rtn.status_code)
+        unsuccessful(rtn.text, rtn.status_code)
+
+
+def register() -> dict[str]:
+    # + inputs +
+    username: str = input(PRT_USER_USERNAME)
+    password: str = input(PRT_USER_PASSWORD)
+    email: str = input(PRT_USER_EMAIL)
+
+    # + header build +
+    header: dict[str] = {"Register": header_base64_register(username, password, email)}
+
+    # + request +
+    try:
+        rtn = requests.post(f"{ROUTE_ROOT}{ROUTE_REGISER}", headers=header)
+    except requests.exceptions.ConnectionError:
+        return connection_error()
+    
+    # + sys +
+    if rtn.status_code == HTTP_201_CREATED:
+        os.system("clear")
+        successfully("SUCCESSFULLY REGISTERED", rtn.status_code)
+    else:
+        unsuccessful(rtn.text, rtn.status_code)
