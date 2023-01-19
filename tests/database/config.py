@@ -27,7 +27,7 @@ create_document_route: str = "/tests/test-create-document"
 
 read_database_route: str = "/tests/test-read-database"
 read_collection_route: str = '/tests/test-read-collection'
-read_documents_route: str = '/tests/test-read-collection'
+read_documents_route: str = '/tests/test-read-document'
 # |====================================================================================================================|
 
 # MONGO CLIENT |=======================================================================================================|

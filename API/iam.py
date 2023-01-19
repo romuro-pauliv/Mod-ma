@@ -248,7 +248,7 @@ class IAM(object):
                         else:
                             return "REQUIRE PRIVILEGES", HTTP_403_FORBIDDEN
                     except KeyError:
-                        return "BAD REQUEST", HTTP_400_BAD_REQUEST
+                        return "BAD REQUEST - DATABASE OR COLLECTION NOT FOUND", HTTP_400_BAD_REQUEST
                 # |----------------------------------------------------------------------------------------------------|
                 else:
                     return "BAD REQUEST - STRUCTURE", HTTP_400_BAD_REQUEST            
