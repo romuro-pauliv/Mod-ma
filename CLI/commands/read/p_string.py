@@ -18,6 +18,21 @@ partial_line: str = " |=========================================================
 line: str = "|================================================================|"
 
 
+def best_print(data: list[str]) -> None:
+    bigger_len: int = 0
+    for db in data:
+        if len(db) > bigger_len:
+            bigger_len: int = len(db)
+    
+    bar: str = "-"*(bigger_len + 5)
+    print(f"|{bar}|")
+    for db in data:
+        space: str = " "*(len(bar) - len(db) - 3)
+        print("| > " + Fore.CYAN + db + space + Style.RESET_ALL + "|")
+    print(f"|{bar}|")
+
+
+
 def connection_error() -> None:
     line_status_code: str = str("| " +  Fore.RED + 'NET' + Style.RESET_ALL + partial_line)    
     
@@ -32,20 +47,6 @@ def unsuccessful(response: str, status_code: int) -> None:
 
     space: str = " "*(len(line) - 3 - len(response))
     print(line_status_code), print("| " + Fore.RED + response + space + Style.RESET_ALL + "|"), print(line)
-
-
-def best_print(data: list[str]) -> None:
-    bigger_len: int = 0
-    for db in data:
-        if len(db) > bigger_len:
-            bigger_len: int = len(db)
-    
-    bar: str = "-"*(bigger_len + 5)
-    print(f"|{bar}|")
-    for db in data:
-        space: str = " "*(len(bar) - len(db) - 3)
-        print("| > " + Fore.CYAN + db + space + Style.RESET_ALL + "|")
-    print(f"|{bar}|")
 
 
 def database_list(data: str) -> None:

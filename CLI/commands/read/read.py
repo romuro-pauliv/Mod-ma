@@ -13,8 +13,6 @@ from commands.read.p_string import *
 
 from typing import Union
 import requests
-import json
-import os
 # |--------------------------------------------------------------------------------------------------------------------|
 
 
