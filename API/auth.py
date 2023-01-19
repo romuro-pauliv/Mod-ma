@@ -187,7 +187,7 @@ def token_generate(ip_addr: str, username: str, key_api: str) -> dict[str]:
     encode_dict: dict[str, Union[str, datetime.datetime]] = {
         "hash": generate_password_hash(ip_addr),
         "username": username,
-        "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+        "exp": datetime.datetime.utcnow() + datetime.timedelta(seconds=20)
     }
     # |----------------------------------------------------------------------------------------------------------------|
     
