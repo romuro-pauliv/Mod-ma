@@ -20,9 +20,14 @@ from dotenv import load_dotenv
 root_route: str = "http://127.0.0.1:5000"
 login_route: str = "/auth/login"
 register_route: str = "/auth/register"
+
 create_database_route: str = "/tests/test-create-database"
 create_collection_route: str = "/tests/test-create-collection"
 create_document_route: str = "/tests/test-create-document"
+
+read_database_route: str = "/tests/test-read-database"
+read_collection_route: str = '/tests/test-read-collection'
+read_documents_route: str = '/tests/test-read-collection'
 # |====================================================================================================================|
 
 # MONGO CLIENT |=======================================================================================================|
