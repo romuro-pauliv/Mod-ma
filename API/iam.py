@@ -35,38 +35,11 @@ class Privileges(object):
             "admin", "local"
             ]
     
-    def get_all_users(self) -> list[str]:
-        users_object: cursor.Cursor = self.mongo().USERS.REGISTER.find({})
-        usernames: list[str] = []
-        for users in users_object:
-            usernames.append(users['username'])
-        return usernames
-    
     def get_keys(self, data: dict[str]) -> list[str]:
         keys: list[str] = []
         for d in data.keys():
             keys.append(d)
         return keys
-    
-    def assemble_privileges(self) -> None:
-        # assemble architecture |======================================================================================|
-        privileges: dict[str, dict] = {
-            "command": "privileges",
-            "datetime": datetime.datetime.utcnow(),
-            "database": self.methods,
-            "collection": self.methods
-        }
-        # |============================================================================================================|
-        for db_name in self.mongo().list_database_names():
-            if db_name not in ["admin", "local"]:
-                privileges[db_name]: dict[str, dict] = {}
-
-                for coll_name in self.mongo()[db_name].list_collection_names():
-                    privileges[db_name][coll_name] = self.methods
-        # |============================================================================================================|
-
-        # Insert in database |=========================================================================================|
-        self.mongo().USERS.PRIVILEGES.insert_one(privileges)
     
     def update(self) -> None:
         # GET PRIVILEGES JSON |========================================================================================|
