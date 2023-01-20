@@ -117,7 +117,7 @@ def test_create_document_without_existing_database() -> None:
     rtn = requests.post(f"{root_route}{create_document_route}", headers=header, json=json_body)
 
     # + tests +
-    assert rtn.text == "BAD REQUEST"
+    assert rtn.text == "BAD REQUEST - DATABASE OR COLLECTION NOT FOUND"
     assert rtn.status_code == 400
 
 
@@ -143,7 +143,7 @@ def test_create_document_without_existing_collection() -> None:
     rtn = requests.post(f"{root_route}{create_document_route}", headers=header, json=json_body)
 
     # + tests +
-    assert rtn.text == "BAD REQUEST"
+    assert rtn.text == "BAD REQUEST - DATABASE OR COLLECTION NOT FOUND"
     assert rtn.status_code == 400
 
 
