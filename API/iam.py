@@ -7,13 +7,15 @@
 
 # | imports |----------------------------------------------------------------------------------------------------------|
 from .db import get_db
-from .auth import get_username_per_token
+from .secure.token.IPT_token import IPToken
 from .status import *
+
+from typing import Callable, Any
 
 from pymongo import cursor
 from flask import request
-from typing import Callable, Any
 from functools import wraps
+
 import datetime
 # |--------------------------------------------------------------------------------------------------------------------|
 
@@ -138,7 +140,7 @@ class Privileges(object):
                         real_privileges: dict = dt
                     # |================================================================================================|
 
-                    username: str = get_username_per_token(request.headers.get("Authorization"))
+                    username: str = IPToken.Tools.get_username_per_token(request.headers.get("Authorization"))
                     
                     # STRUCTURE OF ARRAY PRIVILEGES USERNAME |=========================================================|
                     if username == self.privileges.pam:
@@ -186,7 +188,7 @@ class Privileges(object):
                         real_privileges: dict = dt
                     # |================================================================================================|
 
-                    username: str = get_username_per_token(request.headers.get("Authorization"))
+                    username: str = IPToken.Tools.get_username_per_token(request.headers.get("Authorization"))
 
                     # STRUCTURE OF ARRAY PRIVILEGES USERNAME |=========================================================|
                     if username == self.privileges.pam:
@@ -225,7 +227,7 @@ class IAM(object):
             @wraps(func)
             def involved(*args, **kwargs) -> Callable[..., Any]:
                 # GET USERNAME |---------------------------------------------------------------------------------------|
-                username: str = get_username_per_token(request.headers.get("Authorization"))
+                username: str = IPToken.Tools.get_username_per_token(request.headers.get("Authorization"))
                 # |----------------------------------------------------------------------------------------------------|
 
                 # REQUEST THE PRIVILEGES DATA |------------------------------------------------------------------------|
