@@ -8,4 +8,5 @@ ROUTE_REGISER: str = "/auth/register"
 # READ |===============================================================================================================|
 ROUTE_READ_DATABASE: str = "/tests/test-read-database"
 ROUTE_READ_COLLECTION: str = "/tests/test-read-collection"
+ROUTE_READ_DOCUMENT: str = "/tests/test-read-document"
 # |====================================================================================================================|

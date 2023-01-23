@@ -15,7 +15,6 @@ from API.status import *
 
 import datetime
 import jwt
-
 # |--------------------------------------------------------------------------------------------------------------------|
 
 
@@ -27,7 +26,7 @@ class IPToken(object):
         encode_dict: dict[str, Union[str, datetime.datetime]] = {
             "hash": generate_password_hash(ip_addr),
             "username": username,
-            "exp": datetime.datetime.utcnow() + datetime.timedelta(seconds=20)
+            "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1)
         }
         # |------------------------------------------------------------------------------------------------------------|
 
