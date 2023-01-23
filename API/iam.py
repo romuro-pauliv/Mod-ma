@@ -208,8 +208,25 @@ class Privileges(object):
                         real_privileges: dict = dt
                     # |================================================================================================|
                     
+                    # GET STANDARD PRIVILEGES |========================================================================|
+                    for dt in self.privileges.mongo().USERS.PRIVILEGES.find({"command": "standard privileges"}):
+                        standard_privileges: dict = dt
+                    # |================================================================================================|
+                    
                     # NEW USER CONFIG |================================================================================|
-                    real_privileges['database']['read'].append(username)
+                    # dict treatment |---------------------------------------------------------------------------------| 
+                    del_keys: list[str] = ['_id', 'command', 'datetime']
+                    for i in del_keys:
+                        del standard_privileges[i]
+                    # |------------------------------------------------------------------------------------------------|
+                    for master in self.privileges.get_keys(standard_privileges):
+                        if isinstance(standard_privileges[master], list):
+                            for privil in standard_privileges[master]:
+                                real_privileges[master][privil].append(username)
+                        else:
+                            for coll in self.privileges.get_keys(standard_privileges[master]):
+                                for privil in standard_privileges[master][coll]:
+                                    real_privileges[master][coll][privil].append(username)
                     # |================================================================================================|
                     
                     # DELETE OLDERS PRIVILEGES |=======================================================================|
