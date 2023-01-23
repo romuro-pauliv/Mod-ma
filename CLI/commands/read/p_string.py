@@ -32,7 +32,6 @@ def best_print(data: list[str]) -> None:
     print(f"|{bar}|")
 
 
-
 def connection_error() -> None:
     line_status_code: str = str("| " +  Fore.RED + 'NET' + Style.RESET_ALL + partial_line)    
     
