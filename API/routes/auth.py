@@ -11,6 +11,7 @@ from API.secure.base.decrypt_base64 import Decrypt
 from API.secure.token.IPT_token import IPToken
 from API.status import *
 from API.log import LogAuth
+from API.iam import Privileges
 
 from flask import Blueprint, request, current_app
 from typing import Union
@@ -20,12 +21,17 @@ from typing import Union
 auth_list_typing = Union[list[str], list[str, int]]
 # |--------------------------------------------------------------------------------------------------------------------|
 
+# IAM |----------------------------------------------------------------------------------------------------------------|
+privileges = Privileges("admin").NewUser()
+# |--------------------------------------------------------------------------------------------------------------------|
+
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 
 # Register route |-----------------------------------------------------------------------------------------------------|
 @bp.route("/register", methods=['POST'])
+@privileges.standart_privileges
 def REGISTER() -> tuple[str, int]:
     register_list: auth_list_typing = Decrypt.Base64.read_authentication(request.headers.get("Register"), "register")
     if register_list[1] == HTTP_400_BAD_REQUEST:

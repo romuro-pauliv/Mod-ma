@@ -8,6 +8,8 @@
 # | imports |----------------------------------------------------------------------------------------------------------|
 from .db import get_db
 from .secure.token.IPT_token import IPToken
+from .secure.base.decrypt_base64 import Decrypt
+
 from .status import *
 
 from typing import Callable, Any
@@ -189,6 +191,37 @@ class Privileges(object):
                 return val
             involved.__name__ == func.__name__
             return involved
+        
+    class NewUser(object):
+        def __init__(self) -> None:
+            self.privileges = Privileges("admin")
+             
+        def standart_privileges(self, func: Callable[..., Any]) -> Callable:
+            @wraps(func)
+            def wrapper(*args, **kwargs) -> tuple[str, int]:
+                val: tuple[str, int] = func(*args, **kwargs)
+                if val[1] == HTTP_201_CREATED:
+                    username: str = Decrypt.Base64.read_authentication(request.headers.get("Register"), "register")[0]
+                    
+                    # GET PRIVILEGES JSON |============================================================================|
+                    for dt in self.privileges.mongo().USERS.PRIVILEGES.find({"command": "privileges"}):
+                        real_privileges: dict = dt
+                    # |================================================================================================|
+                    
+                    # NEW USER CONFIG |================================================================================|
+                    real_privileges['database']['read'].append(username)
+                    # |================================================================================================|
+                    
+                    # DELETE OLDERS PRIVILEGES |=======================================================================|
+                    self.privileges.mongo().USERS.PRIVILEGES.delete_one({"command": "privileges"})
+                    # |================================================================================================|
+                    
+                    # Insert in privileges |===========================================================================|
+                    del real_privileges['_id']
+                    self.privileges.mongo().USERS.PRIVILEGES.insert_one(real_privileges)
+                    # |================================================================================================|                    
+                return val
+            return wrapper
 
 class IAM(object):
     @staticmethod
