@@ -121,7 +121,7 @@ class Privileges(object):
                         input_usernames_privileges: list[str] = [self.privileges.pam, username]
                     # |================================================================================================|
 
-                    db_name: str = request.json["database"]
+                    db_name: str = request.json["database"].lower()
                         
                     # STRUCTURE OF UPDATE |============================================================================|
                     real_privileges[db_name]: dict[str, dict[str]] = {}
@@ -169,8 +169,8 @@ class Privileges(object):
                         input_usernames_privileges: list[str] = [self.privileges.pam, username]
                     # |================================================================================================|
 
-                    db_name: str = request.json['database']
-                    cl_name: str = request.json['collection']
+                    db_name: str = request.json['database'].lower()
+                    cl_name: str = request.json['collection'].lower()
 
                     # STRUCTURE OF UPDATE |============================================================================|
                     real_privileges[db_name][cl_name]: dict[str, list[str]] = {

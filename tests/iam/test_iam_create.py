@@ -253,6 +253,7 @@ def test_reset_db() -> None:
     
     # update IAM |-----------------------------------------------------------------------------------------------------|
     del privileges['_id']
+    del privileges['iamtest']
     mongo.USERS.PRIVILEGES.delete_one({"command": "privileges"})
     mongo.USERS.PRIVILEGES.insert_one(privileges)
     # |----------------------------------------------------------------------------------------------------------------|

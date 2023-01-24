@@ -13,6 +13,7 @@ import os
 from commands.exit_ import close
 from commands.auth import auth
 from commands.read import read
+from commands.create import create
 
 from data.command_name import *
 # |--------------------------------------------------------------------------------------------------------------------|
@@ -51,6 +52,22 @@ class exec(object):
                 self.prefix: str = "|> "
             # |========================================================================================================|
     
+    def commands_create(self, cmd: str) -> None:
+        # DATABASE |===================================================================================================|
+        if cmd == COMMAND_CREATE_DATABASE:
+            create.database(self.token)
+        # =============================================================================================================|
+        
+        # COLLECTION |=================================================================================================|
+        if cmd == COMMAND_CREATE_COLLECTION:
+            create.collection(self.token)
+        # |============================================================================================================|
+        
+        # DOCUMENT |===================================================================================================|
+        if cmd == COMMAND_CREATE_DOCUMENT:
+            create.document(self.token)
+        # |============================================================================================================|
+    
     def commands_read(self, cmd: str) -> None:
         # DATABASE |===================================================================================================|
         if cmd == COMMAND_READ_DATABASE:
@@ -71,6 +88,7 @@ class exec(object):
 
             self.commands_auth(command)
             self.commands_read(command)
+            self.commands_create(command)
 
             if command == COMMAND_EXIT:
                 close()
