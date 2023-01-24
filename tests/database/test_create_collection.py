@@ -256,3 +256,25 @@ def test_no_string_in_collection_name() -> None:
     # + tests +
     assert rtn.text == "ONLY STRING ARE ALLOWED"
     assert rtn.status_code == 400
+
+
+# |====================================================================================================================|
+# | RESET |============================================================================================================|
+# |====================================================================================================================|
+def test_reset_db() -> None:
+    mongo.drop_database("test_coll")
+    
+    # Privileges reset |-----------------------------------------------------------------------------------------------|
+    for dt in mongo.USERS.PRIVILEGES.find({"command": "privileges"}):
+        real_privileges: dict[str, list[str] | dict[str]] = dt
+    
+    reset_privileges: dict[str, list[str] | dict[str]] = real_privileges
+    del reset_privileges['test_coll']
+    
+    # + update +
+    mongo.USERS.PRIVILEGES.delete_one({"command": "privileges"})
+    del reset_privileges['_id']
+    mongo.USERS.PRIVILEGES.insert_one(reset_privileges)
+    # |----------------------------------------------------------------------------------------------------------------|
+    
+    assert isinstance(reset_privileges, dict)

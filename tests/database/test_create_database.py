@@ -204,3 +204,25 @@ def test_create_database_with_forbidden_name() -> None:
         # + tests +
         assert rtn.text == "FORBIDDEN - NAME NOT ALLOWED"
         assert rtn.status_code == 403
+
+
+# |====================================================================================================================|
+# | RESET |============================================================================================================|
+# |====================================================================================================================|
+def test_reset_db() -> None:
+    mongo.drop_database("test")
+    
+    # Privileges reset |-----------------------------------------------------------------------------------------------|
+    for dt in mongo.USERS.PRIVILEGES.find({"command": "privileges"}):
+        real_privileges: dict[str, list[str] | dict[str]] = dt
+    
+    reset_privileges: dict[str, list[str] | dict[str]] = real_privileges
+    del reset_privileges['test']
+    
+    # + update +
+    mongo.USERS.PRIVILEGES.delete_one({"command": "privileges"})
+    del reset_privileges['_id']
+    mongo.USERS.PRIVILEGES.insert_one(reset_privileges)
+    # |----------------------------------------------------------------------------------------------------------------|
+    
+    assert isinstance(reset_privileges, dict)

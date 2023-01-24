@@ -51,6 +51,7 @@ def create_architecture() -> None:
                           passwd=json_dt['password'],
                           func=get_db)
         prompt_assemble_privileges("admin", get_db)
+        prompt_assemble_new_user_privileges(get_db)
     else:
          prompt_admin_user("exists", "admin")
 # |====================================================================================================================|

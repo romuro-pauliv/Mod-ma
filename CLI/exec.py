@@ -61,6 +61,9 @@ class exec(object):
         if cmd == COMMAND_READ_COLLECTION:
             read.collection(self.token)
         # |============================================================================================================|
+        
+        if cmd == COMMAND_READ_DOCUMENT:
+            read.documents(self.token)
 
     def init(self) -> None:
         while True:

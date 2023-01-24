@@ -7,14 +7,15 @@
 
 # | imports |----------------------------------------------------------------------------------------------------------|
 from .db import get_db
-from .auth import get_username_per_token
+from .secure.token.IPT_token import IPToken
+from .secure.base.decrypt_base64 import Decrypt
+
 from .status import *
 
-from pymongo import cursor
-from flask import request
 from typing import Callable, Any
+
+from flask import request
 from functools import wraps
-import datetime
 # |--------------------------------------------------------------------------------------------------------------------|
 
 class Privileges(object):
@@ -33,38 +34,11 @@ class Privileges(object):
             "admin", "local"
             ]
     
-    def get_all_users(self) -> list[str]:
-        users_object: cursor.Cursor = self.mongo().USERS.REGISTER.find({})
-        usernames: list[str] = []
-        for users in users_object:
-            usernames.append(users['username'])
-        return usernames
-    
     def get_keys(self, data: dict[str]) -> list[str]:
         keys: list[str] = []
         for d in data.keys():
             keys.append(d)
         return keys
-    
-    def assemble_privileges(self) -> None:
-        # assemble architecture |======================================================================================|
-        privileges: dict[str, dict] = {
-            "command": "privileges",
-            "datetime": datetime.datetime.utcnow(),
-            "database": self.methods,
-            "collection": self.methods
-        }
-        # |============================================================================================================|
-        for db_name in self.mongo().list_database_names():
-            if db_name not in ["admin", "local"]:
-                privileges[db_name]: dict[str, dict] = {}
-
-                for coll_name in self.mongo()[db_name].list_collection_names():
-                    privileges[db_name][coll_name] = self.methods
-        # |============================================================================================================|
-
-        # Insert in database |=========================================================================================|
-        self.mongo().USERS.PRIVILEGES.insert_one(privileges)
     
     def update(self) -> None:
         # GET PRIVILEGES JSON |========================================================================================|
@@ -138,7 +112,7 @@ class Privileges(object):
                         real_privileges: dict = dt
                     # |================================================================================================|
 
-                    username: str = get_username_per_token(request.headers.get("Authorization"))
+                    username: str = IPToken.Tools.get_username_per_token(request.headers.get("Authorization"))
                     
                     # STRUCTURE OF ARRAY PRIVILEGES USERNAME |=========================================================|
                     if username == self.privileges.pam:
@@ -186,7 +160,7 @@ class Privileges(object):
                         real_privileges: dict = dt
                     # |================================================================================================|
 
-                    username: str = get_username_per_token(request.headers.get("Authorization"))
+                    username: str = IPToken.Tools.get_username_per_token(request.headers.get("Authorization"))
 
                     # STRUCTURE OF ARRAY PRIVILEGES USERNAME |=========================================================|
                     if username == self.privileges.pam:
@@ -217,6 +191,56 @@ class Privileges(object):
                 return val
             involved.__name__ == func.__name__
             return involved
+        
+    class NewUser(object):
+        def __init__(self) -> None:
+            self.privileges = Privileges("admin")
+             
+        def standart_privileges(self, func: Callable[..., Any]) -> Callable:
+            @wraps(func)
+            def wrapper(*args, **kwargs) -> tuple[str, int]:
+                val: tuple[str, int] = func(*args, **kwargs)
+                if val[1] == HTTP_201_CREATED:
+                    username: str = Decrypt.Base64.read_authentication(request.headers.get("Register"), "register")[0]
+                    
+                    # GET PRIVILEGES JSON |============================================================================|
+                    for dt in self.privileges.mongo().USERS.PRIVILEGES.find({"command": "privileges"}):
+                        real_privileges: dict = dt
+                    # |================================================================================================|
+                    
+                    # GET STANDARD PRIVILEGES |========================================================================|
+                    for dt in self.privileges.mongo().USERS.PRIVILEGES.find({"command": "standard privileges"}):
+                        standard_privileges: dict = dt
+                    # |================================================================================================|
+                    
+                    # NEW USER CONFIG |================================================================================|
+                    # dict treatment |---------------------------------------------------------------------------------| 
+                    del_keys: list[str] = ['_id', 'command', 'datetime']
+                    for i in del_keys:
+                        del standard_privileges[i]
+                    # |------------------------------------------------------------------------------------------------|
+                    for master in self.privileges.get_keys(standard_privileges):
+                        if isinstance(standard_privileges[master], list):
+                            for privil in standard_privileges[master]:
+                                if username not in real_privileges[master][privil]:
+                                    real_privileges[master][privil].append(username)
+                        else:
+                            for coll in self.privileges.get_keys(standard_privileges[master]):
+                                for privil in standard_privileges[master][coll]:
+                                    if username not in real_privileges[master][coll][privil]:
+                                        real_privileges[master][coll][privil].append(username)
+                    # |================================================================================================|
+                    
+                    # DELETE OLDERS PRIVILEGES |=======================================================================|
+                    self.privileges.mongo().USERS.PRIVILEGES.delete_one({"command": "privileges"})
+                    # |================================================================================================|
+                    
+                    # Insert in privileges |===========================================================================|
+                    del real_privileges['_id']
+                    self.privileges.mongo().USERS.PRIVILEGES.insert_one(real_privileges)
+                    # |================================================================================================|                    
+                return val
+            return wrapper
 
 class IAM(object):
     @staticmethod
@@ -225,7 +249,7 @@ class IAM(object):
             @wraps(func)
             def involved(*args, **kwargs) -> Callable[..., Any]:
                 # GET USERNAME |---------------------------------------------------------------------------------------|
-                username: str = get_username_per_token(request.headers.get("Authorization"))
+                username: str = IPToken.Tools.get_username_per_token(request.headers.get("Authorization"))
                 # |----------------------------------------------------------------------------------------------------|
 
                 # REQUEST THE PRIVILEGES DATA |------------------------------------------------------------------------|
@@ -248,7 +272,7 @@ class IAM(object):
                         else:
                             return "REQUIRE PRIVILEGES", HTTP_403_FORBIDDEN
                     except KeyError:
-                        return "BAD REQUEST", HTTP_400_BAD_REQUEST
+                        return "BAD REQUEST - DATABASE OR COLLECTION NOT FOUND", HTTP_400_BAD_REQUEST
                 # |----------------------------------------------------------------------------------------------------|
                 else:
                     return "BAD REQUEST - STRUCTURE", HTTP_400_BAD_REQUEST            

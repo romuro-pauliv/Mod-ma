@@ -154,8 +154,6 @@ class Model(object):
 
             # dictionary validation |----------------------------------------------------------------------------------|
             response: dict = request.json
-            if not isinstance(response, dict):
-                return "ONLY JSON ARE ALLOWED", HTTP_400_BAD_REQUEST
             
             if not isinstance(response['filter'], dict):
                 return "ONLY JSON FILTER ARE ALLOWED", HTTP_400_BAD_REQUEST

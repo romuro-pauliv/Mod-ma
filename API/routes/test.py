@@ -8,10 +8,12 @@
 
 # imports |------------------------------------------------------------------------------------------------------------|
 from API.status import *
-from API.auth import required_token, get_username_per_token
 from API.db import create, read
-from API.models.route_test import Model
 from API.iam import IAM, Privileges
+
+from API.models.route_test import Model
+
+from API.secure.token.IPT_token import required_token, IPToken
 
 from flask import Blueprint, request
 # |--------------------------------------------------------------------------------------------------------------------|
@@ -39,7 +41,7 @@ def test_token() -> tuple[str, int]:
 def test_create_database() -> tuple[str, int]:
     
     # GET USERNAME AND DATABASE NAME |---------------------------------------------------------------------------------|
-    srnm: str = get_username_per_token(request.headers.get("Authorization"))
+    srnm: str = IPToken.Tools.get_username_per_token(request.headers.get("Authorization"))
     database_name_json: str = request.json["database"]
     # |----------------------------------------------------------------------------------------------------------------|
 
@@ -57,7 +59,7 @@ def test_create_database() -> tuple[str, int]:
 def test_create_collection() -> tuple[str, int]:
 
     # GET USERNAME AND JSON RESPONSE |---------------------------------------------------------------------------------|
-    srnm: str = get_username_per_token(request.headers.get("Authorization"))
+    srnm: str = IPToken.Tools.get_username_per_token(request.headers.get("Authorization"))
     response: dict[str, str] = request.json
     # |----------------------------------------------------------------------------------------------------------------|
 
@@ -74,7 +76,7 @@ def test_create_collection() -> tuple[str, int]:
 def test_create_document() -> tuple[str, int]:
 
     # GET USERNAME AND JSON RESPONSE |---------------------------------------------------------------------------------|
-    srnm: str = get_username_per_token(request.headers.get("Authorization"))
+    srnm: str = IPToken.Tools.get_username_per_token(request.headers.get("Authorization"))
     response: dict[str, str | dict] = request.json
     # |----------------------------------------------------------------------------------------------------------------|
 
@@ -89,7 +91,7 @@ def test_create_document() -> tuple[str, int]:
 @IAM.check_permission("read", "database")
 def test_read_database() -> tuple[list[str], int]:
     # GET USERNAME |---------------------------------------------------------------------------------------------------|
-    srnm: str = get_username_per_token(request.headers.get("Authorization"))
+    srnm: str = IPToken.Tools.get_username_per_token(request.headers.get("Authorization"))
     # |----------------------------------------------------------------------------------------------------------------|
     return read(srnm).database()
 
@@ -102,7 +104,7 @@ def test_read_database() -> tuple[list[str], int]:
 @IAM.check_permission("read", "collection")
 def test_read_collection() -> tuple[list[str] | str, int]:
     # GET USERNAME AND JSON REQUEST |----------------------------------------------------------------------------------|
-    srnm: str = get_username_per_token(request.headers.get("Authorization"))
+    srnm: str = IPToken.Tools.get_username_per_token(request.headers.get("Authorization"))
     response: dict[str] = request.json
     # |----------------------------------------------------------------------------------------------------------------|
     return read(srnm).collection(response['database'])
@@ -116,7 +118,7 @@ def test_read_collection() -> tuple[list[str] | str, int]:
 @IAM.check_permission("read", "especific")
 def test_read_document() -> tuple[list[dict] | str, int]:
     # GET USERNAME AND JSON REQUEST |----------------------------------------------------------------------------------|
-    srnm: str = get_username_per_token(request.headers.get("Authorization"))
+    srnm: str = IPToken.Tools.get_username_per_token(request.headers.get("Authorization"))
     response: dict[str] = request.json
     # |----------------------------------------------------------------------------------------------------------------|
     return read(srnm).document(response['database'], response['collection'], response['filter'])

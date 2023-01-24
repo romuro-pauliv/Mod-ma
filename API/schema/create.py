@@ -10,6 +10,8 @@ from typing import Optional
 from colorama import Fore, Style
 from pymongo.mongo_client import MongoClient
 
+from schema_data import new_user_privileges
+
 import datetime
 
 from bson.objectid import ObjectId
@@ -98,4 +100,20 @@ def prompt_assemble_privileges(username: str, func: MongoClient) -> None:
     
     func().USERS.PRIVILEGES.insert_one(privileges)
 
+    print(Fore.GREEN + " CREATED" + Style.RESET_ALL)
+
+
+def prompt_assemble_new_user_privileges(func: MongoClient) -> None:
+    space: str = " "*(25-len("standard privileges"))
+    print(">>> " + Fore.MAGENTA + "IAM: " + Fore.CYAN + "standard privileges" + space + 
+          Style.RESET_ALL + " |---|", end="")
+    
+    json_send: dict[str] = {
+        "command": "standard privileges",
+        "datetime": ['UTC', datetime.datetime.utcnow()],
+    }
+    json_send.update(new_user_privileges)
+    
+    func().USERS.PRIVILEGES.insert_one(json_send)
+    
     print(Fore.GREEN + " CREATED" + Style.RESET_ALL)
