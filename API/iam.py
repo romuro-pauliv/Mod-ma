@@ -222,11 +222,13 @@ class Privileges(object):
                     for master in self.privileges.get_keys(standard_privileges):
                         if isinstance(standard_privileges[master], list):
                             for privil in standard_privileges[master]:
-                                real_privileges[master][privil].append(username)
+                                if username not in real_privileges[master][privil]:
+                                    real_privileges[master][privil].append(username)
                         else:
                             for coll in self.privileges.get_keys(standard_privileges[master]):
                                 for privil in standard_privileges[master][coll]:
-                                    real_privileges[master][coll][privil].append(username)
+                                    if username not in real_privileges[master][coll][privil]:
+                                        real_privileges[master][coll][privil].append(username)
                     # |================================================================================================|
                     
                     # DELETE OLDERS PRIVILEGES |=======================================================================|

@@ -173,3 +173,44 @@ def test_no_header_register() -> None:
     # + test +
     assert rtn.text == "BAD REQUEST - NO DATA"
     assert rtn.status_code == 400
+
+# |====================================================================================================================|
+# | RESET |============================================================================================================|
+# |====================================================================================================================|
+def test_reset_db() -> None:
+    mongo.USERS.REGISTER.delete_one({"username": "user_test"})
+    for dt in mongo.USERS.PRIVILEGES.find({"command": "privileges"}):
+        privileges: dict[str, list[str] | dict[str]] = dt
+    
+    for dt in mongo.USERS.PRIVILEGES.find({"command": "standard privileges"}):
+        standard_privileges: dict[str, list[str] | dict[str]] = dt
+    
+    # dict treatment |-------------------------------------------------------------------------------------------------|
+    for i in ['_id', 'command', 'datetime']:
+        del standard_privileges[i]
+    # |----------------------------------------------------------------------------------------------------------------|
+    
+    # remove iamtest of IAM schema |-----------------------------------------------------------------------------------|
+    master: list[str] = [i for i in standard_privileges.keys()]
+    for mst in master:
+        if isinstance(standard_privileges[mst], list):
+            for privil in standard_privileges[mst]:
+                privileges[mst][privil].remove("user_test")
+        else:
+            for coll in [i for i in standard_privileges[mst].keys()]:
+                for privil in standard_privileges[mst][coll]:
+                    privileges[mst][coll][privil].remove("user_test")
+    # |----------------------------------------------------------------------------------------------------------------|
+    
+    # update IAM |-----------------------------------------------------------------------------------------------------|
+    del privileges['_id']
+    mongo.USERS.PRIVILEGES.delete_one({"command": "privileges"})
+    mongo.USERS.PRIVILEGES.insert_one(privileges)
+    # |----------------------------------------------------------------------------------------------------------------|
+    
+    mongo.USERS.REGISTER.delete_one({"username": "user_test"})
+    
+    assert "user_test" not in privileges["USERS"]["PRIVILEGES"]["read"]
+    assert "user_test" not in privileges["USERS"]["PRIVILEGES"]["create"]
+    assert "user_test" not in privileges["USERS"]["PRIVILEGES"]["update"]
+    assert "user_test" not in privileges["USERS"]["PRIVILEGES"]["delete"]
