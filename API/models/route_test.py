@@ -120,7 +120,6 @@ class Model(object):
         
         return wrapper
     
-
     @staticmethod
     def read_collection(func: Callable[..., Any]) -> Callable[..., Callable[..., tuple[list[str] | str, int]]]:
         @wraps(func)
@@ -138,7 +137,6 @@ class Model(object):
         
         return wrapper
     
-
     @staticmethod
     def read_document(func: Callable[..., Any]) -> Callable[..., Callable[..., tuple[list[dict] | str, int]]]:
         @wraps(func)
@@ -161,4 +159,33 @@ class Model(object):
 
             return func(*args, **kwargs)
         
+        return wrapper
+
+    @staticmethod
+    def update_document(func: Callable[..., Any]) -> Callable[..., Callable[..., tuple[str, int]]]:
+        @wraps(func)
+        def wrapper(*args, **kwargs) -> Callable[..., tuple[str, int]]:
+            
+            fields: list[str] = ["database", 'collection', '_id', 'update']
+            
+            # json validation |----------------------------------------------------------------------------------------|
+            valid_json = json_fields_validation(fields)
+            if valid_json[1] != HTTP_202_ACCEPTED:
+                return valid_json
+            # |--------------------------------------------------------------------------------------------------------|
+            
+            # dict validation |----------------------------------------------------------------------------------------|
+            valid_dict: dict[str, Any] = dictionary_validation(request.json['update'])
+            if valid_dict[1] != HTTP_202_ACCEPTED:
+                return valid_dict
+            # |--------------------------------------------------------------------------------------------------------|
+            
+            # fobbiden update fields |---------------------------------------------------------------------------------|
+            forbbiden_fields: list[str] = ["datetime", "_id", "user"]
+            for i in request.json['update']:
+                if i in forbbiden_fields:
+                    return f"UPDATING FIELD {i} IS NOT ALLOWED", HTTP_403_FORBIDDEN
+            # |--------------------------------------------------------------------------------------------------------|
+                        
+            return func(*args, **kwargs)
         return wrapper

@@ -178,3 +178,38 @@ class read(object):
             document_list.append(document)
         
         return parse_json(document_list), HTTP_200_OK
+
+
+class update(object):
+    def __init__(self, username: str) -> None:
+        self.username: str = username
+    
+    def document(self, database: str, collection: str, _id: str, new_values: dict[str, Any]) -> tuple[str, int]:
+        # search database and collection |-----------------------------------------------------------------------------|
+        if database.lower() not in get_db().list_database_names():
+            return "DATABASE NOT FOUND", HTTP_404_NOT_FOUND
+        
+        if collection.lower() not in get_db()[database.lower()].list_collection_names():
+            return "COLLECTION NOT FOUND", HTTP_404_NOT_FOUND
+        # |------------------------------------------------------------------------------------------------------------|
+        
+        # Find document |----------------------------------------------------------------------------------------------|
+        real_document: dict[str, Any] = parse_json(get_db()[database.lower()][collection.lower()].find({"_id": _id}))
+        # |------------------------------------------------------------------------------------------------------------|
+        
+        try:
+            # The method serves to filter only the document that not contain ObjectId(). Case the user input the _id
+            # refer to ObjectId() (ex.: LOG documents), a exception is called. 
+            if real_document[0]["_id"] == _id:
+                validation: tuple[str, int] = field_validation(new_values)
+                if validation[1] == HTTP_200_OK:
+                    # Update |-----------------------------------------------------------------------------------------|
+                    filter: dict[str] = {"_id": _id}
+                    updating: dict = {"$set": new_values}
+                    get_db()[database.lower()][collection.lower()].update_one(filter, updating)
+                    # |------------------------------------------------------------------------------------------------|
+                    return "UPDATE", HTTP_202_ACCEPTED
+                else:
+                    return validation
+        except IndexError:
+            return "DOCUMENT NOT FOUND", HTTP_404_NOT_FOUND
