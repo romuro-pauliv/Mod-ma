@@ -12,6 +12,7 @@ from API.db import create, read, update
 from API.iam import IAM, Privileges
 
 from API.models.route_test import Model
+from API.models.routes.tests.decorators import Model as NewModel
 
 from API.secure.token.IPT_token import required_token, IPToken
 
@@ -35,7 +36,7 @@ def test_token() -> tuple[str, int]:
 # |====================================================================================================================|
 @bp.route('/test-create-database', methods=['POST'])
 @required_token
-@Model.create_database
+@NewModel.Create.database
 @IAM.check_permission("create", "database")
 @privileges_add.database
 def test_create_database() -> tuple[str, int]:
