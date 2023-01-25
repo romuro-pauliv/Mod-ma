@@ -50,7 +50,7 @@ def test_real_register() -> None:
             for coll in [i for i in standard_privileges[mst].keys()]:
                 for privil in standard_privileges[mst][coll]:
                     assert "iamtest" in privileges[mst][coll][privil]
-    # |================================================================================================================|
+
 
 # |====================================================================================================================|
 # | UNAUTHORIZED CREATE DATABASE |=====================================================================================|
@@ -69,6 +69,7 @@ def test_unauthorized_create_database() -> None:
     # + tests +
     assert rtn.text == "REQUIRE PRIVILEGES"
     assert rtn.status_code == 403
+
 
 # |====================================================================================================================|
 # | UNAUTHORIZED CREATE COLLECTION |===================================================================================|
