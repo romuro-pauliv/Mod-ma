@@ -184,7 +184,7 @@ class Model(object):
             forbbiden_fields: list[str] = ["datetime", "_id", "user"]
             for i in request.json['update']:
                 if i in forbbiden_fields:
-                    return f"UPDATING FIELD {i} IS NOT ALLOWED", HTTP_403_FORBIDDEN
+                    return f"UPDATING FIELD [{i.upper()}] IS NOT ALLOWED", HTTP_403_FORBIDDEN
             # |--------------------------------------------------------------------------------------------------------|
                         
             return func(*args, **kwargs)
