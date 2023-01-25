@@ -35,15 +35,12 @@ class Privileges(object):
             ]
     
     def get_keys(self, data: dict[str]) -> list[str]:
-        keys: list[str] = []
-        for d in data.keys():
-            keys.append(d)
-        return keys
+        return [i for i in data.keys()]
     
     def update(self) -> None:
         # GET PRIVILEGES JSON |========================================================================================|
         for dt in self.mongo().USERS.PRIVILEGES.find({"command": "privileges"}):
-            real_privileges: dict = dt        
+            real_privileges: dict = dt
         # |============================================================================================================|
 
         mongo_db_list: list[str] = self.mongo().list_database_names()
@@ -103,7 +100,7 @@ class Privileges(object):
         
         def database(self, func: Callable[..., Any]) -> Callable:
             @wraps(func)
-            def involved(*args, **kwargs) -> Callable[..., Any]:
+            def wrapper(*args, **kwargs) -> Callable[..., Any]:
                 val: tuple[str, int] = func(*args, **kwargs)
 
                 if val[1] == HTTP_201_CREATED:
@@ -146,12 +143,11 @@ class Privileges(object):
                     self.privileges.mongo().USERS.PRIVILEGES.insert_one(real_privileges)
 
                 return val
-            involved.__name__ == func.__name__
-            return involved
+            return wrapper
 
         def collection(self, func: Callable[..., Any]) -> Callable:
             @wraps(func)
-            def involved(*args, **kwargs) -> Callable[..., Any]:
+            def wrapper(*args, **kwargs) -> Callable[..., Any]:
                 val: tuple[str, int] = func(*args, **kwargs)
 
                 if val[1] == HTTP_201_CREATED:
@@ -189,8 +185,7 @@ class Privileges(object):
                     del real_privileges['_id']
                     self.privileges.mongo().USERS.PRIVILEGES.insert_one(real_privileges)
                 return val
-            involved.__name__ == func.__name__
-            return involved
+            return wrapper
         
     class NewUser(object):
         def __init__(self) -> None:
@@ -247,7 +242,7 @@ class IAM(object):
     def check_permission(method: str, structure: list | str) -> Callable:
         def inner(func: Callable[..., Any]) -> Callable:
             @wraps(func)
-            def involved(*args, **kwargs) -> Callable[..., Any]:
+            def wrapper(*args, **kwargs) -> Callable[..., Any]:
                 # GET USERNAME |---------------------------------------------------------------------------------------|
                 username: str = IPToken.Tools.get_username_per_token(request.headers.get("Authorization"))
                 # |----------------------------------------------------------------------------------------------------|
@@ -276,7 +271,5 @@ class IAM(object):
                 # |----------------------------------------------------------------------------------------------------|
                 else:
                     return "BAD REQUEST - STRUCTURE", HTTP_400_BAD_REQUEST            
-            
-            involved.__name__ == func.__name__
-            return involved
+            return wrapper
         return inner

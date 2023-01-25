@@ -39,7 +39,6 @@ def register(email: str, username: str, password: str) -> tuple[str, int]:
         if func_validation[1] == HTTP_400_BAD_REQUEST:
             return func_validation
     # |----------------------------------------------------------------------------------------------------------------|
-
     # Validation in database to verify if not exists the same username or email in database |--------------------------|
     fields: list = ['email', 'username']
     values: list = [email, username]
@@ -52,9 +51,7 @@ def register(email: str, username: str, password: str) -> tuple[str, int]:
     # |----------------------------------------------------------------------------------------------------------------|
 
     # Assemble document |----------------------------------------------------------------------------------------------|
-    id_str: str = str(ObjectId())
     json_package: dict[str, str] = {
-        "_id": id_str,
         "user": "root",
         "datetime": ["UTC", datetime.datetime.utcnow()],
         "username": username,

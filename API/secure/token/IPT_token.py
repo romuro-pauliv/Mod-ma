@@ -8,6 +8,7 @@
 # | Imports |----------------------------------------------------------------------------------------------------------|
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import current_app, request
+from functools import wraps
 
 from typing import Union, Callable, Any
 
@@ -78,6 +79,7 @@ class IPToken(object):
 
 # REQUIRED TOKEN |=====================================================================================================|
 def required_token(func: Callable[..., Any]) -> Callable[..., tuple[str, int] | Any]:
+    @wraps(func)
     def wrapper(*args, **kwargs) -> tuple[str, int] | Any:
         # token authentication |---------------------------------------------------------------------------------------|
         token: str = request.headers.get("Authorization")
@@ -87,8 +89,5 @@ def required_token(func: Callable[..., Any]) -> Callable[..., tuple[str, int] | 
             return token_auth
         # |------------------------------------------------------------------------------------------------------------|
         return func(*args, **kwargs)
-
-    # Renaming the function name:
-    wrapper.__name__ = func.__name__
     return wrapper
 # |====================================================================================================================|
