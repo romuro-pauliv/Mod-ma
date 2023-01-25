@@ -8,7 +8,7 @@
 
 # imports |------------------------------------------------------------------------------------------------------------|
 from API.status import *
-from API.db import create, read
+from API.db import create, read, update
 from API.iam import IAM, Privileges
 
 from API.models.route_test import Model
@@ -122,3 +122,17 @@ def test_read_document() -> tuple[list[dict] | str, int]:
     response: dict[str] = request.json
     # |----------------------------------------------------------------------------------------------------------------|
     return read(srnm).document(response['database'], response['collection'], response['filter'])
+
+# |====================================================================================================================|
+# | TEST UPDATE DOCUMENT |=============================================================================================|
+# |====================================================================================================================|
+@bp.route("/test-update-document", methods=["PUT"])
+@required_token
+@Model.update_document
+@IAM.check_permission("update", "especific")
+def test_update_document() -> tuple[str, int]:
+    # GET USERNAME AND JSON REQUEST |----------------------------------------------------------------------------------|
+    srnm: str = IPToken.Tools.get_username_per_token(request.headers.get("Authorization"))
+    response: dict[str] = request.json
+    # |----------------------------------------------------------------------------------------------------------------|
+    return update(srnm).document(response['database'], response['collection'], response['_id'], response['update'])

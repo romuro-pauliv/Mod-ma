@@ -6,3 +6,7 @@ COMMAND_LOGOUT: str = "--logout"
 COMMAND_READ_DATABASE: str = "--read database"
 COMMAND_READ_COLLECTION: str = "--read collection"
 COMMAND_READ_DOCUMENT: str = "--read documents"
+
+COMMAND_CREATE_DATABASE: str = "--create database"
+COMMAND_CREATE_COLLECTION: str = "--create collection"
+COMMAND_CREATE_DOCUMENT: str = "--create document"

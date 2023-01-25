@@ -28,6 +28,8 @@ create_document_route: str = "/tests/test-create-document"
 read_database_route: str = "/tests/test-read-database"
 read_collection_route: str = '/tests/test-read-collection'
 read_documents_route: str = '/tests/test-read-document'
+
+update_document_route: str = "/tests/test-update-document"
 # |====================================================================================================================|
 
 # MONGO CLIENT |=======================================================================================================|
@@ -55,4 +57,12 @@ def header_base64_register(username: str, password: str, email: str) -> str:
 def token_return(username: str, password: str) -> str:
     header: dict[str] = {"Authorization": header_base64_login(username, password)}
     return json.loads(requests.post(f"{root_route}{login_route}", headers=header).text)['token']
+
+
+def get_id(filter: dict[str], database: str, collection: str) -> str:
+    _id_doc_iterable: str = mongo[database][collection].find(filter)
+    _id_doc: str = ""
+    for doc in _id_doc_iterable:
+        _id_doc: str = doc['_id']
+    return _id_doc
 # |--------------------------------------------------------------------------------------------------------------------|
