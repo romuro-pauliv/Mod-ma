@@ -36,7 +36,7 @@ class Validate(object):
             # + fields +
             for key in archive.keys():
                 if len(key) < 4:
-                    return "THE INFORMED FIELD MUST BE MORE THAN 4 CHARACTERS", HTTP_404_NOT_FOUND
+                    return "THE INFORMED FIELD MUST BE MORE THAN 4 CHARACTERS", HTTP_400_BAD_REQUEST
             
             return "VALID JSON", HTTP_202_ACCEPTED
     # |================================================================================================================|

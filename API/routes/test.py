@@ -72,7 +72,7 @@ def test_create_collection() -> tuple[str, int]:
 # |====================================================================================================================|
 @bp.route("/test-create-document", methods=["POST"])
 @required_token
-@Model.create_document
+@NewModel.Create.document
 @IAM.check_permission("create", "especific")
 def test_create_document() -> tuple[str, int]:
 
