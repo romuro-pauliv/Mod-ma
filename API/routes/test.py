@@ -54,7 +54,7 @@ def test_create_database() -> tuple[str, int]:
 # |====================================================================================================================|
 @bp.route("/test-create-collection", methods=['POST'])
 @required_token
-@Model.create_collection
+@NewModel.Create.collection
 @IAM.check_permission("create", "collection")
 @privileges_add.collection
 def test_create_collection() -> tuple[str, int]:

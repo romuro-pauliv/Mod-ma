@@ -44,19 +44,8 @@ class Validate(object):
     # | STRING |=======================================================================================================|
     class STRING(object):
         @staticmethod
-        def value_must_be_str(value: str) -> tuple[str, int]:
+        def str_type(value: str) -> tuple[str, int]:
             if not isinstance(value, str):
-                return "ONLY STRING ARE ALLOWED", HTTP_400_BAD_REQUEST
-            return "VALID TYPE", HTTP_202_ACCEPTED
-        
-        @staticmethod
-        def type_(string: Union[str, list[str]]) -> tuple[str, int]:
-            if isinstance(string, list):
-                for strg in string:
-                    if not isinstance(strg, str):
-                        return "ONLY STRING ARE ALLOWED", HTTP_400_BAD_REQUEST
-                return "VALID TYPE", HTTP_202_ACCEPTED
-            elif not isinstance(string, str):
                 return "ONLY STRING ARE ALLOWED", HTTP_400_BAD_REQUEST
             return "VALID TYPE", HTTP_202_ACCEPTED
         
