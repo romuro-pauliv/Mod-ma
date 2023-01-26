@@ -11,8 +11,7 @@ from API.status import *
 from API.db import create, read, update
 from API.iam import IAM, Privileges
 
-from API.models.route_test import Model
-from API.models.routes.tests.decorators import Model as NewModel
+from API.models.routes.tests.decorators import Model
 
 from API.secure.token.IPT_token import required_token, IPToken
 
@@ -36,7 +35,7 @@ def test_token() -> tuple[str, int]:
 # |====================================================================================================================|
 @bp.route('/test-create-database', methods=['POST'])
 @required_token
-@NewModel.Create.database
+@Model.Create.database
 @IAM.check_permission("create", "database")
 @privileges_add.database
 def test_create_database() -> tuple[str, int]:
@@ -54,7 +53,7 @@ def test_create_database() -> tuple[str, int]:
 # |====================================================================================================================|
 @bp.route("/test-create-collection", methods=['POST'])
 @required_token
-@Model.create_collection
+@Model.Create.collection
 @IAM.check_permission("create", "collection")
 @privileges_add.collection
 def test_create_collection() -> tuple[str, int]:
@@ -72,7 +71,7 @@ def test_create_collection() -> tuple[str, int]:
 # |====================================================================================================================|
 @bp.route("/test-create-document", methods=["POST"])
 @required_token
-@Model.create_document
+@Model.Create.document
 @IAM.check_permission("create", "especific")
 def test_create_document() -> tuple[str, int]:
 
@@ -101,7 +100,7 @@ def test_read_database() -> tuple[list[str], int]:
 # |====================================================================================================================|
 @bp.route("/test-read-collection", methods=["GET"])
 @required_token
-@Model.read_collection
+@Model.Read.collection
 @IAM.check_permission("read", "collection")
 def test_read_collection() -> tuple[list[str] | str, int]:
     # GET USERNAME AND JSON REQUEST |----------------------------------------------------------------------------------|
@@ -115,7 +114,7 @@ def test_read_collection() -> tuple[list[str] | str, int]:
 # |====================================================================================================================|
 @bp.route("/test-read-document", methods=["GET"])
 @required_token
-@Model.read_document
+@Model.Read.document
 @IAM.check_permission("read", "especific")
 def test_read_document() -> tuple[list[dict] | str, int]:
     # GET USERNAME AND JSON REQUEST |----------------------------------------------------------------------------------|
@@ -129,7 +128,7 @@ def test_read_document() -> tuple[list[dict] | str, int]:
 # |====================================================================================================================|
 @bp.route("/test-update-document", methods=["PUT"])
 @required_token
-@Model.update_document
+@Model.Update.document
 @IAM.check_permission("update", "especific")
 def test_update_document() -> tuple[str, int]:
     # GET USERNAME AND JSON REQUEST |----------------------------------------------------------------------------------|

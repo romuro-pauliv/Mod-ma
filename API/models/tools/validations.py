@@ -36,27 +36,29 @@ class Validate(object):
             # + fields +
             for key in archive.keys():
                 if len(key) < 4:
-                    return "THE INFORMED FIELD MUST BE MORE THAN 4 CHARACTERS", HTTP_404_NOT_FOUND
+                    return "THE INFORMED FIELD MUST BE MORE THAN 4 CHARACTERS", HTTP_400_BAD_REQUEST
             
             return "VALID JSON", HTTP_202_ACCEPTED
+        
+        @staticmethod
+        def is_json(archive: dict[str, Any]) -> tuple[str, int]:
+            if not isinstance(archive, dict):
+                return "ONLY JSON FILTER ARE ALLOWED", HTTP_400_BAD_REQUEST
+            return "VALID JSON", HTTP_202_ACCEPTED
+        
+        @staticmethod
+        def forbidden_fields(archive: dict[str, Any], forbidden_fields: list[str]) -> tuple[str, int]:
+            for field in archive:
+                if field in forbidden_fields:
+                    return f"UPDATING FIELD [{field.upper()}] IS NOT ALLOWED", HTTP_403_FORBIDDEN
+            return "VALID FIELDS", HTTP_202_ACCEPTED
     # |================================================================================================================|
     
     # | STRING |=======================================================================================================|
     class STRING(object):
         @staticmethod
-        def value_must_be_str(value: str) -> tuple[str, int]:
+        def str_type(value: str) -> tuple[str, int]:
             if not isinstance(value, str):
-                return "ONLY STRING ARE ALLOWED", HTTP_400_BAD_REQUEST
-            return "VALID TYPE", HTTP_202_ACCEPTED
-        
-        @staticmethod
-        def type_(string: Union[str, list[str]]) -> tuple[str, int]:
-            if isinstance(string, list):
-                for strg in string:
-                    if not isinstance(strg, str):
-                        return "ONLY STRING ARE ALLOWED", HTTP_400_BAD_REQUEST
-                return "VALID TYPE", HTTP_202_ACCEPTED
-            elif not isinstance(string, str):
                 return "ONLY STRING ARE ALLOWED", HTTP_400_BAD_REQUEST
             return "VALID TYPE", HTTP_202_ACCEPTED
         
