@@ -39,6 +39,19 @@ class Validate(object):
                     return "THE INFORMED FIELD MUST BE MORE THAN 4 CHARACTERS", HTTP_400_BAD_REQUEST
             
             return "VALID JSON", HTTP_202_ACCEPTED
+        
+        @staticmethod
+        def is_json(archive: dict[str, Any]) -> tuple[str, int]:
+            if not isinstance(archive, dict):
+                return "ONLY JSON FILTER ARE ALLOWED", HTTP_400_BAD_REQUEST
+            return "VALID JSON", HTTP_202_ACCEPTED
+        
+        @staticmethod
+        def forbidden_fields(archive: dict[str, Any], forbidden_fields: list[str]) -> tuple[str, int]:
+            for field in archive:
+                if field in forbidden_fields:
+                    return f"UPDATING FIELD [{field.upper()}] IS NOT ALLOWED", HTTP_403_FORBIDDEN
+            return "VALID FIELDS", HTTP_202_ACCEPTED
     # |================================================================================================================|
     
     # | STRING |=======================================================================================================|
