@@ -213,3 +213,20 @@ class update(object):
                     return validation
         except IndexError:
             return "DOCUMENT NOT FOUND", HTTP_404_NOT_FOUND
+
+
+class delete(object):
+    def __init__(self, username: str) -> None:
+        self.username: str = username
+        
+    def database(self, database: str) -> tuple[str, int]:
+        # | Search database |------------------------------------------------------------------------------------------|
+        if database.lower() not in get_db().list_database_names():
+            return "DATABASE NOT FOUND", HTTP_404_NOT_FOUND
+        # |------------------------------------------------------------------------------------------------------------|
+        
+        # | Delete |---------------------------------------------------------------------------------------------------|
+        get_db().drop_database(database)
+        # |------------------------------------------------------------------------------------------------------------|
+        
+        return "ACCEPTED", HTTP_202_ACCEPTED

@@ -77,5 +77,3 @@ def login(username: str, password: str) -> tuple[str, int]:
 
     return "SUCCESSFULLY", HTTP_202_ACCEPTED
 # |====================================================================================================================|
-
-    
