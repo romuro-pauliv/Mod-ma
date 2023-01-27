@@ -7,11 +7,15 @@
 
 # + imports +----------------------------------------------------------------------------------------------------------+
 from API.auth import register, login
+
 from API.secure.base.decrypt_base64 import Decrypt
 from API.secure.token.IPT_token import IPToken
+
 from API.status import *
-from API.log import LogAuth
+
 from API.iam import Privileges
+
+from API.log.auth.decorator import LogAuth
 
 from flask import Blueprint, request, current_app
 from typing import Union
@@ -41,7 +45,7 @@ def REGISTER() -> tuple[str, int]:
 
 # Login route |--------------------------------------------------------------------------------------------------------|
 @bp.route("/login", methods=['POST'])
-@LogAuth.login_route
+@LogAuth.login
 def LOGIN() -> tuple[dict, int]:
     # decode auth base64 |---------------------------------------------------------------------------------------------|
     auth_list: auth_list_typing = Decrypt.Base64.read_authentication(request.headers.get("Authorization"), "login")
