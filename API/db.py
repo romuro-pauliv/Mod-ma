@@ -219,16 +219,28 @@ class delete(object):
     def __init__(self, username: str) -> None:
         self.username: str = username
     
-    def tools(self, database: str) -> None:
+    def delete_database_privileges(self, database: str) -> None:
         for dt in get_db().USERS.PRIVILEGES.find({"command": "privileges"}):
-            privileges: dict[str, Union[list[str], dict[str]]] = dt
+            privileges_db: dict[str, Union[list[str], dict[str]]] = dt
         
         # | Update |---------------------------------------------------------------------------------------------------|
-        del privileges[database]
-        del privileges["_id"]
+        del privileges_db[database]
+        del privileges_db["_id"]
         
         get_db().USERS.PRIVILEGES.delete_one({"command": "privileges"})
-        get_db().USERS.PRIVILEGES.insert_one(privileges)
+        get_db().USERS.PRIVILEGES.insert_one(privileges_db)
+        # |------------------------------------------------------------------------------------------------------------|
+    
+    def delete_collection_privileges(self, database: str, collection: str) -> None:
+        for dt in get_db().USERS.PRIVILEGES.find({"command": "privileges"}):
+            privileges_cl: dict[str, Union[list[str], dict[str]]] = dt
+        
+        # | Update |---------------------------------------------------------------------------------------------------|
+        del privileges_cl[database][collection]
+        del privileges_cl["_id"]
+        
+        get_db().USERS.PRIVILEGES.delete_one({"command": "privileges"})
+        get_db().USERS.PRIVILEGES.insert_one(privileges_cl)
         # |------------------------------------------------------------------------------------------------------------|
         
     def database(self, database: str) -> tuple[str, int]:
@@ -237,9 +249,27 @@ class delete(object):
             return "DATABASE NOT FOUND", HTTP_404_NOT_FOUND
         # |------------------------------------------------------------------------------------------------------------|
         # | Delete |---------------------------------------------------------------------------------------------------|
-        get_db().drop_database(database)
+        get_db().drop_database(database.lower())
         # |------------------------------------------------------------------------------------------------------------|
         # | Del database privilege |-----------------------------------------------------------------------------------|
-        self.tools(database)
+        self.delete_database_privileges(database.lower())
+        # |------------------------------------------------------------------------------------------------------------|
+        return "ACCEPTED", HTTP_202_ACCEPTED
+    
+    def collection(self, database: str, collection: str) -> tuple[str, int]:
+        # | Search database and collection |---------------------------------------------------------------------------|
+        if database.lower() not in get_db().list_database_names():
+            return "DATABASE NOT FOUND", HTTP_404_NOT_FOUND
+        
+        if collection.lower() not in get_db()[database.lower()].list_collection_names():
+            return "COLLECTION NOT FOUND", HTTP_404_NOT_FOUND
+        # |------------------------------------------------------------------------------------------------------------|
+        
+        # | Delete |---------------------------------------------------------------------------------------------------|
+        get_db()[database.lower()].drop_collection(collection.lower())
+        # |------------------------------------------------------------------------------------------------------------|
+        
+        # | Del collection privileges |--------------------------------------------------------------------------------|
+        self.delete_collection_privileges(database.lower(), collection.lower())
         # |------------------------------------------------------------------------------------------------------------|
         return "ACCEPTED", HTTP_202_ACCEPTED
