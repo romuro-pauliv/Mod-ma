@@ -213,3 +213,33 @@ class update(object):
                     return validation
         except IndexError:
             return "DOCUMENT NOT FOUND", HTTP_404_NOT_FOUND
+
+
+class delete(object):
+    def __init__(self, username: str) -> None:
+        self.username: str = username
+    
+    def tools(self, database: str) -> None:
+        for dt in get_db().USERS.PRIVILEGES.find({"command": "privileges"}):
+            privileges: dict[str, Union[list[str], dict[str]]] = dt
+        
+        # | Update |---------------------------------------------------------------------------------------------------|
+        del privileges[database]
+        del privileges["_id"]
+        
+        get_db().USERS.PRIVILEGES.delete_one({"command": "privileges"})
+        get_db().USERS.PRIVILEGES.insert_one(privileges)
+        # |------------------------------------------------------------------------------------------------------------|
+        
+    def database(self, database: str) -> tuple[str, int]:
+        # | Search database |------------------------------------------------------------------------------------------|
+        if database.lower() not in get_db().list_database_names():
+            return "DATABASE NOT FOUND", HTTP_404_NOT_FOUND
+        # |------------------------------------------------------------------------------------------------------------|
+        # | Delete |---------------------------------------------------------------------------------------------------|
+        get_db().drop_database(database)
+        # |------------------------------------------------------------------------------------------------------------|
+        # | Del database privilege |-----------------------------------------------------------------------------------|
+        self.tools(database)
+        # |------------------------------------------------------------------------------------------------------------|
+        return "ACCEPTED", HTTP_202_ACCEPTED

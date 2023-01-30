@@ -15,7 +15,6 @@ from .validation.login_validation import Login
 
 from typing import Callable
 
-from bson.objectid import ObjectId
 import datetime
 # +--------------------------------------------------------------------------------------------------------------------+
 
@@ -64,11 +63,7 @@ def register(email: str, username: str, password: str) -> tuple[str, int]:
 # |====================================================================================================================|
 
 # LOGIN |==============================================================================================================|
-def login(username: str, password: str) -> tuple[str, int]:
-    # tools |----------------------------------------------------------------------------------------------------------|
-    tools = Login
-    # |----------------------------------------------------------------------------------------------------------------|
-    
+def login(username: str, password: str) -> tuple[str, int]:    
     # find password |--------------------------------------------------------------------------------------------------|
     passwd: tuple[str, int] = Login.find_password(username)
     if passwd[1] == HTTP_403_FORBIDDEN:
@@ -82,5 +77,3 @@ def login(username: str, password: str) -> tuple[str, int]:
 
     return "SUCCESSFULLY", HTTP_202_ACCEPTED
 # |====================================================================================================================|
-
-    

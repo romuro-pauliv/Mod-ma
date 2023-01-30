@@ -8,7 +8,7 @@
 
 # imports |------------------------------------------------------------------------------------------------------------|
 from API.status import *
-from API.db import create, read, update
+from API.db import create, read, update, delete
 from API.iam import IAM, Privileges
 
 from API.models.routes.tests.decorators import Model
@@ -136,3 +136,18 @@ def test_update_document() -> tuple[str, int]:
     response: dict[str] = request.json
     # |----------------------------------------------------------------------------------------------------------------|
     return update(srnm).document(response['database'], response['collection'], response['_id'], response['update'])
+
+
+# |====================================================================================================================|
+# | TEST DELETE DATABASE |=============================================================================================|
+# |====================================================================================================================|
+@bp.route("/test-delete-database", methods=["DELETE"])
+@required_token
+@Model.Delete.database
+@IAM.check_permission("delete", "database")
+def test_delete_database() -> tuple[str, int]:
+    # GET USERNAME AND JSON REQUEST |----------------------------------------------------------------------------------|
+    srmn: str = IPToken.Tools.get_username_per_token(request.headers.get("Authorization"))
+    response: dict[str] = request.json
+    # |----------------------------------------------------------------------------------------------------------------|
+    return delete(srmn).database(response["database"])
