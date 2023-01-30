@@ -32,6 +32,7 @@ read_documents_route: str = '/tests/test-read-document'
 update_document_route: str = "/tests/test-update-document"
 
 delete_database_route: str = "/tests/test-delete-database"
+delete_collection_route: str = "/tests/test-delete-collection"
 # |====================================================================================================================|
 
 # MONGO CLIENT |=======================================================================================================|
