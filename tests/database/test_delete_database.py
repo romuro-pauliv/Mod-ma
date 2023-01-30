@@ -75,6 +75,82 @@ def test_delete_database_wrong_json_field() -> None:
 
 
 # |====================================================================================================================|
+# | DATABASE NOT FOUND |===============================================================================================|
+# |====================================================================================================================|
+def test_not_found_delete_database() -> None:
+    token: str = token_return("admin", "123!Admin")
+    
+    # + header +
+    header: dict[str] = {"Authorization": f"Token {token}"}
+    
+    # + json +
+    json_body: dict[str] = {"database": "not-found-database"}
+    
+    # + request +
+    rtn = requests.delete(f"{root_route}{delete_database_route}", headers=header, json=json_body)
+    
+    # + tests +
+    assert rtn.text == "DATABASE NOT FOUND"
+    assert rtn.status_code == 404
+
+
+# |====================================================================================================================|
+# | WITHOUT JSON |=====================================================================================================|
+# |====================================================================================================================|
+def test_without_json_delete_database() -> None:
+    token: str = token_return("admin", "123!Admin")
+    
+    # + header +
+    header: dict[str] = {"Authorization": f"Token {token}"}
+    
+    # + request +
+    rtn = requests.delete(f"{root_route}{delete_database_route}", headers=header)
+    
+    # + tests +
+    assert rtn.status_code == 400
+
+
+# |====================================================================================================================|
+# | NO JSON |==========================================================================================================|
+# |====================================================================================================================|
+def test_no_json_delete_database() -> None:
+    token: str = token_return("admin", "123!Admin")
+    
+    # + header +
+    header: dict[str] = {"Authorization": f"Token {token}"}
+    
+    # + json +
+    json_body: dict[str] = {"database": ["testing", "method"]}
+    
+    # + request +
+    rtn = requests.delete(f"{root_route}{delete_database_route}", headers=header, json=json_body)
+    
+    # + tests +
+    assert rtn.status_code == 400
+    assert rtn.text == "ONLY STRING ARE ALLOWED"
+
+
+# |====================================================================================================================|
+# | WITHOUT STRING |===================================================================================================|
+# |====================================================================================================================|
+def test_without_string_delete_database() -> None:
+    token: str = token_return("admin", "123!Admin")
+    
+    # + header +
+    header: dict[str] = {"Authorization": f"Token {token}"}
+    
+    # + json +
+    json_body: dict[str] = {"database": 123133212322123}
+    
+    # + request +
+    rtn = requests.delete(f"{root_route}{delete_database_route}", headers=header, json=json_body)
+    
+    # + tests +
+    assert rtn.status_code == 400
+    assert rtn.text == "ONLY STRING ARE ALLOWED"
+
+
+# |====================================================================================================================|
 # | DELETE DATABASE |==================================================================================================|
 # |====================================================================================================================|
 def test_delete_database() -> None:

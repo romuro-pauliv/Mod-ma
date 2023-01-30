@@ -1,7 +1,0 @@
-database ->                         DATABASE NOT FOUND                                  404     T
-database ->                         ACCEPTED                                            202     T
-
-Models.Validate.JSON.fields  ->     BAD REQUEST - KEY ERROR                             400     T
-Models.Validate.JSON.format_ ->     ONLY JSON ARE ALLOWED                               400     T
-Models.Validate.JSON.format_ ->     THE INFORMED FIELD MUST BE MORE THAN 4 CHARACTERS   400     F
-Models.validate.STRING.str_type->   ONLY STRING ARE ALLOWED                             400     T
