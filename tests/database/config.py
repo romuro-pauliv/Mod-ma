@@ -33,6 +33,7 @@ update_document_route: str = "/tests/test-update-document"
 
 delete_database_route: str = "/tests/test-delete-database"
 delete_collection_route: str = "/tests/test-delete-collection"
+delete_document_route: str = "/tests/test-delete-document"
 # |====================================================================================================================|
 
 # MONGO CLIENT |=======================================================================================================|
