@@ -46,6 +46,21 @@ def test_create_database() -> None:
     assert rtn.status_code == 201
 
 
+def test_create_collection() -> None:
+    token: str = token_return("admin", "123!Admin")
+    # + header +
+    header: dict[str] = {"Authorization": f"Token {token}"}
+    
+    # + json +
+    json_body: dict[str] = {"database": "iamtest", "collection": "iamtest"}
+    
+    # + request +
+    rtn = requests.post(f"{root_route}{create_collection_route}", headers=header, json=json_body)
+    
+    # + test +
+    assert rtn.text == "CREATE"
+    assert rtn.status_code == 201
+
 # |====================================================================================================================|
 # | UNAUTHORIZED DELETE DATABASE |=====================================================================================|
 # |====================================================================================================================|
@@ -64,6 +79,68 @@ def test_unauthorized_delete_database() -> None:
     assert rtn.text == "REQUIRE PRIVILEGES"
     assert rtn.status_code == 403
 
+# |====================================================================================================================|
+# | UNAUTHORIZED DELETE COLLECTION |===================================================================================|
+# |====================================================================================================================|
+def test_unauthorized_delete_collection() -> None:
+    token: str = token_return("iamtest", "123!Iamtest")
+    # + header +
+    header: dict[str] = {"Authorization": f"Token {token}"}
+    
+    # + json +
+    json_body: dict[str] = {"database": "iamtest", "collection": "iamtest"}
+    
+    # + request +
+    rtn = requests.delete(f"{root_route}{delete_collection_route}", headers=header, json=json_body)
+    
+    # + tests +
+    assert rtn.text == "REQUIRE PRIVILEGES"
+    assert rtn.status_code == 403
+
+
+# |====================================================================================================================|
+# | UNAUTHORIZED DELETE COLLECTION |===================================================================================|
+# |====================================================================================================================|
+def test_authorized_delete_collection() -> None:
+    token: str = token_return("iamtest", "123!Iamtest")
+    # + header +
+    header: dict[str] = {"Authorization": f"Token {token}"}
+    
+    # + json +
+    json_body: dict[str] = {"database": "iamtest", "collection": "iamtest"}
+    
+    # | IAM MODIFY |---------------------------------------------------------------------------------------------------|
+    for df in mongo.USERS.PRIVILEGES.find({"command": "privileges"}):
+        privileges: dict[str, list[str] | dict[str]] = df
+    
+    privileges["collection"]["delete"].append("iamtest")
+    
+    # | UPDATE |-------------------------------------------------------------------------------------------------------|
+    mongo.USERS.PRIVILEGES.delete_one({"command": "privileges"})
+    del privileges["_id"]
+    mongo.USERS.PRIVILEGES.insert_one(privileges)
+    # |----------------------------------------------------------------------------------------------------------------|
+    
+    # + request +
+    rtn = requests.delete(f"{root_route}{delete_collection_route}", headers=header, json=json_body)
+    
+    # + tests +
+    assert rtn.text == "ACCEPTED"
+    assert rtn.status_code == 202
+    
+    # | RESET |--------------------------------------------------------------------------------------------------------|
+    for df in mongo.USERS.PRIVILEGES.find({"command": "privileges"}):
+        privileges_reset: dict[str, list[str] | dict[str]] = df
+    
+    privileges["collection"]["delete"].remove("iamtest")
+    
+    # | UPDATE |-------------------------------------------------------------------------------------------------------|
+    mongo.USERS.PRIVILEGES.delete_one({"command": "privileges"})
+    del privileges["_id"]
+    mongo.USERS.PRIVILEGES.insert_one(privileges)
+    # |----------------------------------------------------------------------------------------------------------------|
+    
+    
 # |====================================================================================================================|
 # | AUTHORIZED DELETE DATABASE |=======================================================================================|
 # |====================================================================================================================|
