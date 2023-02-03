@@ -166,3 +166,18 @@ def test_delete_collection() -> tuple[str, int]:
     response: dict[str] = request.json
     # |----------------------------------------------------------------------------------------------------------------|
     return delete(srmn).collection(response['database'], response['collection'])
+
+
+# |====================================================================================================================|
+# | TEST DELETE DOCUMENT |=============================================================================================|
+# |====================================================================================================================|
+@bp.route("/test-delete-document", methods=["DELETE"])
+@required_token
+@Model.Delete.document
+@IAM.check_permission("delete", "especific")
+def test_delete_document() -> tuple[str, int]:
+    # GET USERNAME AND JSON REQUEST |----------------------------------------------------------------------------------|
+    srmn: str = IPToken.Tools.get_username_per_token(request.headers.get("Authorization"))
+    response: dict[str] = request.json
+    # |----------------------------------------------------------------------------------------------------------------|
+    return delete(srmn).document(response['database'], response['collection'], response['doc_id'])

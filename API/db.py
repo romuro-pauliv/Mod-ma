@@ -273,3 +273,27 @@ class delete(object):
         self.delete_collection_privileges(database.lower(), collection.lower())
         # |------------------------------------------------------------------------------------------------------------|
         return "ACCEPTED", HTTP_202_ACCEPTED
+    
+    def document(self, database: str, collection: str, _id: str) -> tuple[str, int]:
+        # | Search database and collection |---------------------------------------------------------------------------|
+        if database.lower() not in get_db().list_database_names():
+            return "DATABASE NOT FOUND", HTTP_404_NOT_FOUND
+        
+        if collection.lower() not in get_db()[database.lower()].list_collection_names():
+            return "COLLECTION NOT FOUND", HTTP_404_NOT_FOUND
+        # |------------------------------------------------------------------------------------------------------------|
+        
+        # Find document |----------------------------------------------------------------------------------------------|
+        real_document: dict[str, Any] = parse_json(get_db()[database.lower()][collection.lower()].find({"_id": _id}))
+        # |------------------------------------------------------------------------------------------------------------|
+        
+        try:
+            # The method serves to filter only the document that not contain ObjectId(). Case the user input the _id
+            # refer to ObjectId() (ex.: LOG documents), a exception is called. 
+            if real_document[0]["_id"] == _id:
+                # | Delete |-------------------------------------------------------------------------------------------|
+                get_db()[database.lower()][collection.lower()].delete_one({"_id": _id})
+                # |----------------------------------------------------------------------------------------------------|    
+                return "ACCEPTED", HTTP_202_ACCEPTED
+        except IndexError:
+            return "DOCUMENT NOT FOUND", HTTP_404_NOT_FOUND
