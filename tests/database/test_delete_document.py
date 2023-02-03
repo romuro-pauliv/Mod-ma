@@ -111,7 +111,118 @@ def test_delete_document_wrong_json_field() -> None:
     # + tests +
     assert rtn.text == "BAD REQUEST - KEY ERROR"
     assert rtn.status_code == 400
+
+# |====================================================================================================================|
+# | DATABASE NOT FOUND |===============================================================================================|
+# |====================================================================================================================|
+def test_delete_document_with_database_not_found() -> None:
+    token: str = token_return("admin", "123!Admin")
     
+    # + header +
+    header: dict[str] = {"Authorization": f"Token {token}"}
+    
+    
+    # + json +
+    json_body: dict[str] = {
+        "database": "dt-not-found",
+        "collection": "test-delete",
+        "doc_id": get_id({"command": "testing"}, "test-delete", "test-delete")}
+    
+    # + request + 
+    rtn = requests.delete(f"{root_route}{delete_document_route}", headers=header, json=json_body)
+    
+    # + test +
+    assert rtn.text == "BAD REQUEST - DATABASE OR COLLECTION NOT FOUND"
+    assert rtn.status_code == 400
+
+
+# |====================================================================================================================|
+# | COLLECTION NOT FOUND |=============================================================================================|
+# |====================================================================================================================|
+def test_delete_document_with_collection_not_found() -> None:
+    token: str = token_return("admin", "123!Admin")
+    
+    # + header +
+    header: dict[str] = {"Authorization": f"Token {token}"}
+    
+    
+    # + json +
+    json_body: dict[str] = {
+        "database": "test-delete",
+        "collection": "coll-not-found",
+        "doc_id": get_id({"command": "testing"}, "test-delete", "test-delete")}
+    
+    # + request + 
+    rtn = requests.delete(f"{root_route}{delete_document_route}", headers=header, json=json_body)
+    
+    # + test +
+    assert rtn.text == "BAD REQUEST - DATABASE OR COLLECTION NOT FOUND"
+    assert rtn.status_code == 400
+
+
+# |====================================================================================================================|
+# | WRONG ID |=========================================================================================================|
+# |====================================================================================================================|
+def test_delete_document_with_wrong_id() -> None:
+    token: str = token_return("admin", "123!Admin")
+    
+    # + header +
+    header: dict[str] = {"Authorization": f"Token {token}"}
+    
+    # + json +
+    json_body: dict[str] = {
+        "database": "test-delete",
+        "collection": "test-delete",
+        "doc_id": "1232321312312323"
+    }
+    
+    # + request +
+    rtn = requests.delete(f"{root_route}{delete_document_route}", headers=header, json=json_body)
+    
+    # + test +
+    assert rtn.text == "DOCUMENT NOT FOUND"
+    assert rtn.status_code == 404
+
+
+# |====================================================================================================================|
+# | WITHOUT JSON |=====================================================================================================|
+# |====================================================================================================================|
+def test_delete_document_without_json() -> None:
+    token: str = token_return("admin", "123!Admin")
+    
+    # + header +
+    header: dict[str] = {"Authorization": f"Token {token}"}
+    
+    # + request +
+    rtn = requests.delete(f"{root_route}{delete_document_route}", headers=header)
+    
+    # + tests +
+    assert rtn.status_code == 400
+
+
+# |====================================================================================================================|
+# | WRONG FORMAT IN DOC_ID |===========================================================================================|
+# |====================================================================================================================|
+def test_delete_document_with_wrong_format_in_doc_id() -> None:
+    token: str = token_return("admin", "123!Admin")
+    
+    # + header +
+    header: dict[str] = {"Authorization": f"Token {token}"}
+    
+    # + json +
+    json_body: dict[str] = {
+        "database": "test-delete",
+        "collection": "test-delete",
+        "doc_id": ["testng", "mode", 12332312]
+    }
+    
+    # + request +
+    rtn = requests.delete(f"{root_route}{delete_document_route}", headers=header, json=json_body)
+    
+    # + test +
+    assert rtn.text == "ONLY STRING ARE ALLOWED"
+    assert rtn.status_code == 400
+
 # |====================================================================================================================|
 # | DELETE DOCUMENTS |=================================================================================================|
 # |====================================================================================================================|

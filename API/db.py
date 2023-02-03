@@ -283,8 +283,17 @@ class delete(object):
             return "COLLECTION NOT FOUND", HTTP_404_NOT_FOUND
         # |------------------------------------------------------------------------------------------------------------|
         
-        # | Delete |---------------------------------------------------------------------------------------------------|
-        get_db()[database.lower()][collection.lower()].delete_one({"_id": _id})
+        # Find document |----------------------------------------------------------------------------------------------|
+        real_document: dict[str, Any] = parse_json(get_db()[database.lower()][collection.lower()].find({"_id": _id}))
         # |------------------------------------------------------------------------------------------------------------|
         
-        return "ACCEPTED", HTTP_202_ACCEPTED
+        try:
+            # The method serves to filter only the document that not contain ObjectId(). Case the user input the _id
+            # refer to ObjectId() (ex.: LOG documents), a exception is called. 
+            if real_document[0]["_id"] == _id:
+                # | Delete |-------------------------------------------------------------------------------------------|
+                get_db()[database.lower()][collection.lower()].delete_one({"_id": _id})
+                # |----------------------------------------------------------------------------------------------------|    
+                return "ACCEPTED", HTTP_202_ACCEPTED
+        except IndexError:
+            return "DOCUMENT NOT FOUND", HTTP_404_NOT_FOUND
