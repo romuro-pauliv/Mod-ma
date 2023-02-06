@@ -16,3 +16,13 @@ ROUTE_READ_DATABASE: str = "/tests/test-read-database"
 ROUTE_READ_COLLECTION: str = "/tests/test-read-collection"
 ROUTE_READ_DOCUMENT: str = "/tests/test-read-document"
 # |====================================================================================================================|
+
+# UPDATE |=============================================================================================================|
+ROUTE_UPDATE_DOCUMENT: str = "/tests/test-update-document"
+# |====================================================================================================================|
+
+# DELETE |=============================================================================================================|
+ROUTE_DELETE_DATABASE: str = "/tests/test-delete-database"
+ROUTE_DELETE_COLLLECTION: str = "/tests/test-delete-collection"
+ROUTE_DELETE_DOCUMENT: str = "/tests/test-delete-document"
+# |====================================================================================================================|
