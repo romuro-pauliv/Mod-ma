@@ -9,7 +9,7 @@
 from API.auth import register, login
 
 from API.secure.base.decrypt_base64 import Decrypt
-from API.secure.token.IPT_token import IPToken
+from API.secure.token.IPT_token import IPToken, required_token
 
 from API.status import *
 
@@ -62,4 +62,11 @@ def LOGIN() -> tuple[dict, int]:
         request.remote_addr,
         auth_list[0],
         current_app.config['SECRET_KEY']), HTTP_202_ACCEPTED
+# |--------------------------------------------------------------------------------------------------------------------|
+
+# Identity Access Managment |------------------------------------------------------------------------------------------|
+@bp.route("/iam", methods=["PUT"])
+@required_token
+def IAM_UPDATE() -> None:
+    return None, 200
 # |--------------------------------------------------------------------------------------------------------------------|
