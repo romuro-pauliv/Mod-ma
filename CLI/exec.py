@@ -14,6 +14,7 @@ from commands.exit_ import close
 from commands.auth import auth
 from commands.read import read
 from commands.create import create
+from commands.update import update
 
 from data.command_name import *
 # |--------------------------------------------------------------------------------------------------------------------|
@@ -81,14 +82,22 @@ class exec(object):
         
         if cmd == COMMAND_READ_DOCUMENT:
             read.documents(self.token)
+    
+    def commands_update(self, cmd: str) -> None:
+        # DOCUMENT |===================================================================================================|
+        if cmd == COMMAND_UPDATE_DOCUMENT:
+            update.document(self.token)
+        # |============================================================================================================|
 
     def init(self) -> None:
         while True:
             command: str = input(self.prefix)
 
             self.commands_auth(command)
+            
             self.commands_read(command)
             self.commands_create(command)
+            self.commands_update(command)
 
             if command == COMMAND_EXIT:
                 close()
