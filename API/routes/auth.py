@@ -69,5 +69,5 @@ def LOGIN() -> tuple[dict, int]:
 @bp.route("/iam", methods=["GET"])
 @required_token
 def IAM_UPDATE() -> None:
-    return PAM({"user": "iamtest"}).get_privileges_fields()
+    return PAM(request.json).test()
 # |--------------------------------------------------------------------------------------------------------------------|
