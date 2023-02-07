@@ -14,6 +14,7 @@ from API.secure.token.IPT_token import IPToken, required_token
 from API.status import *
 
 from API.iam import Privileges
+from API.secure.pam.pam import PAM
 
 from API.log.auth.decorator import LogAuth
 
@@ -65,8 +66,8 @@ def LOGIN() -> tuple[dict, int]:
 # |--------------------------------------------------------------------------------------------------------------------|
 
 # Identity Access Managment |------------------------------------------------------------------------------------------|
-@bp.route("/iam", methods=["PUT"])
+@bp.route("/iam", methods=["GET"])
 @required_token
 def IAM_UPDATE() -> None:
-    return None, 200
+    return PAM({"user": "iamtest"}).get_privileges_fields()
 # |--------------------------------------------------------------------------------------------------------------------|
