@@ -1,7 +1,7 @@
 # Mod-ma - Database Management API
 
 
-![](hhttps://github.com/romuro-pauliv/Mod-ma/blob/main/docs/img/logotipo/modma-logotipo-without-background.png?raw=true)
+![](https://github.com/romuro-pauliv/Mod-ma/blob/main/docs/img/logotipo/modma-logotipo-without-background.png?raw=true)
 
 
 <img align="left" src="https://github.com/romuro-pauliv/Mod-ma/blob/add-PAM/docs/img/logotipo/modma-logotipo-without-background.png?raw=true" alt="logotipo" width="300"/>
