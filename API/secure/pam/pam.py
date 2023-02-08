@@ -23,11 +23,12 @@ class PAM(object):
         # | json and username request |--------------------------------------------------------------------------------|
         self.json: dict[str, Any] = json
         self.username: str = IPToken.Tools.get_username_per_token(request.headers.get("Authorization"))
+        self.authorized_user: list[str] = ["admin"]
         # |------------------------------------------------------------------------------------------------------------|
         
         # | json model configuration |---------------------------------------------------------------------------------|
         self.required_fields: list[str] = ["user", "command", "method", "arguments"]
-        self.command_value: list[str] = ["add", "remove"]
+        self.command_value: list[str] = ["append", "remove"]
         self.method_value: list[str] = ["create", "read", "update", "delete"]
         # |------------------------------------------------------------------------------------------------------------|
     
@@ -58,7 +59,7 @@ class PAM(object):
     def user_validation(self) -> tuple[str, int]:
         # Avoid NoSQL Injection |--------------------------------------------------------------------------------------|
         validate_str: tuple[str, int] = Validate.STRING.str_type(self.json["user"])
-        if validate_str != HTTP_202_ACCEPTED:
+        if validate_str[1] != HTTP_202_ACCEPTED:
             return validate_str
         
         validate_character: tuple[str, int] = Validate.STRING.character(self.json["user"])
@@ -135,7 +136,7 @@ class PAM(object):
                 # |----------------------------------------------------------------------------------------------------|
         return "ARGUMENTS VALID", HTTP_202_ACCEPTED
     
-    def test(self) -> tuple[Union[str, dict[str, Union[str, list]]], int]:
+    def exec_validation(self) -> tuple[Union[str, dict[str, Union[str, list]]], int]:
         # Func validation list |---------------------------------------------------------------------------------------|
         func_validation_list: list[Callable[..., tuple[str, int]]] = [
             self.json_validation,
@@ -153,4 +154,55 @@ class PAM(object):
                 return validation_response
         # |------------------------------------------------------------------------------------------------------------|
         
-        return self.json, HTTP_200_OK
+        return self.json, HTTP_202_ACCEPTED
+    
+    def update(self) -> tuple[str, int]:
+        # Execute all validation |-------------------------------------------------------------------------------------|
+        all_validation: tuple[Union[str, dict[str, Union[str, list]]], int] = self.exec_validation()
+        if all_validation[1] != HTTP_202_ACCEPTED:
+            return all_validation
+        # |------------------------------------------------------------------------------------------------------------|
+        
+        # Only "admin" have access to PAM |----------------------------------------------------------------------------|
+        if not self.username in self.authorized_user:
+            return f"FORBIDDEN - USER [{self.authorized_user}] UNAUTHORIZED", HTTP_403_FORBIDDEN
+        # |------------------------------------------------------------------------------------------------------------|
+        
+        # Get privileges |---------------------------------------------------------------------------------------------|
+        privileges: dict[str, dict] = get_db().USERS.PRIVILEGES.find_one({"command": "privileges"})
+        # |------------------------------------------------------------------------------------------------------------|
+        
+        # Execute update privileges |----------------------------------------------------------------------------------|
+        for args in self.json["arguments"]:
+            # | To database, collection (str) |------------------------------------------------------------------------|
+            if isinstance(args, str):
+                # Append command |-------------------------------------------------------------------------------------|
+                if self.json['command'] == "append":
+                    if self.json['user'] not in privileges[args][self.json['method']]:
+                        privileges[args][self.json['method']].append(self.json['user'])
+                # |----------------------------------------------------------------------------------------------------|
+                
+                # Remove command |-------------------------------------------------------------------------------------|
+                elif self.json['command'] == "remove":
+                    if self.json['user'] in privileges[args][self.json['method']]:
+                        privileges[args][self.json['method']].remove(self.json['user'])
+                # |----------------------------------------------------------------------------------------------------|
+            if isinstance(args, list):
+                # Append command |-------------------------------------------------------------------------------------|
+                if self.json["command"] == "append":
+                    if self.json["user"] not in privileges[args[0]][args[1]][self.json["method"]]:
+                        privileges[args[0]][args[1]][self.json["method"]].append(self.json['user'])
+                # |----------------------------------------------------------------------------------------------------|
+                
+                # Remove command |-------------------------------------------------------------------------------------|
+                if self.json["command"] == "remove":
+                    if self.json["user"] in privileges[args[0]][args[1]][self.json["method"]]:
+                        privileges[args[0]][args[1]][self.json["method"]].remove(self.json["user"])
+                # |----------------------------------------------------------------------------------------------------|
+                
+        # Update |-----------------------------------------------------------------------------------------------------|
+        del privileges["_id"]
+        get_db().USERS.PRIVILEGES.delete_one({"command": "privileges"})
+        get_db().USERS.PRIVILEGES.insert_one(privileges)
+        
+        return "UPDATE PRIVILEGES", HTTP_202_ACCEPTED
