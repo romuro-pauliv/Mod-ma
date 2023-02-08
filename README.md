@@ -1,7 +1,7 @@
 # Mod-ma - Database Management API
 
 
-![](https://img.shields.io/github/repo-size/romuro-pauliv/Mod-ma?style=flat-square) ![](https://img.shields.io/github/last-commit/romuro-pauliv/Mod-ma?style=flat-square) ![](https://img.shields.io/github/license/romuro-pauliv/Mod-ma?style=flat-square)
+![](hhttps://github.com/romuro-pauliv/Mod-ma/blob/main/docs/img/logotipo/modma-logotipo-without-background.png?raw=true)
 
 
 <img align="left" src="https://github.com/romuro-pauliv/Mod-ma/blob/add-PAM/docs/img/logotipo/modma-logotipo-without-background.png?raw=true" alt="logotipo" width="300"/>
