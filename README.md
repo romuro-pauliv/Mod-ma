@@ -1,10 +1,10 @@
 # Mod-ma - Database Management API
 
 
-![](https://github.com/romuro-pauliv/Mod-ma/blob/main/docs/img/logotipo/modma-logotipo-without-background.png?raw=true)
+![](https://img.shields.io/github/repo-size/romuro-pauliv/Mod-ma?style=flat-square) ![](https://img.shields.io/github/last-commit/romuro-pauliv/Mod-ma?style=flat-square) ![](https://img.shields.io/github/license/romuro-pauliv/Mod-ma?style=flat-square)
 
 
-<img align="left" src="https://github.com/romuro-pauliv/Mod-ma/blob/add-PAM/docs/img/logotipo/modma-logotipo-without-background.png?raw=true" alt="logotipo" width="300"/>
+<img align="left" src="https://github.com/romuro-pauliv/Mod-ma/blob/main/docs/img/logotipo/modma-logotipo-without-background.png?raw=true" alt="logotipo" width="300"/>
 
 The Mod-ma is a highly `secure` and efficient `MongoDB database management API`. With full support for CRUD methods, the Modma allows developers to manage their data in a standardized and efficient manner. The security of the Mod-ma is guaranteed by its strict three-layer authentication, which includes IPT-Token, IP Address, and Access Identity Manager (IAM). 
 
