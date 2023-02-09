@@ -13,6 +13,7 @@ from functools import wraps
 from typing import Union, Callable, Any
 
 from API.status import *
+from API.json.responses.token import ipt_token
 
 import datetime
 import jwt
@@ -27,7 +28,7 @@ class IPToken(object):
         encode_dict: dict[str, Union[str, datetime.datetime]] = {
             "hash": generate_password_hash(ip_addr),
             "username": username,
-            "exp": datetime.datetime.utcnow() + datetime.timedelta(seconds=20)
+            "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1)
         }
         # |------------------------------------------------------------------------------------------------------------|
 
@@ -45,25 +46,24 @@ class IPToken(object):
             try:
                 token: str = token.split()[1]
             except IndexError:
-                return "BAD REQUEST - COLON ERROR", HTTP_400_BAD_REQUEST
+                return ipt_token.Responses.R4XX.colon_error()
         except AttributeError:
-            return "BAD REQUEST - NO DATA", HTTP_400_BAD_REQUEST
+            return ipt_token.Responses.R4XX.data_error()
         # decode token |-----------------------------------------------------------------------------------------------|
         try:
             try:
                 decode_token: dict = jwt.decode(token, key_api, ['HS256'])
             except jwt.exceptions.DecodeError:
-                return "INVALID TOKEN", HTTP_400_BAD_REQUEST
+                return ipt_token.Responses.R4XX.invalid_token()
         except jwt.exceptions.ExpiredSignatureError:
-            return "EXPIRED TOKEN", HTTP_403_FORBIDDEN
+            return ipt_token.Responses.R4XX.expired_token()
         # |------------------------------------------------------------------------------------------------------------|
 
         # ip hash validation |-----------------------------------------------------------------------------------------|
         if not check_password_hash(decode_token['hash'], ip_addr):
-            return "IP ADDRESS DOES NOT MATCH", HTTP_403_FORBIDDEN
+            return ipt_token.Responses.R4XX.ip_error()
         # |------------------------------------------------------------------------------------------------------------|
-
-        return "VALID TOKEN", HTTP_200_OK
+        return ipt_token.Responses.R2XX.valid_token()
     # |================================================================================================================|
     
     class Tools(object):
