@@ -30,6 +30,20 @@ privileges_add = Privileges("admin").Add()
 @Model.Create.database
 @IAM.check_permission("create", "database")
 @privileges_add.database
-def create_database() -> tuple[str, int]:
+def create_database() -> tuple[dict[str], int]:
     return create().database(request.json["database"])
 
+
+@bp.route('/', methods=["GET"])
+@required_token
+@IAM.check_permission("read", "database")
+def read_database() -> tuple[list[str] | dict[str], int]:
+    return read().database()
+
+
+@bp.route('/', methods=['DELETE'])
+@required_token
+@Model.Delete.database
+@IAM.check_permission("delete", "database")
+def delete_database() -> tuple[dict[str], int]:
+    return delete().database(request.json["database"])

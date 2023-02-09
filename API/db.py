@@ -10,7 +10,7 @@ from API.status import *
 
 from API.secure.token.IPT_token import IPToken
 
-from API.json.responses import database
+from API.json.responses.database import create_status, delete_status
 
 from flask import current_app, g, request
 from pymongo import MongoClient
@@ -78,12 +78,12 @@ class create(object):
         
         # Forbidden names |--------------------------------------------------------------------------------------------|
         if name in forbidden_database_names:
-            return database.Reponses.R4XX.name_not_allowed(database_name)
+            return create_status.Reponses.R4XX.name_not_allowed(database_name)
         # |------------------------------------------------------------------------------------------------------------|
 
         # database search |--------------------------------------------------------------------------------------------|
         if database_name in get_db().list_database_names():
-            return database.Reponses.R4XX.name_in_use(database_name)
+            return create_status.Reponses.R4XX.name_in_use(database_name)
         # |------------------------------------------------------------------------------------------------------------|
 
         # Create database |--------------------------------------------------------------------------------------------|
@@ -95,7 +95,7 @@ class create(object):
 
         get_db()[database_name].LOG.insert_one(document)
         # |------------------------------------------------------------------------------------------------------------|
-        return database.Reponses.R2XX.create(database_name)
+        return create_status.Reponses.R2XX.create(database_name)
     
     def collection(self, database: str, name: str) -> tuple[str, int]:
         database_name: str = database.lower()       # lowercase database
@@ -157,8 +157,8 @@ class create(object):
 
 
 class read(object):
-    def __init__(self, username: str) -> None:
-        self.usename: str = username
+    def __init__(self) -> None:
+        self.usename: str = IPToken.Tools.get_username_per_token(request.headers.get("Authorization"))
     
     def database(self) -> tuple[list[str], int]:
         return get_db().list_database_names(), HTTP_200_OK
@@ -222,21 +222,12 @@ class update(object):
 
 
 class delete(object):
-    def __init__(self, username: str) -> None:
-        self.username: str = username
+    def __init__(self) -> None:
+        self.username: str = IPToken.Tools.get_username_per_token(request.headers.get("Authorization"))
     
     def delete_database_privileges(self, database: str) -> None:
-        for dt in get_db().USERS.PRIVILEGES.find({"command": "privileges"}):
-            privileges_db: dict[str, Union[list[str], dict[str]]] = dt
-        
-        # | Update |---------------------------------------------------------------------------------------------------|
-        del privileges_db[database]
-        del privileges_db["_id"]
-        
-        get_db().USERS.PRIVILEGES.delete_one({"command": "privileges"})
-        get_db().USERS.PRIVILEGES.insert_one(privileges_db)
-        # |------------------------------------------------------------------------------------------------------------|
-    
+        get_db().USERS.PRIVILEGES.update_one({"command": "privileges"}, {"$unset": {database: ""}})
+
     def delete_collection_privileges(self, database: str, collection: str) -> None:
         for dt in get_db().USERS.PRIVILEGES.find({"command": "privileges"}):
             privileges_cl: dict[str, Union[list[str], dict[str]]] = dt
@@ -250,17 +241,15 @@ class delete(object):
         # |------------------------------------------------------------------------------------------------------------|
         
     def database(self, database: str) -> tuple[str, int]:
+        database: str = database.lower()
         # | Search database |------------------------------------------------------------------------------------------|
-        if database.lower() not in get_db().list_database_names():
-            return "DATABASE NOT FOUND", HTTP_404_NOT_FOUND
-        # |------------------------------------------------------------------------------------------------------------|
+        if database not in get_db().list_database_names():
+            return delete_status.Responses.R4XX.not_found(database)
         # | Delete |---------------------------------------------------------------------------------------------------|
-        get_db().drop_database(database.lower())
+        get_db().drop_database(database)
+        self.delete_database_privileges(database)
         # |------------------------------------------------------------------------------------------------------------|
-        # | Del database privilege |-----------------------------------------------------------------------------------|
-        self.delete_database_privileges(database.lower())
-        # |------------------------------------------------------------------------------------------------------------|
-        return "ACCEPTED", HTTP_202_ACCEPTED
+        return delete_status.Responses.R2XX.delete_database(database)
     
     def collection(self, database: str, collection: str) -> tuple[str, int]:
         # | Search database and collection |---------------------------------------------------------------------------|
