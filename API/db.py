@@ -8,7 +8,11 @@
 # imports |------------------------------------------------------------------------------------------------------------|
 from API.status import *
 
-from flask import current_app, g
+from API.secure.token.IPT_token import IPToken
+
+from API.json.responses import database
+
+from flask import current_app, g, request
 from pymongo import MongoClient
 from typing import Union, Any
 
@@ -63,20 +67,23 @@ def field_validation(document: dict[str, Any]) -> tuple[str, int]:
 
 
 class create(object):
-    def __init__(self, username: str) -> None:
-        self.username: str = username
+    def __init__(self) -> None:
+        self.username: str = IPToken.Tools.get_username_per_token(request.headers.get("Authorization"))
 
     def database(self, name: str) -> tuple[str, int]:
         database_name: str = name.lower()
+        forbidden_database_names: list[str] = [
+            "command", "datetime", "database", "collection", "documents", "admin", "local"
+        ]
         
         # Forbidden names |--------------------------------------------------------------------------------------------|
-        if name in ["command", "datetime", "database", "collection", "documents", "admin", "local"]:
-            return "FORBIDDEN - NAME NOT ALLOWED", HTTP_403_FORBIDDEN
+        if name in forbidden_database_names:
+            return database.Reponses.R4XX.name_not_allowed(database_name)
         # |------------------------------------------------------------------------------------------------------------|
 
         # database search |--------------------------------------------------------------------------------------------|
         if database_name in get_db().list_database_names():
-            return "FORBIDDEN - DATABASE NAME IN USE", HTTP_403_FORBIDDEN
+            return database.Reponses.R4XX.name_in_use(database_name)
         # |------------------------------------------------------------------------------------------------------------|
 
         # Create database |--------------------------------------------------------------------------------------------|
@@ -88,8 +95,7 @@ class create(object):
 
         get_db()[database_name].LOG.insert_one(document)
         # |------------------------------------------------------------------------------------------------------------|
-
-        return 'CREATE', HTTP_201_CREATED
+        return database.Reponses.R2XX.create(database_name)
     
     def collection(self, database: str, name: str) -> tuple[str, int]:
         database_name: str = database.lower()       # lowercase database
