@@ -46,5 +46,11 @@ def create_app(test_config: Union[bool, None] = None) -> Flask:
     app.register_blueprint(database.bp)
     # |----------------------------------------------------------------------------------------------------------------|
 
+    # collection blueprint |-------------------------------------------------------------------------------------------|
+    from .routes import collection
+    app.register_blueprint(collection.bp)
+    # |----------------------------------------------------------------------------------------------------------------|
+
+    
     return app
 
