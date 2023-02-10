@@ -22,6 +22,10 @@ from API.json.responses.document import read_status as document_read_status
 from API.json.responses.document import update_status as document_update_status
 from API.json.responses.document import delete_status as document_delete_status
 
+from API.log.model.logs import Create as logCreate
+from API.log.model.logs import Update as logUpdate
+from API.log.model.logs import Delete as logDelete
+
 from flask import current_app, g, request
 from pymongo import MongoClient
 from typing import Union, Any
@@ -39,16 +43,6 @@ def get_db() -> MongoClient:
         g.db = MongoClient(current_app.config['MONGO_URI'])
     return g.db
 # |====================================================================================================================|
-
-
-"""
-Below you will define the database CRUD methods. All database connections will be defined in the module (only register 
-and login methods are not defined here)    
-"""
-
-
-class ExceptionPass(Exception):
-    pass
 
 
 def parse_json(data: list | dict) -> dict:
@@ -81,13 +75,7 @@ class create(object):
         # |------------------------------------------------------------------------------------------------------------|
 
         # Create database |--------------------------------------------------------------------------------------------|
-        document: dict[str, str | list] = {
-            "user": self.username,
-            "datetime": ['UTC', datetime.datetime.utcnow()],
-            "command": f"Hello, I'm {database}"
-        }
-
-        get_db()[database].LOG.insert_one(document)
+        logCreate.Database.log(database, self.username)
         # |------------------------------------------------------------------------------------------------------------|
         return database_create_status.Reponses.R2XX.create(database)
     
@@ -104,12 +92,7 @@ class create(object):
         # |------------------------------------------------------------------------------------------------------------|
 
         # Create collection |------------------------------------------------------------------------------------------|
-        document: dict[str] = {
-            "user": self.username,
-            "datetime": ['UTC', datetime.datetime.utcnow()],
-            "command": f"Hello, I'm {collection}"
-        }
-        get_db()[database][collection].insert_one(document)
+        logCreate.Collection.log(database, collection, self.username)
         # |------------------------------------------------------------------------------------------------------------|
 
         return collection_create_status.Responses.R2XX.collection_created(collection)
@@ -201,6 +184,7 @@ class update(object):
             if real_document[0]["_id"] == _id:
                 # Update |-------------------------------------------------------------------------------------------|
                 get_db()[database][collection].update_one({"_id": _id}, {"$set": new_values})
+                logUpdate.Document.log(database, collection, self.username, _id)
                 # |--------------------------------------------------------------------------------------------------|
                 return document_update_status.Responses.R2XX.document_updated(_id)
         except IndexError:
@@ -225,6 +209,7 @@ class delete(object):
         # | Delete |---------------------------------------------------------------------------------------------------|
         get_db().drop_database(database)
         self.delete_database_privileges(database)
+        logDelete.Database.log(database, self.username)
         # |------------------------------------------------------------------------------------------------------------|
         return database_delete_status.Responses.R2XX.delete_database(database)
     
@@ -243,6 +228,7 @@ class delete(object):
         # | Delete |---------------------------------------------------------------------------------------------------|
         get_db()[database].drop_collection(collection)
         self.delete_collection_privileges(database, collection)
+        logDelete.Collection.log(database, collection, self.username)
         # |------------------------------------------------------------------------------------------------------------|
         
         return collection_delete_status.Responses.R2XX.collection_deleted(collection)
@@ -268,6 +254,7 @@ class delete(object):
             if real_document[0]["_id"] == _id:
                 # | Delete |-------------------------------------------------------------------------------------------|
                 get_db()[database][collection].delete_one({"_id": _id})
+                logDelete.Document.log(database, collection, _id, self.username)
                 # |----------------------------------------------------------------------------------------------------|    
                 return document_delete_status.Responses.R2XX.document_deleted(_id)
         except IndexError:
