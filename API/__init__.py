@@ -50,6 +50,11 @@ def create_app(test_config: Union[bool, None] = None) -> Flask:
     from .routes import collection
     app.register_blueprint(collection.bp)
     # |----------------------------------------------------------------------------------------------------------------|
+    
+    # document blueprint |---------------------------------------------------------------------------------------------|
+    from .routes import document
+    app.register_blueprint(document.bp)
+    # |----------------------------------------------------------------------------------------------------------------|
 
     
     return app

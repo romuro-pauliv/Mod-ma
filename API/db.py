@@ -17,6 +17,10 @@ from API.json.responses.collection import create_status as collection_create_sta
 from API.json.responses.collection import read_status as collection_read_status
 from API.json.responses.collection import delete_status as collection_delete_status
 
+from API.json.responses.document import create_status as document_create_status
+from API.json.responses.document import read_status as document_read_status
+from API.json.responses.document import update_status as document_update_status
+
 from flask import current_app, g, request
 from pymongo import MongoClient
 from typing import Union, Any
@@ -126,20 +130,15 @@ class create(object):
         return collection_create_status.Responses.R2XX.collection_created(collection)
     
     def document(self, database: str, collection: str, document: str) -> tuple[str, int]:
-        database_name: str = database.lower()       # lowercase database
-        collection_name: str = collection.lower()   # lowercase collection
+        database: str = database.lower()       # lowercase database
+        collection: str = collection.lower()   # lowercase collection
 
         # database and collection search |-----------------------------------------------------------------------------|
-        if database_name not in get_db().list_database_names():
-            return "FORBIDDEN - DATABASE NOT EXISTS", HTTP_403_FORBIDDEN
+        if database not in get_db().list_database_names():
+            return document_create_status.Responses.R4XX.database_not_found(database)
         
-        if collection_name not in get_db()[database_name].list_collection_names():
-            return "FORBIDDEN - COLLECTION NOT EXISTS", HTTP_403_FORBIDDEN
-        # |------------------------------------------------------------------------------------------------------------|
-
-        # fields validation |------------------------------------------------------------------------------------------|
-        if field_validation(document)[1] == HTTP_403_FORBIDDEN:
-            return "FORBIDDEN - FIELD VALIDATION", HTTP_403_FORBIDDEN
+        if collection not in get_db()[database].list_collection_names():
+            return document_create_status.Responses.R4XX.collection_not_found(collection)
         # |------------------------------------------------------------------------------------------------------------|
 
         # Assemble document |------------------------------------------------------------------------------------------|
@@ -155,10 +154,10 @@ class create(object):
         # |------------------------------------------------------------------------------------------------------------|
 
         # Create document |--------------------------------------------------------------------------------------------|
-        get_db()[database_name][collection_name].insert_one(total_document)
+        get_db()[database][collection].insert_one(total_document)
         # |------------------------------------------------------------------------------------------------------------|
 
-        return {"info": "CREATE", "document_id": id_str}, HTTP_201_CREATED
+        return document_create_status.Responses.R2XX.create_document(id_str)
 
 
 class read(object):
@@ -178,10 +177,10 @@ class read(object):
 
         # Verify if the database and collection exists |---------------------------------------------------------------|
         if database not in get_db().list_database_names():
-            return "DATABASE NOT FOUND", HTTP_404_NOT_FOUND
+            return document_read_status.Responses.R4XX.database_not_found(database)
         
         if collection not in get_db()[database].list_collection_names():
-            return "COLLECTION NOT FOUND", HTTP_404_NOT_FOUND
+            return document_read_status.Responses.R4XX.collection_not_found(collection)
         # |------------------------------------------------------------------------------------------------------------|
 
         document_list: list[dict[str, Any]] = []
@@ -192,20 +191,23 @@ class read(object):
 
 
 class update(object):
-    def __init__(self, username: str) -> None:
-        self.username: str = username
+    def __init__(self) -> None:
+        self.username: str = IPToken.Tools.get_username_per_token(request.headers.get("Authorization"))
     
     def document(self, database: str, collection: str, _id: str, new_values: dict[str, Any]) -> tuple[str, int]:
-        # search database and collection |-----------------------------------------------------------------------------|
-        if database.lower() not in get_db().list_database_names():
-            return "DATABASE NOT FOUND", HTTP_404_NOT_FOUND
+        database: str = database.lower()
+        collection: str = collection.lower()
         
-        if collection.lower() not in get_db()[database.lower()].list_collection_names():
-            return "COLLECTION NOT FOUND", HTTP_404_NOT_FOUND
+        # search database and collection |-----------------------------------------------------------------------------|
+        if database not in get_db().list_database_names():
+            return document_update_status.Responses.R4XX.database_not_found(database)
+        
+        if collection not in get_db()[database].list_collection_names():
+            return document_update_status.Responses.R4XX.collection_not_found(collection)
         # |------------------------------------------------------------------------------------------------------------|
         
         # Find document |----------------------------------------------------------------------------------------------|
-        real_document: dict[str, Any] = parse_json(get_db()[database.lower()][collection.lower()].find({"_id": _id}))
+        real_document: dict[str, Any] = parse_json(get_db()[database][collection].find({"_id": _id}))
         # |------------------------------------------------------------------------------------------------------------|
         
         try:
@@ -217,13 +219,13 @@ class update(object):
                     # Update |-----------------------------------------------------------------------------------------|
                     filter: dict[str] = {"_id": _id}
                     updating: dict = {"$set": new_values}
-                    get_db()[database.lower()][collection.lower()].update_one(filter, updating)
+                    get_db()[database][collection].update_one(filter, updating)
                     # |------------------------------------------------------------------------------------------------|
-                    return "UPDATE", HTTP_202_ACCEPTED
+                    return document_update_status.Responses.R2XX.document_updated(_id)
                 else:
                     return validation
         except IndexError:
-            return "DOCUMENT NOT FOUND", HTTP_404_NOT_FOUND
+            return document_update_status.Responses.R4XX.document_not_found(_id)
 
 
 class delete(object):
