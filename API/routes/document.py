@@ -45,3 +45,11 @@ def read_document() -> tuple[list[dict] | dict[str], int]:
 def update_document() -> tuple[dict[str], int]:
     return update().document(
         request.json["database"], request.json["collection"], request.json["_id"], request.json["update"])
+
+
+@bp.route("/", methods=["DELETE"])
+@required_token
+@Model.Delete.document
+@IAM.check_permission("delete", "especific")
+def delete_document() -> tuple[dict[str], int]:
+    return delete().document(request.json["database"], request.json["collection"], request.json["_id"])
