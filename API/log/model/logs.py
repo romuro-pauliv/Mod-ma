@@ -22,7 +22,7 @@ def log_model(database: str, collection: str, username: str, LOG: str | dict[str
     }
     get_db()[database][collection].insert_one(document)
 
-
+# | CREATE |-----------------------------------------------------------------------------------------------------------|
 class Create(object):
     class Database(object):
         @staticmethod
@@ -46,8 +46,9 @@ class Create(object):
                 "database": database,
                 "collection": collection
             })
+# |--------------------------------------------------------------------------------------------------------------------|
 
-
+# | UPDATE |-----------------------------------------------------------------------------------------------------------|
 class Update(object):
     class Document(object):
         @staticmethod
@@ -64,8 +65,9 @@ class Update(object):
                 "collection": collection,
                 "document_id": document_id
             })
+# |--------------------------------------------------------------------------------------------------------------------|
 
-
+# | DELETE |-----------------------------------------------------------------------------------------------------------|
 class Delete(object):
     class Database(object):
         @staticmethod
@@ -102,3 +104,4 @@ class Delete(object):
                 "collection": collection,
                 "document_id": document_id
             })
+# |--------------------------------------------------------------------------------------------------------------------|
