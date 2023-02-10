@@ -101,6 +101,7 @@ class Model(object):
             def wrapper(*args, **kwargs) -> Callable[..., tuple[Union[str, dict], int]]:
                 # + Fields +
                 fields: list[str] = ["database", "collection", "document"]
+                forbidden_document_fields: list[str] = ["_id", "datetime", "user"]
                 
                 # | Json validation |----------------------------------------------------------------------------------|
                 validate_json: tuple[str, int] = Validate.JSON.fields(fields)
@@ -134,6 +135,11 @@ class Model(object):
                 validate_document_json_format: list[str, int] = Validate.JSON.format_(request.json['document'])
                 if validate_document_json_format[1] != HTTP_202_ACCEPTED:
                     return validate_document_json_format
+                
+                validate_forbidden_fields: list[str, int] = Validate.JSON.forbidden_fields(
+                    request.json['document'], forbidden_document_fields)
+                if validate_forbidden_fields[1] != HTTP_202_ACCEPTED:
+                    return validate_forbidden_fields
                 # |----------------------------------------------------------------------------------------------------|
                 
                 return func(*args, **kwargs)
@@ -185,6 +191,7 @@ class Model(object):
             def wrapper(*args, **kwargs) -> Callable[..., tuple[str, int]]:
                 # + Fields +
                 fields: list[str] = ["database", "collection", "_id", "update"]
+                forbidden_update_fields: list[str] = ["datetime", "_id", "user"]
                 
                 # | Json validation |----------------------------------------------------------------------------------|
                 validate_json: tuple[str, int] = Validate.JSON.fields(fields)
@@ -198,7 +205,7 @@ class Model(object):
                     return validate_update_format
                 
                 validate_update_forbidden_fields: tuple[str, int] = Validate.JSON.forbidden_fields(
-                    request.json['update'], ["datetime", "_id", "user"]
+                    request.json['update'], forbidden_update_fields
                 )
                 if validate_update_forbidden_fields[1] != HTTP_202_ACCEPTED:
                     return validate_update_forbidden_fields
@@ -273,16 +280,12 @@ class Model(object):
             @wraps(func)
             def wrapper(*args, **kwargs) -> Callable[..., tuple[str, int]]:
                 # + Fields +
-                fields: list[str] = ["database", "collection", "doc_id"]
+                fields: list[str] = ["database", "collection", "_id"]
                 
                 # Json validation |------------------------------------------------------------------------------------|
                 validate_json: tuple[str, int] = Validate.JSON.fields(fields)
                 if validate_json[1] != HTTP_202_ACCEPTED:
                     return validate_json
-                
-                validate_format: tuple[str, int] = Validate.JSON.format_(request.json)
-                if validate_format[1] != HTTP_202_ACCEPTED:
-                    return validate_format
                 # |----------------------------------------------------------------------------------------------------|
                 
                 # + Request values +
