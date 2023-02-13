@@ -23,7 +23,7 @@ def database(token: str) -> None:
 
     # + request +
     try:
-        rtn = requests.get(f"{ROUTE_ROOT}{ROUTE_READ_DATABASE}", headers=header)
+        rtn = requests.get(f"{ROUTE_ROOT}{ROUTE_DATABASE}", headers=header)
     except requests.exceptions.ConnectionError:
         return connection_error()
     
@@ -31,7 +31,7 @@ def database(token: str) -> None:
     if rtn.status_code == HTTP_200_OK:
         database_list(rtn.text)
     else:
-        unsuccessful(rtn.text, rtn.status_code)
+        unsuccessful(json.loads(rtn.text)["response"], rtn.status_code)
 
 def collection(token: str) -> None:
     # + inputs +
@@ -45,7 +45,7 @@ def collection(token: str) -> None:
 
     # + request +
     try:
-        rtn = requests.get(f"{ROUTE_ROOT}{ROUTE_READ_COLLECTION}", headers=header, json=json_data)
+        rtn = requests.get(f"{ROUTE_ROOT}{ROUTE_COLLECTION}", headers=header, json=json_data)
     except requests.exceptions.ConnectionError:
         return connection_error()
     
@@ -53,7 +53,7 @@ def collection(token: str) -> None:
     if rtn.status_code == HTTP_200_OK:
         collection_list(rtn.text)
     else:
-        unsuccessful(rtn.text, rtn.status_code)
+        unsuccessful(json.loads(rtn.text)["response"], rtn.status_code)
 
 
 def documents(token: str) -> None:
@@ -69,7 +69,7 @@ def documents(token: str) -> None:
     
     # + request +
     try:
-        rtn = requests.get(f"{ROUTE_ROOT}{ROUTE_READ_DOCUMENT}", headers=header, json=json_data)
+        rtn = requests.get(f"{ROUTE_ROOT}{ROUTE_DOCUMENT}", headers=header, json=json_data)
     except requests.exceptions.ConnectionError:
         return connection_error()
     
@@ -78,4 +78,4 @@ def documents(token: str) -> None:
         for dt in data:
             pprint(dt), print("\n")
     else:
-        unsuccessful(rtn.text, rtn.status_code)
+        unsuccessful(json.loads(rtn.text)["response"], rtn.status_code)

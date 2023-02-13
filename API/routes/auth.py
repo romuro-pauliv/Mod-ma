@@ -33,13 +33,13 @@ def Register() -> tuple[dict[str], int]:
 
 # Login route |--------------------------------------------------------------------------------------------------------|
 @bp.route("/login", methods=['POST'])
-# @LogAuth.login
+@LogAuth.login
 def Login() -> tuple[dict[str], int]:
     return exec_login(request.headers.get("Authorization"))
 
 # Identity Access Managment |------------------------------------------------------------------------------------------|
 @bp.route("/iam", methods=["PUT"])
 @required_token
-def IAM_UPDATE() -> None:
+def IamUpdate() -> None:
     return PAM(request.json).update()
 # |--------------------------------------------------------------------------------------------------------------------|

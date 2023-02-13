@@ -5,24 +5,8 @@ ROUTE_LOGIN: str = "/auth/login"
 ROUTE_REGISER: str = "/auth/register"
 # |====================================================================================================================|
 
-# CREATE |=============================================================================================================|
-ROUTE_CREATE_DATABASE: str = "/tests/test-create-database"
-ROUTE_CREATE_COLLECTION: str = "/tests/test-create-collection"
-ROUTE_CREATE_DOCUMENT: str = "/tests/test-create-document"
-# |====================================================================================================================|
-
-# READ |===============================================================================================================|
-ROUTE_READ_DATABASE: str = "/tests/test-read-database"
-ROUTE_READ_COLLECTION: str = "/tests/test-read-collection"
-ROUTE_READ_DOCUMENT: str = "/tests/test-read-document"
-# |====================================================================================================================|
-
-# UPDATE |=============================================================================================================|
-ROUTE_UPDATE_DOCUMENT: str = "/tests/test-update-document"
-# |====================================================================================================================|
-
-# DELETE |=============================================================================================================|
-ROUTE_DELETE_DATABASE: str = "/tests/test-delete-database"
-ROUTE_DELETE_COLLLECTION: str = "/tests/test-delete-collection"
-ROUTE_DELETE_DOCUMENT: str = "/tests/test-delete-document"
+# BLUEPRINT |==========================================================================================================|
+ROUTE_DATABASE: str = "/database/"
+ROUTE_COLLECTION: str = "/collection/"
+ROUTE_DOCUMENT: str = "/document/"
 # |====================================================================================================================|

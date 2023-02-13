@@ -10,7 +10,6 @@ from routes.route import *
 from data.http_status import *
 from commands.update.p_string import *
 
-from typing import Union, Any
 import requests
 # |--------------------------------------------------------------------------------------------------------------------|
 
@@ -26,14 +25,14 @@ def database(token: str) -> None:
     
     # + request +
     try:
-        rtn = requests.delete(f"{ROUTE_ROOT}{ROUTE_DELETE_DATABASE}", headers=header, json=json_body)
+        rtn = requests.delete(f"{ROUTE_ROOT}{ROUTE_DATABASE}", headers=header, json=json_body)
     except requests.exceptions.ConnectionError:
         connection_error()
     
     if rtn.status_code == HTTP_202_ACCEPTED:
-        successfully(rtn.text, rtn.status_code)
+        successfully(json.loads(rtn.text)["response"], rtn.status_code)
     else:
-        unsuccessful(rtn.text, rtn.status_code)
+        unsuccessful(json.loads(rtn.text)["response"], rtn.status_code)
 
 
 def collection(token: str) -> None:
@@ -49,14 +48,14 @@ def collection(token: str) -> None:
     
     # + request +
     try:
-        rtn = requests.delete(f"{ROUTE_ROOT}{ROUTE_DELETE_COLLLECTION}", headers=header, json=json_body)
+        rtn = requests.delete(f"{ROUTE_ROOT}{ROUTE_COLLECTION}", headers=header, json=json_body)
     except requests.exceptions.ConnectionError:
         connection_error()
     
     if rtn.status_code == HTTP_202_ACCEPTED:
-        successfully(rtn.text, rtn.status_code)
+        successfully(json.loads(rtn.text)["response"], rtn.status_code)
     else:
-        unsuccessful(rtn.text, rtn.status_code)
+        unsuccessful(json.loads(rtn.text)["response"], rtn.status_code)
 
 
 def document(token: str) -> None:
@@ -69,15 +68,15 @@ def document(token: str) -> None:
     header: dict[str] = {"Authorization": f"Bearer {token}"}
     
     # + json +
-    json_body: dict[str] = {"database": database, "collection": collection, "doc_id": doc_id}
+    json_body: dict[str] = {"database": database, "collection": collection, "_id": doc_id}
     
     # + request +
     try:
-        rtn = requests.delete(f"{ROUTE_ROOT}{ROUTE_DELETE_DOCUMENT}", headers=header, json=json_body)
+        rtn = requests.delete(f"{ROUTE_ROOT}{ROUTE_DOCUMENT}", headers=header, json=json_body)
     except requests.exceptions.ConnectionError:
         connection_error()
         
     if rtn.status_code == HTTP_202_ACCEPTED:
-        successfully(rtn.text, rtn.status_code)
+        successfully(json.loads(rtn.text)["response"], rtn.status_code)
     else:
-        unsuccessful(rtn.text, rtn.status_code)
+        unsuccessful(json.loads(rtn.text)["response"], rtn.status_code)

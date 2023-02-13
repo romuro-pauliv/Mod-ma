@@ -26,15 +26,15 @@ def database(token: str) -> None:
 
     # + request +
     try:
-        rtn = requests.post(f"{ROUTE_ROOT}{ROUTE_CREATE_DATABASE}", headers=header, json=json_data)
+        rtn = requests.post(f"{ROUTE_ROOT}{ROUTE_DATABASE}", headers=header, json=json_data)
     except requests.exceptions.ConnectionError:
         return connection_error()
     
     # + sys +
     if rtn.status_code == HTTP_201_CREATED:
-        successfully(rtn.text, rtn.status_code)
+        successfully(json.loads(rtn.text)["response"], rtn.status_code)
     else:
-        unsuccessful(rtn.text, rtn.status_code)
+        unsuccessful(json.loads(rtn.text)["response"], rtn.status_code)
 
 
 def collection(token: str) -> None:
@@ -50,15 +50,15 @@ def collection(token: str) -> None:
 
     # + request +
     try:
-        rtn = requests.post(f"{ROUTE_ROOT}{ROUTE_CREATE_COLLECTION}", headers=header, json=json_data)
+        rtn = requests.post(f"{ROUTE_ROOT}{ROUTE_COLLECTION}", headers=header, json=json_data)
     except requests.exceptions.ConnectionError:
         return connection_error()
     
     # + sys +
     if rtn.status_code == HTTP_201_CREATED:
-        successfully(rtn.text, rtn.status_code)
+        successfully(json.loads(rtn.text)["response"], rtn.status_code)
     else:
-        unsuccessful(rtn.text, rtn.status_code)
+        unsuccessful(json.loads(rtn.text)["response"], rtn.status_code)
 
 
 def document(token: str) -> None:
@@ -81,12 +81,12 @@ def document(token: str) -> None:
     
     # + request +
     try:
-        rtn = requests.post(f"{ROUTE_ROOT}{ROUTE_CREATE_DOCUMENT}", headers=header, json=json_data)
+        rtn = requests.post(f"{ROUTE_ROOT}{ROUTE_DOCUMENT}", headers=header, json=json_data)
     except requests.exceptions.ConnectionError:
         return connection_error()
     
     # + sys +
     if rtn.status_code == HTTP_201_CREATED:
-        successfully(json.loads(rtn.text)["document_id"], rtn.status_code)
+        successfully(json.loads(rtn.text)["response"]['_id'], rtn.status_code)
     else:
         unsuccessful(rtn.text, rtn.status_code)
