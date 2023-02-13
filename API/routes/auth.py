@@ -7,9 +7,9 @@
 
 # + imports +----------------------------------------------------------------------------------------------------------+
 from API.auth.register import exec_register
+from API.auth.login import exec_login
 
-from API.secure.base.decrypt_base64 import Decrypt
-from API.secure.token.IPT_token import IPToken, required_token
+from API.secure.token.IPT_token import required_token
 
 from API.iam import Privileges
 from API.secure.pam.pam import PAM
@@ -26,31 +26,16 @@ bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 # Register route |-----------------------------------------------------------------------------------------------------|
 @bp.route("/register", methods=['POST'])
-# @privileges.standart_privileges
-def REGISTER() -> tuple[dict[str], int]:
+@privileges.standart_privileges
+def Register() -> tuple[dict[str], int]:
     return exec_register(request.headers.get("Register"))
 # |--------------------------------------------------------------------------------------------------------------------|
 
-# # Login route |--------------------------------------------------------------------------------------------------------|
-# @bp.route("/login", methods=['POST'])
+# Login route |--------------------------------------------------------------------------------------------------------|
+@bp.route("/login", methods=['POST'])
 # @LogAuth.login
-# def LOGIN() -> tuple[dict, int]:
-#     # decode auth base64 |---------------------------------------------------------------------------------------------|
-#     auth_list = Decrypt.Base64.read_authentication(request.headers.get("Authorization"), "login")
-#     if auth_list[1] == HTTP_400_BAD_REQUEST:
-#         return auth_list
-#     # |----------------------------------------------------------------------------------------------------------------|
-
-#     # Verify in database the user/password |---------------------------------------------------------------------------|
-#     login_db: tuple[str, int] = login(username=auth_list[0], password=auth_list[1])
-#     if login_db[1] == HTTP_403_FORBIDDEN:
-#         return login_db
-#     # |----------------------------------------------------------------------------------------------------------------|
-#     return IPToken.token_generate(
-#         request.remote_addr,
-#         auth_list[0],
-#         current_app.config['SECRET_KEY']), HTTP_202_ACCEPTED
-# # |--------------------------------------------------------------------------------------------------------------------|
+def Login() -> tuple[dict[str], int]:
+    return exec_login(request.headers.get("Authorization"))
 
 # Identity Access Managment |------------------------------------------------------------------------------------------|
 @bp.route("/iam", methods=["PUT"])

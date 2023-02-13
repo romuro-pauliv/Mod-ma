@@ -6,12 +6,12 @@
 # +--------------------------------------------------------------------------------------------------------------------|
 
 # | Imports |----------------------------------------------------------------------------------------------------------|
+from API.json.responses.auth.register_status import Responses
 from API.models.routes.auth.functions import Model
 from API.secure.base.decrypt_base64 import Decrypt
-from API.status import HTTP_202_ACCEPTED, HTTP_201_CREATED, HTTP_400_BAD_REQUEST
 from API.json.auth.register import new_user
 from API.db import get_db
-from flask import request
+from API.status import *
 # |--------------------------------------------------------------------------------------------------------------------|
 
 def exec_register(credentials: str) -> tuple[dict[str], int]:
@@ -33,4 +33,4 @@ def exec_register(credentials: str) -> tuple[dict[str], int]:
     get_db().USERS.REGISTER.insert_one(new_user(
         credentials_decrypt[0], credentials_decrypt[1], credentials_decrypt[2]
     ))
-    return "REGISTER OK", HTTP_201_CREATED
+    return Responses.ExecRegister.R2XX.successfully_registered()

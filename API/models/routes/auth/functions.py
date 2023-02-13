@@ -41,3 +41,6 @@ class Model(object):
             if valid_in_database[1] != HTTP_202_ACCEPTED:
                 return valid_in_database
         return valid_in_database
+    
+    def login(self, username: str, password: str) -> tuple[dict[str], int]:
+        return self.database_validation.verify_password(username, password)

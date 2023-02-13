@@ -64,3 +64,9 @@ class Responses(object):
             @staticmethod
             def available() -> tuple[str, int]:
                 return "AVAILABLE TO REGISTER", HTTP_202_ACCEPTED
+    
+    class ExecRegister(object):
+        class R2XX(object):
+            @staticmethod
+            def successfully_registered() -> tuple[dict[str], int]:
+                return response_structure("SUCCESSFULLY REGISTERED", HTTP_201_CREATED)
