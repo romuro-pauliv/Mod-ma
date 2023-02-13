@@ -1,27 +1,23 @@
 # +--------------------------------------------------------------------------------------------------------------------|
-# |                                                                                              API.service.person.py |
+# |                                                                          API.json.reponses.auth.register_status.py |
 # |                                                                                             Author: Pauliv, Rômulo |
 # |                                                                                          email: romulopauliv@bk.ru |
 # |                                                                                                    encoding: UTF-8 |
 # +--------------------------------------------------------------------------------------------------------------------|
 
-# + imports +----------------------------------------------------------------------------------------------------------+
-from API.db import create
+# | Imports |----------------------------------------------------------------------------------------------------------|
 from API.status import *
+from API.json.tools.tools import response_structure
 # |--------------------------------------------------------------------------------------------------------------------|
 
-class LegalPerson(object):
-    def __init__(self, username: str) -> None:
-        self.username: str = username
+
+class Responses(object):
+    class R4XX(object):
+        @staticmethod
+        def incorrect_username_or_password() -> tuple[dict[str], int]:
+            return response_structure("INCORRECT USERNAME/PASSWORD", HTTP_403_FORBIDDEN)
     
-    def create(self) -> None:
-        pass
-
-    def read(self) -> None:
-        pass
-
-    def update(self) -> None:
-        pass
-
-    def delete(self) -> None:
-        pass
+    class R2XX(object):
+        @staticmethod
+        def successfully_login() -> tuple[dict[str], int]:
+            return response_structure("SUCCESSFULLY LOGIN", HTTP_202_ACCEPTED)

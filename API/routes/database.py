@@ -7,12 +7,10 @@
 
 # imports |------------------------------------------------------------------------------------------------------------|
 from API.status import *
-from API.db import create, read, update, delete
+from API.db import create, read, delete
 from API.iam import IAM, Privileges
-
-from API.models.routes.tests.decorators import Model
-
-from API.secure.token.IPT_token import required_token, IPToken
+from API.models.routes.database.decorators import Model
+from API.secure.token.IPT_token import required_token
 
 from flask import Blueprint, request
 # |--------------------------------------------------------------------------------------------------------------------|

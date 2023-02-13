@@ -1,27 +1,33 @@
 # +--------------------------------------------------------------------------------------------------------------------|
-# |                                                                                     validation.login_validation.py |
+# |                                                                                                  API.auth.login.py |
 # |                                                                                             Author: Pauliv, Rômulo |
 # |                                                                                          email: romulopauliv@bk.ru |
 # |                                                                                                    encoding: UTF-8 |
 # +--------------------------------------------------------------------------------------------------------------------|
 
 # | Imports |----------------------------------------------------------------------------------------------------------|
+from API.secure.base.decrypt_base64 import Decrypt
+from API.models.routes.auth.functions import Model
+from API.json.auth.login import send_token_after_login
 from API.status import *
-from API.db import get_db
 # |--------------------------------------------------------------------------------------------------------------------|
 
-class Login(object):
-    # | Find password |================================================================================================|
-    @staticmethod
-    def find_password(username: str) -> tuple[str, int]:
-        document: list = []
-        for doc in get_db().USERS.REGISTER.find({"username": username}):
-            document.append(doc)
-        try:
-            if document[0]:
-                return document[0]['password'], HTTP_200_OK
-        except IndexError:
-            return "INCORRECT USERNAME/PASSWORD", HTTP_403_FORBIDDEN
-    # |================================================================================================================|
-    class Validation(object):
-        pass
+
+def exec_login(credentials: str) -> tuple[dict[str], int]:
+    # + Decryption +
+    credentials_decrypt: list[str] = Decrypt.Base64.read_authentication(
+        credentials, "login"
+    )
+    
+    if credentials_decrypt[1] == HTTP_400_BAD_REQUEST:
+        return credentials_decrypt
+    
+    # + Model validation +
+    validation: tuple[dict[str], int] = Model().login(
+        credentials_decrypt[0], credentials_decrypt[1]
+    )
+    if validation[1] != HTTP_202_ACCEPTED:
+        return validation
+    
+    return send_token_after_login(credentials_decrypt[0])
+    

@@ -9,7 +9,7 @@
 from .db import get_db
 from .secure.token.IPT_token import IPToken
 from .secure.base.decrypt_base64 import Decrypt
-from .json.responses.iam import iam_request
+from .json.responses.iam import iam_status
 
 from .status import *
 
@@ -257,7 +257,7 @@ class IAM(object):
                     if username in privileges[structure][method]:
                         return func(*args, **kwargs)
                     else:
-                        return iam_request.Responses.R4XX.require_privileges_error(username)
+                        return iam_status.Responses.R4XX.require_privileges_error(username)
                 # |----------------------------------------------------------------------------------------------------|
                 # SPECIFIC COLLECTION |--------------------------------------------------------------------------------|
                 elif structure == "especific":
@@ -266,12 +266,12 @@ class IAM(object):
                         if username in privileges[rst_json['database']][rst_json['collection']][method]:
                             return func(*args, **kwargs)
                         else:
-                            return iam_request.Responses.R4XX.require_privileges_error(username)
+                            return iam_status.Responses.R4XX.require_privileges_error(username)
                     except KeyError:
-                        return iam_request.Responses.R4XX.db_or_coll_not_found(
+                        return iam_status.Responses.R4XX.db_or_coll_not_found(
                             rst_json["database"], rst_json["collection"])
                 # |----------------------------------------------------------------------------------------------------|
                 else:
-                    return iam_request.Responses.R4XX.internal_error_structure()            
+                    return iam_status.Responses.R4XX.internal_error_structure()            
             return wrapper
         return inner
