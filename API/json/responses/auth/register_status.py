@@ -26,7 +26,7 @@ class Responses(object):
         class R2XX(object):
             @staticmethod
             def valid_username() -> tuple[str, int]:
-                return "USERNAME IS VALID", HTTP_200_OK
+                return "USERNAME IS VALID", HTTP_202_ACCEPTED
     
     class Email(object):
         class R4XX(object):
@@ -53,3 +53,14 @@ class Responses(object):
             @staticmethod
             def valid_password() -> tuple[str, int]:
                 return "PASSWORD VALID", HTTP_202_ACCEPTED
+    
+    class DatabaseSearch(object):
+        class R4XX(object):
+            @staticmethod
+            def email_or_username_in_use() -> tuple[dict[str], int]:
+                return response_structure("EMAIL OR USERNAME IN USE", HTTP_403_FORBIDDEN)
+        
+        class R2XX(object):
+            @staticmethod
+            def available() -> tuple[str, int]:
+                return "AVAILABLE TO REGISTER", HTTP_202_ACCEPTED

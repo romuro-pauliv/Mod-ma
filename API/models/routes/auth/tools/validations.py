@@ -7,8 +7,10 @@
 
 # | Imports |----------------------------------------------------------------------------------------------------------|
 from API.json.responses.auth.register_status import Responses as register_responses
+from API.db import get_db
 
 from re import fullmatch
+from typing import Any
 import string
 # |--------------------------------------------------------------------------------------------------------------------|
 
@@ -58,3 +60,13 @@ class Validate(object):
                     return register_responses.Password.R4XX.missing_one_character(char_mode)
             
             return register_responses.Password.R2XX.valid_password()
+    
+    class Database(object):
+        @staticmethod
+        def verify_disponibility_in_database(field: str, value: str) -> None:
+            document: dict[str, Any] = get_db().USERS.REGISTER.find_one({field: value})
+            try:
+                if document[field]:
+                    return register_responses.DatabaseSearch.R4XX.email_or_username_in_use()
+            except TypeError:
+                return register_responses.DatabaseSearch.R2XX.available()

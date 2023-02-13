@@ -13,7 +13,7 @@ from functools import wraps
 from typing import Union, Callable, Any
 
 from API.status import *
-from API.json.responses.token import ipt_token
+from API.json.responses.token import token_status
 
 import datetime
 import jwt
@@ -46,24 +46,24 @@ class IPToken(object):
             try:
                 token: str = token.split()[1]
             except IndexError:
-                return ipt_token.Responses.R4XX.colon_error()
+                return token_status.Responses.R4XX.colon_error()
         except AttributeError:
-            return ipt_token.Responses.R4XX.data_error()
+            return token_status.Responses.R4XX.data_error()
         # decode token |-----------------------------------------------------------------------------------------------|
         try:
             try:
                 decode_token: dict = jwt.decode(token, key_api, ['HS256'])
             except jwt.exceptions.DecodeError:
-                return ipt_token.Responses.R4XX.invalid_token()
+                return token_status.Responses.R4XX.invalid_token()
         except jwt.exceptions.ExpiredSignatureError:
-            return ipt_token.Responses.R4XX.expired_token()
+            return token_status.Responses.R4XX.expired_token()
         # |------------------------------------------------------------------------------------------------------------|
 
         # ip hash validation |-----------------------------------------------------------------------------------------|
         if not check_password_hash(decode_token['hash'], ip_addr):
-            return ipt_token.Responses.R4XX.ip_error()
+            return token_status.Responses.R4XX.ip_error()
         # |------------------------------------------------------------------------------------------------------------|
-        return ipt_token.Responses.R2XX.valid_token()
+        return token_status.Responses.R2XX.valid_token()
     # |================================================================================================================|
     
     class Tools(object):
