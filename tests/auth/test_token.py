@@ -6,111 +6,128 @@
 # +--------------------------------------------------------------------------------------------------------------------|
 
 # | imports |----------------------------------------------------------------------------------------------------------|
-import requests
-import time
-import jwt
 from werkzeug.security import generate_password_hash
-import datetime
 from config import *
 from typing import Any
+
+import requests
+import datetime
+import time
+import jwt
 # |--------------------------------------------------------------------------------------------------------------------|
 
-def test_real_token() -> None:
-    token: str = token_return("admin", "123!Admin")
-    # + header +
-    header: dict[str] = {"Authorization": f"Token {token}"}
 
-    # + request +
-    rtn = requests.post(f"{root_route}{test_token_route}", headers=header)
-
-    # + tests +
-    assert rtn.text == "TEST OK"
-    assert rtn.status_code == 202
+# | Set data |---------------------------------------------------------------------------------------------------------|
+credentials: dict[str] = {"username": "admin", "password": "123!Admin"}
+header_token_config: dict[str] = {"field": "Authorization", "prefix": "Token "}
+# |--------------------------------------------------------------------------------------------------------------------|
 
 
-def test_without_token() -> None:
-    # + header +
-    header: dict[None] = {}
+# | functions |--------------------------------------------------------------------------------------------------------|
+def basic_function_requests(header: dict[str] | Any) -> requests.models.Response:
+    return requests.post(f"{root_route}{test_token_route}", headers=header)
 
-    # + request +
-    rtn = requests.post(f"{root_route}{test_token_route}", headers=header)
+def response_assert(hypothetical_response: str, request_obj: requests.models.Response) -> bool:
+    return (hypothetical_response == json.loads(request_obj.text)['response'])
 
-    # + tests +
-    assert json.loads(rtn.text)["response"] == "A STRING WAS NOT IDENTIFIED IN THE TOKEN"
-    assert rtn.status_code == 400
+def status_code_assert(hypothetical_status_code: int, request_obj: requests.models.Response) -> bool:
+    return (hypothetical_status_code == request_obj.status_code)
+# |--------------------------------------------------------------------------------------------------------------------|
 
 
-def test_expired_signature_token() -> None:
-    token: str = token_return("admin", "123!Admin")
-    # + header +
-    header: dict[str] = {"Authorization": f"Token {token}"}
+# | Header format tests |-----------------------------------------------------------------------------------------------|
+"""
+The below tests are about formatting the header sent to the route. The intention is to define
+all possible exceptions, avoiding an internal server error (500).
+"""
 
-    # + request +
-    time.sleep(25)
-    rtn = requests.post(f"{root_route}{test_token_route}", headers=header)
+token: str = token_return(credentials["username"], credentials["password"])
 
-    # + tests +
-    assert json.loads(rtn.text)["response"] == "EXPIRED TOKEN"
-    assert rtn.status_code == 403
+def test_without_header() -> None:
+    response: requests.models.Response = basic_function_requests(None)
+    
+    assert response_assert("A STRING WAS NOT IDENTIFIED IN THE TOKEN", response)
+    assert status_code_assert(400, response)
 
 
 def test_invalid_token() -> None:
-    token: str = token_return("admin", "123!Admin")
-    token: str = token + "a"
-    # + header +
-    header: dict[str] = {"Authorization": f"Token {token}"}
-
-    # + request +
-    rtn = requests.post(f"{root_route}{test_token_route}", headers=header)
-
-    # + tests +
-    assert json.loads(rtn.text)["response"] == "INVALID TOKEN"
-    assert rtn.status_code == 403
-
-
-def test_wrong_formatting_token() -> None:
-    token: str = token_return("admin", "123!Admin")
-    # + header +
-    header: dict[str] = {"Authorization": f"Token WRONG {token}"}
-
-    # + request +
-    rtn = requests.post(f"{root_route}{test_token_route}", headers=header)
-
-    # + tests +
-    assert json.loads(rtn.text)["response"] == "INVALID TOKEN"
-    assert rtn.status_code == 403
-
-
-def test_false_ip_address_token() -> None:
-    # + generate false token with false ip address +
-    false_ip: str = "142.250.219.206"
-
-    encode_dict_token: dict[str, str | datetime.datetime] = {
-        "hash": generate_password_hash(false_ip),
-        "exp": datetime.datetime.utcnow() + datetime.timedelta(seconds=20)
-    }
-
-    token: str = jwt.encode(payload=encode_dict_token, key="dev", algorithm="HS256")
+    response: requests.models.Response = basic_function_requests(
+        {header_token_config["field"]: f"{header_token_config['prefix']}{token}a"})
     
-    # + header +
-    header: dict[str] = {"Authorization": f"Token {token}"}
+    assert response_assert("INVALID TOKEN", response)
+    assert status_code_assert(403, response)
 
-    # + request +
-    rtn = requests.post(f"{root_route}{test_token_route}", headers=header)
-
-    # + tests +
-    assert json.loads(rtn.text)["response"] == "IP ADDRESS DOES NOT MATCH"
-    assert rtn.status_code == 403
+    
+def test_wrong_formatting_string_token() -> None:
+    response: requests.models.Response = basic_function_requests(
+        {header_token_config["field"]: f"{header_token_config['prefix']}wrong {token}"}
+    )
+    assert response_assert("INVALID TOKEN", response)
+    assert status_code_assert(403, response)
 
 
 def test_colon_error() -> None:
-    token: str = token_return("admin", "123!Admin")
-    # + header +
-    header: dict[str] = {"Authorization": token}
+    response: requests.models.Response = basic_function_requests(
+        {header_token_config["field"]: f"{token}"}
+    )
+    
+    assert response_assert("WAS NOT IDENTIFIED [:] COLON IN THE CREDENTIALS", response)
+    assert status_code_assert(400, response)
+# |--------------------------------------------------------------------------------------------------------------------|
 
-    # + request +
-    rtn = requests.post(f"{root_route}{test_token_route}", headers=header)
 
-    # + tests +
-    assert json.loads(rtn.text)["response"] == "WAS NOT IDENTIFIED [:] COLON IN THE CREDENTIALS"
-    assert rtn.status_code == 400
+# | Right Token |------------------------------------------------------------------------------------------------------|
+"""
+The below test are about the right token. 
+"""
+
+def test_token() -> None:
+    real_token: str = token_return(credentials['username'], credentials['password'])
+    
+    response: requests.models.Response = basic_function_requests(
+        {header_token_config['field']: f"{header_token_config['prefix']}{real_token}"}
+    )
+    assert response.text == "TEST OK"
+    assert status_code_assert(202, response)
+# |--------------------------------------------------------------------------------------------------------------------|
+
+
+# | False Ip Address |-------------------------------------------------------------------------------------------------|
+"""
+The below test are about a request with false ip address. The token are generate
+with fake IP and the address remote of send request will be verificated with right
+IP address.
+"""
+
+def token_with_false_ip(ip: str) -> str:
+    encode_dict: dict[str, str | datetime.datetime] = {
+        "hash": generate_password_hash(ip),
+        "exp": datetime.datetime.utcnow() + datetime.timedelta(seconds=20)
+    }    
+    return jwt.encode(payload=encode_dict, key="dev", algorithm="HS256")
+
+def test_false_ip_address_token() -> None:
+    response: requests.models.Response = basic_function_requests(
+        {header_token_config['field']: f"{header_token_config['prefix']}{token_with_false_ip('142.250.219.206')}"}
+    )
+    assert response_assert("IP ADDRESS DOES NOT MATCH", response)
+    assert status_code_assert(403, response)
+# |--------------------------------------------------------------------------------------------------------------------|
+
+
+# | Token expired |----------------------------------------------------------------------------------------------------|
+"""
+The below tests are about expired date of token. We recommend that expired token variable 
+in API be set in 20 seconds.
+"""
+
+token: str = token_return(credentials["username"], credentials["password"])
+
+def test_expired_signature_token() -> None:
+    time.sleep(25)
+    response: requests.models.Response = basic_function_requests(
+        {header_token_config["field"]: f"{header_token_config['prefix']}{token}"}
+    )
+    assert response_assert("EXPIRED TOKEN", response)
+    assert status_code_assert(403, response)
+# |--------------------------------------------------------------------------------------------------------------------|
