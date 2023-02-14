@@ -30,6 +30,7 @@ class LogAuth(object):
                 "date": ["UTC", datetime.datetime.utcnow()],
                 "log": {"command": f"{func.__name__}",
                         "addr": request.remote_addr,
+                        "response": val[0]["response"] if val[1] != 202 else "SUCCESS",
                         "code": val[1]}               
             }
             # |--------------------------------------------------------------------------------------------------------|
