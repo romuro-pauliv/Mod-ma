@@ -197,7 +197,8 @@ class Privileges(object):
             def wrapper(*args, **kwargs) -> tuple[str, int]:
                 val: tuple[str, int] = func(*args, **kwargs)
                 if val[1] == HTTP_201_CREATED:
-                    username: str = Decrypt.Base64.read_authentication(request.headers.get("Register"), "register")[0]
+                    username: str = Decrypt.Base64.read_authentication(
+                        request.headers.get("Register"), "register")[0][0]
                     
                     # GET PRIVILEGES JSON |============================================================================|
                     for dt in self.privileges.mongo().USERS.PRIVILEGES.find({"command": "privileges"}):
