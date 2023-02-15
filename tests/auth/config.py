@@ -20,7 +20,7 @@ from dotenv import load_dotenv
 root_route: str = "http://127.0.0.1:5000"
 login_route: str = "/auth/login"
 register_route: str = "/auth/register"
-test_token_route: str = "/tests/test-token"
+test_token_route: str = "/tests/token"
 # |====================================================================================================================|
 
 # MONGO CLIENT |=======================================================================================================|

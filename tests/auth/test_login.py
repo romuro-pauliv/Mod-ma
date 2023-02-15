@@ -179,7 +179,7 @@ def test_no_colon() -> None:
         credentials['username'], credentials['password']
     )})
     
-    assert response_assert("NO COLON IDENTIFY - BAD REQUEST", response)
+    assert response_assert("COLON ERROR - BAD REQUEST", response)
     assert status_code_assert(400, response)
 
 
@@ -196,6 +196,6 @@ def test_false_encode() -> None:
 def test_no_header() -> None:
     response: requests.models.Response = basic_function_requests(None)
     
-    assert response_assert("NO HEADER DATA - BAD REQUEST", response)
+    assert response_assert("INVALID HEADER DATA - BAD REQUEST", response)
     assert status_code_assert(400, response)
 # |--------------------------------------------------------------------------------------------------------------------|

@@ -16,26 +16,30 @@ import binascii
 
 class Decrypt(object):
     class Base64(object):
-        @staticmethod
-        # read base64 |================================================================================================|
+        @staticmethod    
         def read_authentication(header_credentials: str, _method: str) -> list[str]:
+            methods: list[str] = ["login", "register"]
             try:
-                try:
-                    try:
-                        encrypt_credentials: str = header_credentials.split()[1]
-                        decrypt_credentials: list[str] = base64.b64decode(encrypt_credentials).decode().split(":")
-                        if _method == "login":
-                            if len(decrypt_credentials) > 2:
-                                return Responses.R4XX.colon_error()
-                        if _method == "register":
-                            if len(decrypt_credentials) > 3:
-                                return Responses.R4XX.colon_not_allowed()
-                        if decrypt_credentials[1]:
-                            return decrypt_credentials
-                    except IndexError:
-                        return Responses.R4XX.no_colon_identify()
-                except AttributeError:
-                    return Responses.R4XX.no_data()
+                
+                encrypt_credentials: str = header_credentials.split()[1]
+                decrypt_credentials: list[str] = base64.b64decode(encrypt_credentials).decode().split(":")
+            except (IndexError, AttributeError):
+                return Responses.R4XX.invalid_header_data()
             except binascii.Error:
                 return Responses.R4XX.binascii_error()
-        # |============================================================================================================|
+               
+            if _method == methods[0] and len(decrypt_credentials) != 2:
+                return Responses.R4XX.colon_error()
+            
+            elif _method == methods[1] and len(decrypt_credentials) != 3:
+                return Responses.R4XX.colon_error()
+            
+            elif decrypt_credentials and (_method in methods):
+                for credential in decrypt_credentials:
+                    
+                    if isinstance(credential, str) and len(credential) > 0:
+                        return Responses.R2XX.valid(decrypt_credentials)
+                    
+                    else:
+                        return Responses.R4XX.invalid_argument()
+            

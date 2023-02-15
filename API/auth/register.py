@@ -19,7 +19,7 @@ def exec_register(credentials: str) -> tuple[dict[str], int]:
     credentials_decrypt: list[str] = Decrypt.Base64.read_authentication(
         credentials, "register"
     )
-    if credentials_decrypt[1] == HTTP_400_BAD_REQUEST:
+    if credentials_decrypt[1] != HTTP_200_OK:
         return credentials_decrypt
     
     # + Model validation +
