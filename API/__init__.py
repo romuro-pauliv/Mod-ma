@@ -10,6 +10,7 @@
 import os
 from flask import Flask
 from typing import Union
+import asyncio
 # +--------------------------------------------------------------------------------------------------------------------+
 
 
@@ -56,6 +57,6 @@ def create_app(test_config: Union[bool, None] = None) -> Flask:
     app.register_blueprint(document.bp)
     # |----------------------------------------------------------------------------------------------------------------|
 
-    
+
     return app
 
