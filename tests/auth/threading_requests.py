@@ -5,7 +5,7 @@ from colorama import Fore, Style
 import urllib3
 
 def login_function(username: str, password: str) -> str:
-    header: dict[str] = {"Authorization": header_base64_login(username, password)}
+    header: dict[str] = {"Authorization": header_base64_register(username, password)}
     return requests.post(f"{root_route}{login_route}", headers=header).status_code
 
 def send_request(request_id: int) -> int:

@@ -197,4 +197,24 @@ def test_no_header() -> None:
     
     assert response_assert("INVALID HEADER DATA - BAD REQUEST", response)
     assert status_code_assert(400, response)
+
+
+def test_invalid_argument() -> None:
+    credentials_list: list[str] = [
+        {"username": "", "password": credentials["password"]},
+        {"username": credentials["username"], "password": ""}
+    ]
+    
+    for credentials_test in credentials_list:
+        response: requests.models.Request = basic_function_requests({header_config["field"]:
+            header_base64_login(
+                username=credentials_test["username"],
+                password=credentials_test["password"]
+            )})
+        if credentials_test["password"] == "":
+            assert response_assert("INCORRECT USERNAME/PASSWORD", response)
+            assert status_code_assert(403, response)
+        else:
+            assert response_assert("INVALID ARGUMENT INFORMED - BAD REQUEST", response)
+            assert status_code_assert(400, response)
 # |--------------------------------------------------------------------------------------------------------------------|

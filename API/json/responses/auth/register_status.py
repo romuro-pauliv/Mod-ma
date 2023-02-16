@@ -47,7 +47,7 @@ class Responses(object):
 
             @staticmethod
             def missing_one_character(_char: str) -> tuple[dict[str], int]:
-                return response_structure(f"MISSING 1 [{_char}] CHARACTER", HTTP_400_BAD_REQUEST)
+                return response_structure(f"MISSING 1 [{_char.upper()}] CHARACTER", HTTP_400_BAD_REQUEST)
             
         class R2XX(object):
             @staticmethod
