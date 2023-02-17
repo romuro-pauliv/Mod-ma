@@ -14,6 +14,7 @@ from typing import Any
 # | Set data |---------------------------------------------------------------------------------------------------------|
 credentials: dict[str] = {"username": "admin", "password": "123!Admin"}
 header: dict[str] = {"Authorization": f"Bearer {token_return(credentials['username'], credentials['password'])}"}
+create_database: str = "testing"
 # |--------------------------------------------------------------------------------------------------------------------|
 
 # | function |---------------------------------------------------------------------------------------------------------|
@@ -33,7 +34,7 @@ The test below are about the real create database
 """
 
 def test_create_database() -> None:
-    database_name: str = "testing"
+    database_name: str = create_database
     response: requests.models.Response = post_function({"database": database_name})
     assert response_assert(f"[{database_name}] CREATED", response)
     assert status_code_assert(201, response)
@@ -45,7 +46,7 @@ The tests below are about try create exists database
 """
 
 def test_create_database_in_use() -> None:
-    database_name: str = "testing"
+    database_name: str = create_database
     response: requests.models.Response = post_function({"database": database_name})
     assert response_assert(f"FORBIDDEN - NAME [{database_name}] IN USE", response)
     assert status_code_assert(403, response)
@@ -80,3 +81,23 @@ def test_database_name_with_forbidden_characters() -> None:
         assert response_assert(f"CHARACTER [{_char}] IN [{database_name}] NOT ALLOWED", response)
         assert status_code_assert(400, response)
 # |--------------------------------------------------------------------------------------------------------------------|
+
+
+# | Reset |------------------------------------------------------------------------------------------------------------|
+"""
+The function below not are about a test. The function reset the privileges merged in privileges paper and 
+delete database used in above tests
+"""
+
+def test_reset() -> None:
+    privileges_query: dict[str] = {"command": "privileges"}
+    
+    mongo.drop_database(create_database)
+    privileges: dict[str, list[str] | dict[str]] = mongo.USERS.PRIVILEGES.find_one(privileges_query)
+    del privileges['_id']
+    del privileges[create_database]
+    
+    mongo.USERS.PRIVILEGES.delete_one(privileges_query)
+    mongo.USERS.PRIVILEGES.insert_one(privileges)
+    
+    assert isinstance(privileges, dict)
