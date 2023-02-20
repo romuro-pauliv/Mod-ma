@@ -1,5 +1,5 @@
 # +--------------------------------------------------------------------------------------------------------------------|
-# |                                                                                                 database.config.py |
+# |                                                                                                     test.config.py |
 # |                                                                                             Author: Pauliv, Rômulo |
 # |                                                                                          email: romulopauliv@bk.ru |
 # |                                                                                                    encoding: UTF-8 |
@@ -21,9 +21,19 @@ root_route: str = "http://127.0.0.1:5000"
 login_route: str = "/auth/login"
 register_route: str = "/auth/register"
 
-database: str = "/database/"
-collection: str = '/collection/'
-document: str = "/document/"
+create_database_route: str = "/tests/test-create-database"
+create_collection_route: str = "/tests/test-create-collection"
+create_document_route: str = "/tests/test-create-document"
+
+read_database_route: str = "/tests/test-read-database"
+read_collection_route: str = '/tests/test-read-collection'
+read_documents_route: str = '/tests/test-read-document'
+
+update_document_route: str = "/tests/test-update-document"
+
+delete_database_route: str = "/tests/test-delete-database"
+delete_collection_route: str = "/tests/test-delete-collection"
+delete_document_route: str = "/tests/test-delete-document"
 # |====================================================================================================================|
 
 # MONGO CLIENT |=======================================================================================================|
@@ -35,6 +45,7 @@ load_dotenv(dotenv_path=Path(json_dt['dotenv']))
 
 mongo = MongoClient(os.getenv('MONGO_URI'))
 # |====================================================================================================================|
+
 
 # PRE FUNCTION |-------------------------------------------------------------------------------------------------------|
 def header_base64_login(username: str, password: str) -> str:
