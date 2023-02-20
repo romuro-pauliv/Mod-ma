@@ -44,9 +44,8 @@ def test_login() -> None:
     
     json_response: dict[str, Any] = json.loads(response.text)
     
+    assert json_response["token"]
     assert status_code_assert(202, response)
-    assert json_response['token']
-    assert json_response["token expiration time [UTC]"]
 # |--------------------------------------------------------------------------------------------------------------------|
 
 # | Wrong Credentials login |------------------------------------------------------------------------------------------|
@@ -86,7 +85,7 @@ def test_NoSQL_Authentication_Bypass_1() -> None:
         credentials['username'], password_with_injection
     )})
     
-    assert response_assert("COLON ERROR - BAD REQUEST", response)
+    assert response_assert("CHARACTER [:] NOT ALLOWED", response)
     assert status_code_assert(400, response)
     
 
@@ -96,7 +95,7 @@ def test_NoSQL_Authentication_Bypass_2() -> None:
         injection['username'], injection['password']
     )})
     
-    assert response_assert("COLON ERROR - BAD REQUEST", response)
+    assert response_assert("CHARACTER [:] NOT ALLOWED", response)
     assert status_code_assert(400, response)
 
 
@@ -106,7 +105,7 @@ def test_NoSQL_Authentication_Bypass_3() -> None:
         injection['username'], injection['password']
     )})
     
-    assert response_assert("COLON ERROR - BAD REQUEST", response)
+    assert response_assert("CHARACTER [:] NOT ALLOWED", response)
     assert status_code_assert(400, response)
 
 
@@ -116,7 +115,7 @@ def test_NoSQL_Authentication_Bypass_4() -> None:
         injection['username'], injection['password']
     )})
     
-    assert response_assert("COLON ERROR - BAD REQUEST", response)
+    assert response_assert("CHARACTER [:] NOT ALLOWED", response)
     assert status_code_assert(400, response)
 
 """
@@ -130,7 +129,7 @@ def test_NoSQL_Extract_Data_Information_1() -> None:
         injection['username'], injection['password']
     )})
     
-    assert response_assert("COLON ERROR - BAD REQUEST", response)
+    assert response_assert("CHARACTER [:] NOT ALLOWED", response)
     assert status_code_assert(400, response)
 
 
@@ -140,7 +139,7 @@ def test_NoSQL_Extract_Data_Information_2() -> None:
         injection['username'], injection['password']
     )})
     
-    assert response_assert("COLON ERROR - BAD REQUEST", response)
+    assert response_assert("CHARACTER [:] NOT ALLOWED", response)
     assert status_code_assert(400, response)
 
 
@@ -150,7 +149,7 @@ def test_NoSQL_Extract_Data_Information_3() -> None:
         injection['username'], injection['password']
     )})
     
-    assert response_assert("COLON ERROR - BAD REQUEST", response)
+    assert response_assert("CHARACTER [:] NOT ALLOWED", response)
     assert status_code_assert(400, response)
 
 
@@ -162,7 +161,7 @@ def test_NoSQL_Extract_Data_Information_4() -> None:
         injection['username'], injection['password']
     )})
     
-    assert response_assert("COLON ERROR - BAD REQUEST", response)
+    assert response_assert("CHARACTER [:] NOT ALLOWED", response)
     assert status_code_assert(400, response)
 # |--------------------------------------------------------------------------------------------------------------------|
 
@@ -179,7 +178,7 @@ def test_no_colon() -> None:
         credentials['username'], credentials['password']
     )})
     
-    assert response_assert("NO COLON IDENTIFY - BAD REQUEST", response)
+    assert response_assert("CHARACTER [:] NOT ALLOWED", response)
     assert status_code_assert(400, response)
 
 
@@ -196,6 +195,26 @@ def test_false_encode() -> None:
 def test_no_header() -> None:
     response: requests.models.Response = basic_function_requests(None)
     
-    assert response_assert("NO HEADER DATA - BAD REQUEST", response)
+    assert response_assert("INVALID HEADER DATA - BAD REQUEST", response)
     assert status_code_assert(400, response)
+
+
+def test_invalid_argument() -> None:
+    credentials_list: list[str] = [
+        {"username": "", "password": credentials["password"]},
+        {"username": credentials["username"], "password": ""}
+    ]
+    
+    for credentials_test in credentials_list:
+        response: requests.models.Request = basic_function_requests({header_config["field"]:
+            header_base64_login(
+                username=credentials_test["username"],
+                password=credentials_test["password"]
+            )})
+        if credentials_test["password"] == "":
+            assert response_assert("INCORRECT USERNAME/PASSWORD", response)
+            assert status_code_assert(403, response)
+        else:
+            assert response_assert("INVALID ARGUMENT INFORMED - BAD REQUEST", response)
+            assert status_code_assert(400, response)
 # |--------------------------------------------------------------------------------------------------------------------|

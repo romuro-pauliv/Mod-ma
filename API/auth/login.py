@@ -15,19 +15,17 @@ from API.status import *
 
 def exec_login(credentials: str) -> tuple[dict[str], int]:
     # + Decryption +
-    credentials_decrypt: list[str] = Decrypt.Base64.read_authentication(
-        credentials, "login"
-    )
+    credentials: tuple[list[str] | dict[str], int] = Decrypt.Base64.read_authentication(credentials, "login")
     
-    if credentials_decrypt[1] == HTTP_400_BAD_REQUEST:
-        return credentials_decrypt
+    if credentials[1] != HTTP_200_OK:       # Compare status_code
+        return credentials
+    
+    credentials: dict[str] = {"username": credentials[0][0], "password": credentials[0][1]}
     
     # + Model validation +
-    validation: tuple[dict[str], int] = Model().login(
-        credentials_decrypt[0], credentials_decrypt[1]
-    )
+    validation: tuple[dict[str], int] = Model().login(credentials['username'], credentials['password'])
     if validation[1] != HTTP_202_ACCEPTED:
         return validation
     
-    return send_token_after_login(credentials_decrypt[0])
+    return send_token_after_login(credentials['username'])
     

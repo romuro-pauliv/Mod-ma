@@ -13,17 +13,17 @@ from API.json.tools.tools import response_structure
 class Responses(object):
     class R4XX(object):
         def colon_error() -> tuple[dict[str], int]:
-            return response_structure("COLON ERROR - BAD REQUEST", HTTP_400_BAD_REQUEST)
-        
-        def colon_not_allowed() -> tuple[dict[str], int]:
-            return response_structure("CHARACTER [:] NOT ALLOWED - BAD REQUEST", HTTP_400_BAD_REQUEST)
-        
-        def no_colon_identify() -> tuple[dict[str], int]:
-            return response_structure("NO COLON IDENTIFY - BAD REQUEST", HTTP_400_BAD_REQUEST)
-        
-        def no_data() -> tuple[dict[str], int]:
-            return response_structure("NO HEADER DATA - BAD REQUEST", HTTP_400_BAD_REQUEST)
+            return response_structure("CHARACTER [:] NOT ALLOWED", HTTP_400_BAD_REQUEST)
         
         def binascii_error() -> tuple[dict[str], int]:
             return response_structure("BINASCII ERROR - BAD REQUEST", HTTP_400_BAD_REQUEST)
         
+        def invalid_argument() -> tuple[dict[str], int]:
+            return response_structure("INVALID ARGUMENT INFORMED - BAD REQUEST", HTTP_400_BAD_REQUEST)
+        
+        def invalid_header_data() -> tuple[dict[str], int]:
+            return response_structure("INVALID HEADER DATA - BAD REQUEST", HTTP_400_BAD_REQUEST)
+    
+    class R2XX(object):
+        def valid(decrypt_credentials: list[str]) -> tuple[list[str], int]:
+            return decrypt_credentials, HTTP_200_OK

@@ -25,13 +25,13 @@ class Model(object):
                 fields: list[str] = ["database"]
                 
                 # | Json validation |----------------------------------------------------------------------------------|
-                validate_fields = Validate.JSON.fields(fields)
-                if validate_fields[1] != HTTP_202_ACCEPTED:
-                    return validate_fields
-
                 validate_format: tuple[str, int] = Validate.JSON.format_(request.json)
                 if validate_format[1] != HTTP_202_ACCEPTED:
                     return validate_format
+                
+                validate_fields = Validate.JSON.fields(fields)
+                if validate_fields[1] != HTTP_202_ACCEPTED:
+                    return validate_fields
                 # |----------------------------------------------------------------------------------------------------|
                 
                 # + request values +

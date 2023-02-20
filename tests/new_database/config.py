@@ -1,5 +1,5 @@
 # +--------------------------------------------------------------------------------------------------------------------|
-# |                                                                                                     test.config.py |
+# |                                                                                                 database.config.py |
 # |                                                                                             Author: Pauliv, Rômulo |
 # |                                                                                          email: romulopauliv@bk.ru |
 # |                                                                                                    encoding: UTF-8 |
@@ -11,8 +11,8 @@ import json
 import base64
 import requests
 
-from pathlib import Path
 from pymongo import MongoClient
+from pathlib import Path
 from dotenv import load_dotenv
 # |--------------------------------------------------------------------------------------------------------------------|
 
@@ -20,7 +20,10 @@ from dotenv import load_dotenv
 root_route: str = "http://127.0.0.1:5000"
 login_route: str = "/auth/login"
 register_route: str = "/auth/register"
-test_token_route: str = "/tests/token"
+
+database: str = "/database/"
+collection: str = '/collection/'
+document: str = "/document/"
 # |====================================================================================================================|
 
 # MONGO CLIENT |=======================================================================================================|
@@ -32,7 +35,6 @@ load_dotenv(dotenv_path=Path(json_dt['dotenv']))
 
 mongo = MongoClient(os.getenv('MONGO_URI'))
 # |====================================================================================================================|
-
 
 # PRE FUNCTION |-------------------------------------------------------------------------------------------------------|
 def header_base64_login(username: str, password: str) -> str:
@@ -48,4 +50,12 @@ def header_base64_register(username: str, password: str, email: str) -> str:
 def token_return(username: str, password: str) -> str:
     header: dict[str] = {"Authorization": header_base64_login(username, password)}
     return json.loads(requests.post(f"{root_route}{login_route}", headers=header).text)['token']
+
+
+def get_id(filter: dict[str], database: str, collection: str) -> str:
+    _id_doc_iterable: str = mongo[database][collection].find(filter)
+    _id_doc: str = ""
+    for doc in _id_doc_iterable:
+        _id_doc: str = doc['_id']
+    return _id_doc
 # |--------------------------------------------------------------------------------------------------------------------|

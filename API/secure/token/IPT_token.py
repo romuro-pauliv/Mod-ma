@@ -43,18 +43,16 @@ class IPToken(object):
     @staticmethod
     def token_authentication(token: str, ip_addr: str, key_api: str) -> tuple[str, int]:
         try:
-            try:
-                token: str = token.split()[1]
-            except IndexError:
-                return token_status.Responses.R4XX.colon_error()
+            token: str = token.split()[1]
+        except IndexError:
+            return token_status.Responses.R4XX.colon_error()
         except AttributeError:
             return token_status.Responses.R4XX.data_error()
         # decode token |-----------------------------------------------------------------------------------------------|
         try:
-            try:
-                decode_token: dict = jwt.decode(token, key_api, ['HS256'])
-            except jwt.exceptions.DecodeError:
-                return token_status.Responses.R4XX.invalid_token()
+            decode_token: dict = jwt.decode(token, key_api, ['HS256'])
+        except jwt.exceptions.DecodeError:
+            return token_status.Responses.R4XX.invalid_token()
         except jwt.exceptions.ExpiredSignatureError:
             return token_status.Responses.R4XX.expired_token()
         # |------------------------------------------------------------------------------------------------------------|
