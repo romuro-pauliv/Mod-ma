@@ -80,8 +80,44 @@ def test_database_name_with_forbidden_characters() -> None:
         response: requests.models.Response = post_function({"database": database_name})
         assert response_assert(f"CHARACTER [{_char}] IN [{database_name}] NOT ALLOWED", response)
         assert status_code_assert(400, response)
+
+
+def test_database_name_no_string_type() -> None:
+    database_name_list: list[str] = [["testing", "mode"], {"testing": "mode"}, 123321321]
+    for database_name in database_name_list:
+        response: requests.models.Response = post_function({"database": database_name})
+        assert response_assert("ONLY STRING ARE ALLOWED", response)
+        assert status_code_assert(400, response)
 # |--------------------------------------------------------------------------------------------------------------------|
 
+# | Test database json syntax |----------------------------------------------------------------------------------------|
+"""
+The tests below are about json systax
+"""
+
+def test_empty_json() -> None:
+    response: requests.models.Response = post_function({})
+    assert response_assert("KEY ERROR - NEED [database] FIELD", response)
+    assert status_code_assert(400, response)
+
+
+def test_without_json() -> None:
+    response: requests.models.Response = post_function(None)
+    assert status_code_assert(400, response)
+
+
+def test_without_necessary_field() -> None:
+    response: requests.models.Response = post_function({"testing": "modetest"})
+    assert response_assert("KEY ERROR - NEED [database] FIELD", response)
+    assert status_code_assert(400, response)
+
+
+def test_no_json_sended() -> None:
+    send_json: list[str] = [["testing", "mode"], 123321321, "testing"]
+    response: requests.models.Response = post_function(send_json)
+    assert response_assert("ONLY JSON ARE ALLOWED", response)
+    assert status_code_assert(400, response)
+# |--------------------------------------------------------------------------------------------------------------------|
 
 # | Reset |------------------------------------------------------------------------------------------------------------|
 """
