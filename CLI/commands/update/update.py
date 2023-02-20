@@ -38,11 +38,11 @@ def document(token: str) -> None:
     
     # + request +
     try:
-        rtn = requests.put(f"{ROUTE_ROOT}{ROUTE_UPDATE_DOCUMENT}", headers=header, json=json_body)
+        rtn = requests.put(f"{ROUTE_ROOT}{ROUTE_DOCUMENT}", headers=header, json=json_body)
     except requests.exceptions.ConnectionError:
         return connection_error()
     
     if rtn.status_code == HTTP_202_ACCEPTED:
-        successfully(rtn.text, rtn.status_code)
+        successfully(json.loads(rtn.text)["response"], rtn.status_code)
     else:
-        unsuccessful(rtn.text, rtn.status_code)
+        unsuccessful(json.loads(rtn.text)["response"], rtn.status_code)

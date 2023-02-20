@@ -1,27 +1,18 @@
 # +--------------------------------------------------------------------------------------------------------------------|
-# |                                                                                              API.service.person.py |
+# |                                                                                         API.json.reponses.tools.py |
 # |                                                                                             Author: Pauliv, Rômulo |
 # |                                                                                          email: romulopauliv@bk.ru |
 # |                                                                                                    encoding: UTF-8 |
 # +--------------------------------------------------------------------------------------------------------------------|
 
-# + imports +----------------------------------------------------------------------------------------------------------+
-from API.db import create
-from API.status import *
+# | Imports |----------------------------------------------------------------------------------------------------------|
+import datetime
 # |--------------------------------------------------------------------------------------------------------------------|
 
-class LegalPerson(object):
-    def __init__(self, username: str) -> None:
-        self.username: str = username
-    
-    def create(self) -> None:
-        pass
-
-    def read(self) -> None:
-        pass
-
-    def update(self) -> None:
-        pass
-
-    def delete(self) -> None:
-        pass
+def response_structure(response: str, status_code: int) -> tuple[dict, int]:
+    json_response: dict[str | dict[str]] = {
+        "date": str(f"UTC {datetime.datetime.utcnow()}"),
+        "response": response,
+        "status_code": str(status_code)
+        }
+    return json_response, status_code

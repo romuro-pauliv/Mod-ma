@@ -28,14 +28,14 @@ class LogAuth(object):
             log: dict[str, Any] = {
                 "user": "root",
                 "date": ["UTC", datetime.datetime.utcnow()],
-                "command": f"{func.__name__}",
-                "addr": request.remote_addr,
-                "code": val[1]
+                "log": {"command": f"{func.__name__}",
+                        "addr": request.remote_addr,
+                        "response": val[0]["response"] if val[1] != 202 else "SUCCESS",
+                        "code": val[1]}               
             }
             # |--------------------------------------------------------------------------------------------------------|
 
             # INPUT LOG |----------------------------------------------------------------------------------------------|
-            get_db().LOG.MAINLOG.insert_one(log)
             get_db().USERS.LOG.insert_one(log)
             # |--------------------------------------------------------------------------------------------------------|
             return val

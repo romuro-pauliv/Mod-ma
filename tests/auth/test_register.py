@@ -9,208 +9,312 @@
 import json
 import requests
 from config import *
+from typing import Any
+import pymongo.collection
 # |--------------------------------------------------------------------------------------------------------------------|
 
 
-# INTIAL CONFIG TO TEST |==============================================================================================|
-def test_pre_test_delete_users_login() -> None:
-    admin_user: dict[str] = mongo.USERS.REGISTER.find({"username":"admin"})
-    usertest_user: dict[str] = mongo.USERS.REGISTER.find({"username":"user_test"})
+# | Set data |---------------------------------------------------------------------------------------------------------|
+credentials: dict[str] = {"username": "usertest", "password": "123!UserTest", "email": "usertest@usertest.com"}
+credentials_to_syntax_test: dict[str] = {"username": "user_test", "email": "usertestuser@usertestuser.com"}
+header_config: dict[str] = {"field": "Register"}
+forbidden_character: str = "!\"#$%&'()*+,./:;<=>?@[\]^`{|}~ "
+# |--------------------------------------------------------------------------------------------------------------------|
 
-    for document in admin_user:
-        try:
-            if document['username'] == "admin":
-                assert document['username'] == "admin"
-                mongo.USERS.REGISTER.delete_one({"username":"admin"})
-        except KeyError:
-            pass
+
+# | functions |--------------------------------------------------------------------------------------------------------|
+def basic_function_request(header: dict[str] | Any) -> requests.models.Response:
+    return requests.post(f"{root_route}{register_route}", headers=header)
+
+def login_function() -> requests.models.Response:
+    return requests.post(f"{root_route}{login_route}", headers={"Authorization": header_base64_login(
+        credentials['username'], credentials['password'])})
+
+def response_assert(hypothetical_response: str, request_obj: requests.models.Response) -> bool:
+    return (hypothetical_response == json.loads(request_obj.text)["response"])
+
+def status_code_assert(hypothetical_status_code: int, request_obj: requests.models.Response) -> bool:
+    return (hypothetical_status_code == request_obj.status_code)
+# |--------------------------------------------------------------------------------------------------------------------|
+
+
+# | Register Test |----------------------------------------------------------------------------------------------------|
+"""
+The tests below are about the real register in Modma
+"""
+
+def test_register() -> None:
+    response: requests.models.Response = basic_function_request({header_config['field']: header_base64_register(
+        credentials['username'], credentials['password'], credentials['email']
+    )})
     
-    for document in usertest_user:
-        try:
-            if document['username'] == "user_test":
-                assert document['username'] == "user_test"
-                mongo.USERS.REGISTER.delete_one({"username":"user_test"})
-        except KeyError:
-            pass
-# |====================================================================================================================|
+    assert response_assert("SUCCESSFULLY REGISTERED", response)
+    assert status_code_assert(201, response)
 
 
-# |====================================================================================================================|
-# | REAL REGISTER |====================================================================================================|
-# |====================================================================================================================|
-def test_real_register() -> None:
-    # + header +
-    header: dict[str] = {"Register": header_base64_register("user_test", "123!Admin", "usertest@usertest.com")}
+def test_login() -> None:
+    response: requests.models.Response = login_function()
+    assert status_code_assert(202, response)
+# |--------------------------------------------------------------------------------------------------------------------|
 
-    # + request +
-    rtn = requests.post(f"{root_route}{register_route}", headers=header)
-
-    # + tests +
-    assert rtn.text == "CREATED"
-    assert rtn.status_code == 201
-
-    # +====================+
-    # + LOGIN CONFIRMATION +
-    # +====================+
-
-    # + header +
-    header: dict[str] = {"Authorization": header_base64_login("user_test", "123!Admin")}
-
-    # + request +
-    rtn = requests.post(f"{root_route}{login_route}", headers=header)
-
-    # + tests +
-    assert json.loads(rtn.text)['token']
-    assert json.loads(rtn.text)['token expiration time [UTC]']
-    assert rtn.status_code == 202
+# | Username type tests |----------------------------------------------------------------------------------------------|
+def test_forbidden_character_in_username() -> None:
+    for _char in forbidden_character:
+        response: requests.models.Response = basic_function_request({header_config['field']:
+            header_base64_register(
+                str(credentials["username"] + _char),
+                credentials['password'],
+                credentials['email'])})
+        assert f"CHARACTER [{_char}] NOT ALLOWED" == json.loads(response.text)["response"]
+        assert status_code_assert(400, response)
 
 
-# |====================================================================================================================|
-# | CHARACTER VALIDATION USERNAME |====================================================================================|
-# |====================================================================================================================|
-def test_character_username_validation_register() -> None:
-    for _char in "!\"#$%&'()*+,./:;<=>?@[\]^`{|}~ ":
-        # + header +
-        header: dict[str] = {"Register": header_base64_register(str("user" + _char), "123!Admin", "test123@test.com")}
-
-        # + request +
-        rtn = requests.post(f"{root_route}{register_route}", headers=header)
-
-        # + tests +
-        assert rtn.text == str("CHARACTER [" + _char + "] NOT ALLOWED")
-        assert rtn.status_code == 400
-
-
-# |====================================================================================================================|
-# | USERNAME LESS THAN 4 CHARACTERS |==================================================================================|
-# |====================================================================================================================|
-def test_username_less_than_4_character_resgister() -> None:
-    # + header +
-    header: dict[str] = {"Register": header_base64_register("use", "123!Admin", "test123test@test.com")}
-
-    # + request +
-    rtn = requests.post(f"{root_route}{register_route}", headers=header)
-
-    # + tests +
-    assert rtn.text == "YOUR USERNAME MUST BE MORE THAN 4 CHARACTERS"
-    assert rtn.status_code == 400
-
-
-# |====================================================================================================================|
-# | PASSWORD LESS THAN 8 CHARACTERS |==================================================================================|
-# |====================================================================================================================|
-def test_password_less_than_8_characters_register() -> None:
-    # + header +
-    header: dict[str] = {"Register": header_base64_register("user", "1234", "test12341@test.com")}
-
-    # + request +
-    rtn = requests.post(f"{root_route}{register_route}", headers=header)
-
-    # + test +
-    assert rtn.text == "YOUR PASSWORD MUST BE MORE THAN 8 CHARACTERS"
-    assert rtn.status_code == 400
-
-
-# |====================================================================================================================|
-# | ASCII VALIDATION |=================================================================================================|
-# |====================================================================================================================|
-def test_password_validation_ascii_register() -> None:
-    type_char: list[str] = ["lowercase", "uppercase", "digits", "punctuation"]
-    password_list: list[str] = ["123!ADMIN", "123!admin", "!adminADMIN", "123Admin"]
-
-    for n, passwd in enumerate(password_list):
-        # + header +
-        header: dict[str] = {"Register": header_base64_register("user", passwd, "test99876@test.com")}
-
-        # + request +
-        rtn = requests.post(f"{root_route}{register_route}", headers=header)
-
-        # + tests +
-        assert rtn.text == str("MISSING 1 " + type_char[n].upper() + " CHARACTER")
-        assert rtn.status_code == 400
-
-
-# |====================================================================================================================|
-# | USERNAME IN USE |==================================================================================================|
-# |====================================================================================================================|
-def test_username_in_user_register() -> None:
-    # + header +
-    header: dict[str] = {"Register": header_base64_register("user_test", "123!Admin", "test87718123@test.com")}
-
-    # + request +
-    rtn = requests.post(f"{root_route}{register_route}", headers=header)
-
-    # + tests +
-    assert rtn.text == "EMAIL OR USERNAME IN USE"
-    assert rtn.status_code == 403
-
-
-# |====================================================================================================================|
-# | EMAIL IN USE |=====================================================================================================|
-# |====================================================================================================================|
-def test_email_in_use_register() -> None:
-    # + header +
-    header: dict[str] = {"Register": header_base64_register("test_test", "123!Admin", "usertest@usertest.com")}
-
-    # + request +
-    rtn = requests.post(f"{root_route}{register_route}", headers=header)
-
-    # + tests +
-    assert rtn.text == "EMAIL OR USERNAME IN USE"
-    assert rtn.status_code == 403
-
-
-# |====================================================================================================================|
-# | NO REGISTER HEADER |===============================================================================================|
-# |====================================================================================================================|
-def test_no_header_register() -> None:
-    # + header +
-    header: dict[None] = {}
-
-    # + request +
-    rtn = requests.post(f"{root_route}{register_route}", headers=header)
-
-    # + test +
-    assert rtn.text == "BAD REQUEST - NO DATA"
-    assert rtn.status_code == 400
-
-# |====================================================================================================================|
-# | RESET |============================================================================================================|
-# |====================================================================================================================|
-def test_reset_db() -> None:
-    mongo.USERS.REGISTER.delete_one({"username": "user_test"})
-    for dt in mongo.USERS.PRIVILEGES.find({"command": "privileges"}):
-        privileges: dict[str, list[str] | dict[str]] = dt
+def test_username_less_than_4_character() -> None:
+    username_list: list[str] = ["u", "us", "use"]
+    for new_username in username_list:
+        response: requests.models.Response = basic_function_request({header_config['field']:
+            header_base64_register(new_username, credentials['password'], credentials['email'])})
     
-    for dt in mongo.USERS.PRIVILEGES.find({"command": "standard privileges"}):
-        standard_privileges: dict[str, list[str] | dict[str]] = dt
+        assert response_assert(f"THE USERNAME [{new_username}] NEED MORE THAN 4 CHARACTERS", response)
+        assert status_code_assert(400, response)
+
+# |--------------------------------------------------------------------------------------------------------------------|
+
+# | Password type tests |----------------------------------------------------------------------------------------------|
+def test_password_less_than_8_characters() -> None:
+    password_list: list[str] = ["", "a", "ab", "abc", "abcd", "abcde", "abcdef", "abcdefg"]
+    for new_password in password_list:
+        response: requests.models.Response = basic_function_request({header_config['field']:
+            header_base64_register(credentials_to_syntax_test["username"],
+                                   new_password,
+                                   credentials_to_syntax_test['email'])})
+        assert response_assert("YOUR PASSWORD MUST BE MORE THAN 8 CHARACTERS", response)
+        assert status_code_assert(400, response)
+
+
+def test_password_missing_one_ascii_character() -> None:
+    password_list: list[str] = ["123!admin", "123Admin", "Admin!Admin", "123ADMIN"]
+    json_response: list[str] = ["UPPERCASE", "PUNCTUATION", "DIGITS", "LOWERCASE"]
     
-    # dict treatment |-------------------------------------------------------------------------------------------------|
-    for i in ['_id', 'command', 'datetime']:
-        del standard_privileges[i]
-    # |----------------------------------------------------------------------------------------------------------------|
+    for n, new_password in enumerate(password_list):
+        response: requests.models.Response = basic_function_request({header_config["field"]:
+            header_base64_register(credentials_to_syntax_test["username"],
+                                   new_password,
+                                   credentials_to_syntax_test["email"])})
+        
+        assert response_assert(f"MISSING 1 [{json_response[n]}] CHARACTER", response)
+        assert status_code_assert(400, response)
+# |--------------------------------------------------------------------------------------------------------------------|
+
+# | Email types |------------------------------------------------------------------------------------------------------|
+def test_invalid_email() -> None:
+    email_list: list[str] = ["plainaddress", "@%^%#$@#$@#.com", "@example.com", "Joe Smith <email@example.com>",
+                             "email.example.com", "email@example@example.com", ".email@example.com", 
+                             "email.@example.com", "email..email@example.com", "あいうえお@example.com",
+                             "email@example.com (Joe Smith)", "email@example", "email@-example.com", 
+                             "email@example.web", "email@111.222.333.44444", "email@example..com", 
+                             "Abc..123@example.com"]
+    for new_email in email_list:
+        response: requests.models.Response = basic_function_request({header_config['field']:
+            header_base64_register(credentials_to_syntax_test['username'], credentials['password'], new_email)})
+        
+        response_assert(f"EMAIL [{new_email}] INVALID", response)
+        status_code_assert(400, response)
+# |--------------------------------------------------------------------------------------------------------------------|
+
+# | Tests Credentials Encode |-----------------------------------------------------------------------------------------|
+def test_no_colon() -> None:
+    def new_encode(username: str, password: str, email: str) -> str:
+        encode_pass: bytes = f"{username}{password}{email}".encode()    # No add [:]
+        return f"Register {base64.b64encode(encode_pass).decode()}"
     
-    # remove iamtest of IAM schema |-----------------------------------------------------------------------------------|
-    master: list[str] = [i for i in standard_privileges.keys()]
-    for mst in master:
-        if isinstance(standard_privileges[mst], list):
-            for privil in standard_privileges[mst]:
-                privileges[mst][privil].remove("user_test")
+    response: requests.models.Response = basic_function_request({header_config['field']: new_encode(
+        credentials['username'], credentials['password'], credentials['email']
+    )})
+    
+    assert response_assert("CHARACTER [:] NOT ALLOWED", response)
+    assert status_code_assert(400, response)
+
+
+def test_false_encode() -> None:
+    response: requests.models.Response = basic_function_request({header_config['field']:
+        "false_string test,test~11test"})
+
+    assert response_assert("BINASCII ERROR - BAD REQUEST", response)
+    assert status_code_assert(400, response)
+# |--------------------------------------------------------------------------------------------------------------------|
+
+# | Test Header Authorization |----------------------------------------------------------------------------------------|
+def test_no_header() -> None:
+    response: requests.models.Response = basic_function_request(None)
+    
+    assert response_assert("INVALID HEADER DATA - BAD REQUEST", response)
+    assert status_code_assert(400, response)
+
+
+def test_invalid_argument() -> None:
+    credentials_list: list[str] = [
+        {"username": "", "password": credentials['password'], "email": credentials['email']},
+        {"username": credentials['username'], "password": "", "email": credentials["email"]},
+        {"username": credentials['username'], "password": credentials["password"], "email": ""}
+    ]
+    
+    for credentials_test in credentials_list:
+        
+        response: requests.models.Response = basic_function_request({header_config['field']:
+            header_base64_register(
+                username=credentials_test["username"],
+                password=credentials_test["password"],
+                email=credentials_test["email"]
+            )})
+        if credentials_test["password"] == "":
+            assert response_assert("YOUR PASSWORD MUST BE MORE THAN 8 CHARACTERS", response)
+            assert status_code_assert(400, response)
+        elif credentials_test["email"] == "":
+            assert response_assert("EMAIL [] INVALID", response)
+            assert status_code_assert(400, response)
         else:
-            for coll in [i for i in standard_privileges[mst].keys()]:
-                for privil in standard_privileges[mst][coll]:
-                    privileges[mst][coll][privil].remove("user_test")
+            assert response_assert("INVALID ARGUMENT INFORMED - BAD REQUEST", response)
+            assert status_code_assert(400, response)
+# |--------------------------------------------------------------------------------------------------------------------|
+
+# | NoSQL Injection |--------------------------------------------------------------------------------------------------|
+"""
+Basic authentication bypass using not equal ($ne) or greater ($gt)
+"""
+
+def test_NoSQL_Authentication_Bypass_1() -> None:
+    password_with_injection: str = {"$ne": 1}
+    response: requests.models.Response = basic_function_request({header_config['field']: header_base64_register(
+        credentials['username'], password_with_injection, credentials["email"]
+    )})
+    
+    assert response_assert("CHARACTER [:] NOT ALLOWED", response)
+    assert status_code_assert(400, response)
+    
+
+def test_NoSQL_Authentication_Bypass_2() -> None:
+    injection: dict[str, dict[str]] = {"username": {"$ne": None}, "password": {"$ne": None}}
+    response: requests.models.Response = basic_function_request({header_config['field']: header_base64_register(
+        injection['username'], injection['password'], credentials["email"]
+    )})
+    
+    assert response_assert("CHARACTER [:] NOT ALLOWED", response)
+    assert status_code_assert(400, response)
+
+
+def test_NoSQL_Authentication_Bypass_3() -> None:
+    injection: dict[str, dict[str]] = {"username": {"$ne": "foo"}, "password": {"$ne": "bar"}}
+    response: requests.models.Response = basic_function_request({header_config['field']: header_base64_register(
+        injection['username'], injection['password'], credentials["email"]
+    )})
+    
+    assert response_assert("CHARACTER [:] NOT ALLOWED", response)
+    assert status_code_assert(400, response)
+
+
+def test_NoSQL_Authentication_Bypass_4() -> None:
+    injection: dict[str, dict[str]] = {"username": {"$gt":""}, "password": {"$gt":""}}
+    response: requests.models.Response = basic_function_request({header_config['field']: header_base64_register(
+        injection['username'], injection['password'], credentials["email"]
+    )})
+    
+    assert response_assert("CHARACTER [:] NOT ALLOWED", response)
+    assert status_code_assert(400, response)
+
+"""
+Extract data information
+"""
+
+
+def test_NoSQL_Extract_Data_Information_1() -> None:
+    injection: dict[str, dict[str]] = {"username": {"$eq": "admin"}, "password": {"$regex": "^m" }}
+    response: requests.models.Response = basic_function_request({header_config['field']: header_base64_register(
+        injection['username'], injection['password'], credentials["email"]
+    )})
+    
+    assert response_assert("CHARACTER [:] NOT ALLOWED", response)
+    assert status_code_assert(400, response)
+
+
+def test_NoSQL_Extract_Data_Information_2() -> None:
+    injection: dict[str, dict[str]] = {"username": {"$eq": "admin"}, "password": {"$regex": "^md" }}
+    response: requests.models.Response = basic_function_request({header_config['field']: header_base64_register(
+        injection['username'], injection['password'], credentials["email"]
+    )})
+    
+    assert response_assert("CHARACTER [:] NOT ALLOWED", response)
+    assert status_code_assert(400, response)
+
+
+def test_NoSQL_Extract_Data_Information_3() -> None:
+    injection: dict[str, dict[str]] = {"username": {"$eq": "admin"}, "password": {"$regex": "^mdp"}}
+    response: requests.models.Response = basic_function_request({header_config['field']: header_base64_register(
+        injection['username'], injection['password'], credentials["email"]
+    )})
+    
+    assert response_assert("CHARACTER [:] NOT ALLOWED", response)
+    assert status_code_assert(400, response)
+
+
+def test_NoSQL_Extract_Data_Information_4() -> None:
+    injection: dict[str, dict[str]] = {
+        "username":{"$in":["Admin", "4dm1n", "admin", "root", "administrator"]},"password":{"$gt":""}
+    }
+    response: requests.models.Response = basic_function_request({header_config['field']: header_base64_register(
+        injection['username'], injection['password'], credentials["email"]
+    )})
+    
+    assert response_assert("CHARACTER [:] NOT ALLOWED", response)
+    assert status_code_assert(400, response)
+# |--------------------------------------------------------------------------------------------------------------------|
+
+
+
+# | Reset Database and IAM |-------------------------------------------------------------------------------------------|
+"""
+This isn't a test. This is a reset function so there are no problems running the test again
+"""
+def test_reset() -> None:
+    # MongoDB Connection
+    PRIVILEGES_DB: pymongo.collection.Collection = mongo.USERS.PRIVILEGES
+    REGISTER_DB = pymongo.collection.Collection = mongo.USERS.REGISTER
+    # Query
+    privileges_query: dict[str] = {"command": "privileges"}
+    standard_privileges_query: dict[str] = {"command": "standard privileges"}
+    
+    # treatment
+    useless_fields_standard_privileges: list[str] = ["_id", "command", "datetime"]
+    
+    # Delete user of database
+    REGISTER_DB.delete_one({"username": credentials['username']})
+    
+    # Data withdrawal
+    privileges: dict[str, list[str] | dict[str]] = PRIVILEGES_DB.find_one(privileges_query)
+    standard_privileges: dict[str, list[str] | dict[str]] = PRIVILEGES_DB.find_one(standard_privileges_query)
+    
+    # standard privileges treatment
+    for useless_field in useless_fields_standard_privileges:
+        del standard_privileges[useless_field]
+    
+    # Remove username of IAM schema |----------------------------------------------------------------------------------|
+    standard_privileges_fields: list[str] = [i for i in standard_privileges.keys()]
+    for field in standard_privileges_fields:
+        if isinstance(standard_privileges[field], list):
+            for methods in standard_privileges[field]:
+                privileges[field][methods].remove(credentials['username'])
+        else:
+            for collection in [i for i in standard_privileges[field].keys()]:
+                for methods in standard_privileges[field][collection]:
+                    privileges[field][collection][methods].remove(credentials['username'])
     # |----------------------------------------------------------------------------------------------------------------|
     
-    # update IAM |-----------------------------------------------------------------------------------------------------|
+    # Update IAM
     del privileges['_id']
-    mongo.USERS.PRIVILEGES.delete_one({"command": "privileges"})
-    mongo.USERS.PRIVILEGES.insert_one(privileges)
-    # |----------------------------------------------------------------------------------------------------------------|
+    PRIVILEGES_DB.delete_one(privileges_query), PRIVILEGES_DB.insert_one(privileges)
     
-    mongo.USERS.REGISTER.delete_one({"username": "user_test"})
-    
-    assert "user_test" not in privileges["USERS"]["PRIVILEGES"]["read"]
-    assert "user_test" not in privileges["USERS"]["PRIVILEGES"]["create"]
-    assert "user_test" not in privileges["USERS"]["PRIVILEGES"]["update"]
-    assert "user_test" not in privileges["USERS"]["PRIVILEGES"]["delete"]
+    # Test
+    crud_method: list[str] = ["read", "create", "update", "delete"]
+    for method_ in crud_method:
+        assert credentials['username'] not in privileges['USERS']['PRIVILEGES'][method_]
+# |--------------------------------------------------------------------------------------------------------------------|

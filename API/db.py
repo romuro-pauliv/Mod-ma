@@ -8,7 +8,25 @@
 # imports |------------------------------------------------------------------------------------------------------------|
 from API.status import *
 
-from flask import current_app, g
+from API.secure.token.IPT_token import IPToken
+
+from API.json.responses.database import create_status as database_create_status
+from API.json.responses.database import delete_status as database_delete_status
+
+from API.json.responses.collection import create_status as collection_create_status
+from API.json.responses.collection import read_status as collection_read_status
+from API.json.responses.collection import delete_status as collection_delete_status
+
+from API.json.responses.document import create_status as document_create_status
+from API.json.responses.document import read_status as document_read_status
+from API.json.responses.document import update_status as document_update_status
+from API.json.responses.document import delete_status as document_delete_status
+
+from API.log.model.logs import Create as logCreate
+from API.log.model.logs import Update as logUpdate
+from API.log.model.logs import Delete as logDelete
+
+from flask import current_app, g, request
 from pymongo import MongoClient
 from typing import Union, Any
 
@@ -27,16 +45,6 @@ def get_db() -> MongoClient:
 # |====================================================================================================================|
 
 
-"""
-Below you will define the database CRUD methods. All database connections will be defined in the module (only register 
-and login methods are not defined here)    
-"""
-
-
-class ExceptionPass(Exception):
-    pass
-
-
 def parse_json(data: list | dict) -> dict:
     """
     Convert API receive json to dict type for easily handle
@@ -46,89 +54,59 @@ def parse_json(data: list | dict) -> dict:
     return json.loads(json_util.dumps(data))
 
 
-def field_validation(document: dict[str, Any]) -> tuple[str, int]:
-    """
-    Validation of sended json. Server to don't include fields how date, user, and _id.
-    Args: document (dict[str, Any]): Dict to validation
-    Returns: tuple[str, int]: Description and HTTP code
-    """
-    denied_fields: list[str] = ["_id", "date", "user"]
-    try:
-        for field, _ in document.items():
-            if field in denied_fields:
-                raise ExceptionPass
-    except ExceptionPass:
-        return "FORBIDDEN - FIELD VALIDATION", HTTP_403_FORBIDDEN
-    return "OK", HTTP_200_OK
-
-
 class create(object):
-    def __init__(self, username: str) -> None:
-        self.username: str = username
+    def __init__(self) -> None:
+        self.username: str = IPToken.Tools.get_username_per_token(request.headers.get("Authorization"))
 
-    def database(self, name: str) -> tuple[str, int]:
-        database_name: str = name.lower()
+    def database(self, database: str) -> tuple[str, int]:
+        database: str = database.lower()
+        forbidden_database_names: list[str] = [
+            "command", "datetime", "database", "collection", "documents", "admin", "local"
+        ]
         
         # Forbidden names |--------------------------------------------------------------------------------------------|
-        if name in ["command", "datetime", "database", "collection", "documents", "admin", "local"]:
-            return "FORBIDDEN - NAME NOT ALLOWED", HTTP_403_FORBIDDEN
+        if database in forbidden_database_names:
+            return database_create_status.Reponses.R4XX.name_not_allowed(database)
         # |------------------------------------------------------------------------------------------------------------|
 
         # database search |--------------------------------------------------------------------------------------------|
-        if database_name in get_db().list_database_names():
-            return "FORBIDDEN - DATABASE NAME IN USE", HTTP_403_FORBIDDEN
+        if database in get_db().list_database_names():
+            return database_create_status.Reponses.R4XX.name_in_use(database)
         # |------------------------------------------------------------------------------------------------------------|
 
         # Create database |--------------------------------------------------------------------------------------------|
-        document: dict[str, str | list] = {
-            "user": self.username,
-            "datetime": ['UTC', datetime.datetime.utcnow()],
-            "command": f"Hello, I'm {database_name}"
-        }
-
-        get_db()[database_name].LOG.insert_one(document)
+        logCreate.Database.log(database, self.username)
         # |------------------------------------------------------------------------------------------------------------|
-
-        return 'CREATE', HTTP_201_CREATED
+        return database_create_status.Reponses.R2XX.create(database)
     
-    def collection(self, database: str, name: str) -> tuple[str, int]:
-        database_name: str = database.lower()       # lowercase database
-        collection_name: str = name.lower()         # lowercase collection
+    def collection(self, database: str, collection: str) -> tuple[str, int]:
+        database: str = database.lower()              # lowercase database
+        collection: str = collection.lower()          # lowercase collection
 
         # database and collection search |-----------------------------------------------------------------------------|
-        if database_name not in get_db().list_database_names():
-            return "FORBIDDEN - DATABASE NOT EXISTS", HTTP_403_FORBIDDEN
+        if database not in get_db().list_database_names():
+            return collection_create_status.Responses.R4XX.database_not_found(database)
         
-        if collection_name in get_db()[database_name].list_collection_names():
-            return "FORBIDDEN - COLLECTION NAME IN USE", HTTP_403_FORBIDDEN
+        if collection in get_db()[database].list_collection_names():
+            return collection_create_status.Responses.R4XX.collection_name_in_use(collection)
         # |------------------------------------------------------------------------------------------------------------|
 
         # Create collection |------------------------------------------------------------------------------------------|
-        document: dict[str] = {
-            "user": self.username,
-            "datetime": ['UTC', datetime.datetime.utcnow()],
-            "command": f"Hello, I'm {collection_name}"
-        }
-        get_db()[database_name][collection_name].insert_one(document)
+        logCreate.Collection.log(database, collection, self.username)
         # |------------------------------------------------------------------------------------------------------------|
 
-        return "CREATE", HTTP_201_CREATED
+        return collection_create_status.Responses.R2XX.collection_created(collection)
     
     def document(self, database: str, collection: str, document: str) -> tuple[str, int]:
-        database_name: str = database.lower()       # lowercase database
-        collection_name: str = collection.lower()   # lowercase collection
+        database: str = database.lower()       # lowercase database
+        collection: str = collection.lower()   # lowercase collection
 
         # database and collection search |-----------------------------------------------------------------------------|
-        if database_name not in get_db().list_database_names():
-            return "FORBIDDEN - DATABASE NOT EXISTS", HTTP_403_FORBIDDEN
+        if database not in get_db().list_database_names():
+            return document_create_status.Responses.R4XX.database_not_found(database)
         
-        if collection_name not in get_db()[database_name].list_collection_names():
-            return "FORBIDDEN - COLLECTION NOT EXISTS", HTTP_403_FORBIDDEN
-        # |------------------------------------------------------------------------------------------------------------|
-
-        # fields validation |------------------------------------------------------------------------------------------|
-        if field_validation(document)[1] == HTTP_403_FORBIDDEN:
-            return "FORBIDDEN - FIELD VALIDATION", HTTP_403_FORBIDDEN
+        if collection not in get_db()[database].list_collection_names():
+            return document_create_status.Responses.R4XX.collection_not_found(collection)
         # |------------------------------------------------------------------------------------------------------------|
 
         # Assemble document |------------------------------------------------------------------------------------------|
@@ -144,15 +122,15 @@ class create(object):
         # |------------------------------------------------------------------------------------------------------------|
 
         # Create document |--------------------------------------------------------------------------------------------|
-        get_db()[database_name][collection_name].insert_one(total_document)
+        get_db()[database][collection].insert_one(total_document)
         # |------------------------------------------------------------------------------------------------------------|
 
-        return {"info": "CREATE", "document_id": id_str}, HTTP_201_CREATED
+        return document_create_status.Responses.R2XX.create_document(id_str)
 
 
 class read(object):
-    def __init__(self, username: str) -> None:
-        self.usename: str = username
+    def __init__(self) -> None:
+        self.usename: str = IPToken.Tools.get_username_per_token(request.headers.get("Authorization"))
     
     def database(self) -> tuple[list[str], int]:
         return get_db().list_database_names(), HTTP_200_OK
@@ -161,16 +139,16 @@ class read(object):
         if database in get_db().list_database_names():
             return get_db()[database].list_collection_names(), HTTP_200_OK
         else:
-            return "NOT FOUND", HTTP_404_NOT_FOUND
+            return collection_read_status.Responses.R4XX.database_not_found(database)
     
     def document(self, database: str, collection: str, filter: dict[str]) -> tuple[dict[str, Any], int]:
 
         # Verify if the database and collection exists |---------------------------------------------------------------|
         if database not in get_db().list_database_names():
-            return "DATABASE NOT FOUND", HTTP_404_NOT_FOUND
+            return document_read_status.Responses.R4XX.database_not_found(database)
         
         if collection not in get_db()[database].list_collection_names():
-            return "COLLECTION NOT FOUND", HTTP_404_NOT_FOUND
+            return document_read_status.Responses.R4XX.collection_not_found(collection)
         # |------------------------------------------------------------------------------------------------------------|
 
         document_list: list[dict[str, Any]] = []
@@ -181,119 +159,103 @@ class read(object):
 
 
 class update(object):
-    def __init__(self, username: str) -> None:
-        self.username: str = username
+    def __init__(self) -> None:
+        self.username: str = IPToken.Tools.get_username_per_token(request.headers.get("Authorization"))
     
     def document(self, database: str, collection: str, _id: str, new_values: dict[str, Any]) -> tuple[str, int]:
-        # search database and collection |-----------------------------------------------------------------------------|
-        if database.lower() not in get_db().list_database_names():
-            return "DATABASE NOT FOUND", HTTP_404_NOT_FOUND
+        database: str = database.lower()
+        collection: str = collection.lower()
         
-        if collection.lower() not in get_db()[database.lower()].list_collection_names():
-            return "COLLECTION NOT FOUND", HTTP_404_NOT_FOUND
+        # search database and collection |-----------------------------------------------------------------------------|
+        if database not in get_db().list_database_names():
+            return document_update_status.Responses.R4XX.database_not_found(database)
+        
+        if collection not in get_db()[database].list_collection_names():
+            return document_update_status.Responses.R4XX.collection_not_found(collection)
         # |------------------------------------------------------------------------------------------------------------|
         
         # Find document |----------------------------------------------------------------------------------------------|
-        real_document: dict[str, Any] = parse_json(get_db()[database.lower()][collection.lower()].find({"_id": _id}))
+        real_document: dict[str, Any] = parse_json(get_db()[database][collection].find({"_id": _id}))
         # |------------------------------------------------------------------------------------------------------------|
         
         try:
             # The method serves to filter only the document that not contain ObjectId(). Case the user input the _id
             # refer to ObjectId() (ex.: LOG documents), a exception is called. 
             if real_document[0]["_id"] == _id:
-                validation: tuple[str, int] = field_validation(new_values)
-                if validation[1] == HTTP_200_OK:
-                    # Update |-----------------------------------------------------------------------------------------|
-                    filter: dict[str] = {"_id": _id}
-                    updating: dict = {"$set": new_values}
-                    get_db()[database.lower()][collection.lower()].update_one(filter, updating)
-                    # |------------------------------------------------------------------------------------------------|
-                    return "UPDATE", HTTP_202_ACCEPTED
-                else:
-                    return validation
+                # Update |-------------------------------------------------------------------------------------------|
+                get_db()[database][collection].update_one({"_id": _id}, {"$set": new_values})
+                logUpdate.Document.log(database, collection, self.username, _id)
+                # |--------------------------------------------------------------------------------------------------|
+                return document_update_status.Responses.R2XX.document_updated(_id)
         except IndexError:
-            return "DOCUMENT NOT FOUND", HTTP_404_NOT_FOUND
+            return document_update_status.Responses.R4XX.document_not_found(_id)
 
 
 class delete(object):
-    def __init__(self, username: str) -> None:
-        self.username: str = username
+    def __init__(self) -> None:
+        self.username: str = IPToken.Tools.get_username_per_token(request.headers.get("Authorization"))
     
     def delete_database_privileges(self, database: str) -> None:
-        for dt in get_db().USERS.PRIVILEGES.find({"command": "privileges"}):
-            privileges_db: dict[str, Union[list[str], dict[str]]] = dt
-        
-        # | Update |---------------------------------------------------------------------------------------------------|
-        del privileges_db[database]
-        del privileges_db["_id"]
-        
-        get_db().USERS.PRIVILEGES.delete_one({"command": "privileges"})
-        get_db().USERS.PRIVILEGES.insert_one(privileges_db)
-        # |------------------------------------------------------------------------------------------------------------|
-    
+        get_db().USERS.PRIVILEGES.update_one({"command": "privileges"}, {"$unset": {database: ""}})
+
     def delete_collection_privileges(self, database: str, collection: str) -> None:
-        for dt in get_db().USERS.PRIVILEGES.find({"command": "privileges"}):
-            privileges_cl: dict[str, Union[list[str], dict[str]]] = dt
-        
-        # | Update |---------------------------------------------------------------------------------------------------|
-        del privileges_cl[database][collection]
-        del privileges_cl["_id"]
-        
-        get_db().USERS.PRIVILEGES.delete_one({"command": "privileges"})
-        get_db().USERS.PRIVILEGES.insert_one(privileges_cl)
-        # |------------------------------------------------------------------------------------------------------------|
+        get_db().USERS.PRIVILEGES.update_one({"command": "privileges"}, {"$unset": {f"{database}.{collection}": ""}})
         
     def database(self, database: str) -> tuple[str, int]:
+        database: str = database.lower()
         # | Search database |------------------------------------------------------------------------------------------|
-        if database.lower() not in get_db().list_database_names():
-            return "DATABASE NOT FOUND", HTTP_404_NOT_FOUND
-        # |------------------------------------------------------------------------------------------------------------|
+        if database not in get_db().list_database_names():
+            return database_delete_status.Responses.R4XX.not_found(database)
         # | Delete |---------------------------------------------------------------------------------------------------|
-        get_db().drop_database(database.lower())
+        get_db().drop_database(database)
+        self.delete_database_privileges(database)
+        logDelete.Database.log(database, self.username)
         # |------------------------------------------------------------------------------------------------------------|
-        # | Del database privilege |-----------------------------------------------------------------------------------|
-        self.delete_database_privileges(database.lower())
-        # |------------------------------------------------------------------------------------------------------------|
-        return "ACCEPTED", HTTP_202_ACCEPTED
+        return database_delete_status.Responses.R2XX.delete_database(database)
     
     def collection(self, database: str, collection: str) -> tuple[str, int]:
-        # | Search database and collection |---------------------------------------------------------------------------|
-        if database.lower() not in get_db().list_database_names():
-            return "DATABASE NOT FOUND", HTTP_404_NOT_FOUND
+        database: str = database.lower()
+        collection: str = collection.lower()
         
-        if collection.lower() not in get_db()[database.lower()].list_collection_names():
-            return "COLLECTION NOT FOUND", HTTP_404_NOT_FOUND
+        # | Search database and collection |---------------------------------------------------------------------------|
+        if database not in get_db().list_database_names():
+            return collection_delete_status.Responses.R4XX.database_not_found(database)
+        
+        if collection not in get_db()[database.lower()].list_collection_names():
+            return collection_delete_status.Responses.R4XX.collection_not_found(collection)
         # |------------------------------------------------------------------------------------------------------------|
         
         # | Delete |---------------------------------------------------------------------------------------------------|
-        get_db()[database.lower()].drop_collection(collection.lower())
+        get_db()[database].drop_collection(collection)
+        self.delete_collection_privileges(database, collection)
+        logDelete.Collection.log(database, collection, self.username)
         # |------------------------------------------------------------------------------------------------------------|
         
-        # | Del collection privileges |--------------------------------------------------------------------------------|
-        self.delete_collection_privileges(database.lower(), collection.lower())
-        # |------------------------------------------------------------------------------------------------------------|
-        return "ACCEPTED", HTTP_202_ACCEPTED
+        return collection_delete_status.Responses.R2XX.collection_deleted(collection)
     
     def document(self, database: str, collection: str, _id: str) -> tuple[str, int]:
+        database: str = database.lower()
+        collection: str = collection.lower()
+        
         # | Search database and collection |---------------------------------------------------------------------------|
-        if database.lower() not in get_db().list_database_names():
-            return "DATABASE NOT FOUND", HTTP_404_NOT_FOUND
+        if database not in get_db().list_database_names():
+            return document_delete_status.Responses.R4XX.database_not_found(database)
         
         if collection.lower() not in get_db()[database.lower()].list_collection_names():
-            return "COLLECTION NOT FOUND", HTTP_404_NOT_FOUND
+            return document_delete_status.Responses.R4XX.collection_not_found(collection)
         # |------------------------------------------------------------------------------------------------------------|
         
         # Find document |----------------------------------------------------------------------------------------------|
         real_document: dict[str, Any] = parse_json(get_db()[database.lower()][collection.lower()].find({"_id": _id}))
         # |------------------------------------------------------------------------------------------------------------|
-        
         try:
             # The method serves to filter only the document that not contain ObjectId(). Case the user input the _id
             # refer to ObjectId() (ex.: LOG documents), a exception is called. 
             if real_document[0]["_id"] == _id:
                 # | Delete |-------------------------------------------------------------------------------------------|
-                get_db()[database.lower()][collection.lower()].delete_one({"_id": _id})
+                get_db()[database][collection].delete_one({"_id": _id})
+                logDelete.Document.log(database, collection, _id, self.username)
                 # |----------------------------------------------------------------------------------------------------|    
-                return "ACCEPTED", HTTP_202_ACCEPTED
+                return document_delete_status.Responses.R2XX.document_deleted(_id)
         except IndexError:
-            return "DOCUMENT NOT FOUND", HTTP_404_NOT_FOUND
+            return document_delete_status.Responses.R4XX.document_not_found(_id)

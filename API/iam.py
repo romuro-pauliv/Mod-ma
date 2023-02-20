@@ -9,6 +9,7 @@
 from .db import get_db
 from .secure.token.IPT_token import IPToken
 from .secure.base.decrypt_base64 import Decrypt
+from .json.responses.iam import iam_status
 
 from .status import *
 
@@ -196,7 +197,8 @@ class Privileges(object):
             def wrapper(*args, **kwargs) -> tuple[str, int]:
                 val: tuple[str, int] = func(*args, **kwargs)
                 if val[1] == HTTP_201_CREATED:
-                    username: str = Decrypt.Base64.read_authentication(request.headers.get("Register"), "register")[0]
+                    username: str = Decrypt.Base64.read_authentication(
+                        request.headers.get("Register"), "register")[0][0]
                     
                     # GET PRIVILEGES JSON |============================================================================|
                     for dt in self.privileges.mongo().USERS.PRIVILEGES.find({"command": "privileges"}):
@@ -256,7 +258,7 @@ class IAM(object):
                     if username in privileges[structure][method]:
                         return func(*args, **kwargs)
                     else:
-                        return "REQUIRE PRIVILEGES", HTTP_403_FORBIDDEN
+                        return iam_status.Responses.R4XX.require_privileges_error(username)
                 # |----------------------------------------------------------------------------------------------------|
                 # SPECIFIC COLLECTION |--------------------------------------------------------------------------------|
                 elif structure == "especific":
@@ -265,11 +267,12 @@ class IAM(object):
                         if username in privileges[rst_json['database']][rst_json['collection']][method]:
                             return func(*args, **kwargs)
                         else:
-                            return "REQUIRE PRIVILEGES", HTTP_403_FORBIDDEN
+                            return iam_status.Responses.R4XX.require_privileges_error(username)
                     except KeyError:
-                        return "BAD REQUEST - DATABASE OR COLLECTION NOT FOUND", HTTP_400_BAD_REQUEST
+                        return iam_status.Responses.R4XX.db_or_coll_not_found(
+                            rst_json["database"], rst_json["collection"])
                 # |----------------------------------------------------------------------------------------------------|
                 else:
-                    return "BAD REQUEST - STRUCTURE", HTTP_400_BAD_REQUEST            
+                    return iam_status.Responses.R4XX.internal_error_structure()            
             return wrapper
         return inner

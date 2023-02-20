@@ -1,5 +1,5 @@
 # +--------------------------------------------------------------------------------------------------------------------|
-# |                                                                                     validation.login_validation.py |
+# |                                                                               API.json.reponses.iam.iam_request.py |
 # |                                                                                             Author: Pauliv, Rômulo |
 # |                                                                                          email: romulopauliv@bk.ru |
 # |                                                                                                    encoding: UTF-8 |
@@ -7,21 +7,23 @@
 
 # | Imports |----------------------------------------------------------------------------------------------------------|
 from API.status import *
-from API.db import get_db
+from API.json.tools.tools import response_structure
 # |--------------------------------------------------------------------------------------------------------------------|
 
-class Login(object):
-    # | Find password |================================================================================================|
-    @staticmethod
-    def find_password(username: str) -> tuple[str, int]:
-        document: list = []
-        for doc in get_db().USERS.REGISTER.find({"username": username}):
-            document.append(doc)
-        try:
-            if document[0]:
-                return document[0]['password'], HTTP_200_OK
-        except IndexError:
-            return "INCORRECT USERNAME/PASSWORD", HTTP_403_FORBIDDEN
-    # |================================================================================================================|
-    class Validation(object):
-        pass
+class Responses(object):
+    class R4XX(object):
+        @staticmethod
+        def require_privileges_error(username: str) -> tuple[dict, int]:
+            return response_structure(
+                f"USER [{username}] REQUIRE PRIVILEGES", HTTP_403_FORBIDDEN
+            )
+        
+        @staticmethod
+        def db_or_coll_not_found(database: str, collection: str) -> tuple[dict, int]:
+            return response_structure(
+                f"DATABASE [{database}] OR COLLECTION [{collection}] NOT FOUND", HTTP_404_NOT_FOUND
+            )
+        
+        @staticmethod
+        def internal_error_structure() -> tuple[str, int]:
+            return "BAD REQUEST - STRUCTURE", HTTP_400_BAD_REQUEST
