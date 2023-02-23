@@ -25,42 +25,32 @@ class Model(object):
                 forbidden_document_fields: list[str] = ["_id", "datetime", "user"]
                 
                 # | Json validation |----------------------------------------------------------------------------------|
-                validate_json: tuple[str, int] = Validate.JSON.fields(fields)
-                if validate_json[1] != HTTP_202_ACCEPTED:
-                    return validate_json
-                
                 validate_format: tuple[str, int] = Validate.JSON.format_(request.json)
                 if validate_format[1] != HTTP_202_ACCEPTED:
                     return validate_format
-                # |----------------------------------------------------------------------------------------------------|
                 
-                # + request values +
-                values_: list[str] = [request.json[i] for i in fields]
-                
-                # | String validation |--------------------------------------------------------------------------------|
-                for i in values_[0:1]:
-                    validate_value_str: tuple[str, int] = Validate.STRING.str_type(i)
-                    if validate_value_str[1] != HTTP_202_ACCEPTED:
-                        return validate_value_str
-                
-                validate_string_length: tuple[str, int] = Validate.STRING.length(values_[0:1], 4)
-                if validate_string_length[1] != HTTP_202_ACCEPTED:
-                    return validate_string_length
-                
-                validate_string_character: tuple[str, int] = Validate.STRING.character(values_[0:1])
-                if validate_string_character[1] != HTTP_202_ACCEPTED:
-                    return validate_string_character
+                validate_json: tuple[str, int] = Validate.JSON.fields(fields)
+                if validate_json[1] != HTTP_202_ACCEPTED:
+                    return validate_json
                 # |----------------------------------------------------------------------------------------------------|
                 
                 # Json document validation |---------------------------------------------------------------------------|
-                validate_document_json_format: list[str, int] = Validate.JSON.format_(request.json['document'])
+                document: dict[str, Any] = request.json['document']
+                
+                validate_document_json_format: list[str, int] = Validate.JSON.format_(document)
                 if validate_document_json_format[1] != HTTP_202_ACCEPTED:
                     return validate_document_json_format
                 
                 validate_forbidden_fields: list[str, int] = Validate.JSON.forbidden_fields(
-                    request.json['document'], forbidden_document_fields)
+                    document, forbidden_document_fields)
                 if validate_forbidden_fields[1] != HTTP_202_ACCEPTED:
                     return validate_forbidden_fields
+                
+                document_fields: list[str] = [i for i in document.keys()]
+                
+                validate_character_fields: list[str, int] = Validate.STRING.character(document_fields)
+                if validate_character_fields[1] != HTTP_202_ACCEPTED:
+                    return validate_character_fields
                 # |----------------------------------------------------------------------------------------------------|
                 
                 return func(*args, **kwargs)
