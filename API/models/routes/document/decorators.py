@@ -146,19 +146,13 @@ class Model(object):
                 fields: list[str] = ["database", "collection", "_id"]
                 
                 # Json validation |------------------------------------------------------------------------------------|
+                validate_format: tuple[dict, int] = Validate.JSON.format_(request.json, False)
+                if validate_format[1] != HTTP_202_ACCEPTED:
+                    return validate_format
+                
                 validate_json: tuple[str, int] = Validate.JSON.fields(fields)
                 if validate_json[1] != HTTP_202_ACCEPTED:
                     return validate_json
-                # |----------------------------------------------------------------------------------------------------|
-                
-                # + Request values +
-                values_: list[str] = [request.json[i] for i in fields]
-                
-                # | String validation |--------------------------------------------------------------------------------|
-                for i in values_:
-                    validate_value_str: tuple[str, int] = Validate.STRING.str_type(i)
-                    if validate_value_str[1] != HTTP_202_ACCEPTED:
-                        return validate_value_str
                 # |----------------------------------------------------------------------------------------------------|
                 
                 return func(*args, **kwargs)
