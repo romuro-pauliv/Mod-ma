@@ -101,6 +101,10 @@ class Model(object):
                 forbidden_update_fields: list[str] = ["datetime", "_id", "user"]
                 
                 # | Json validation |----------------------------------------------------------------------------------|
+                validate_format: tuple[str, int] = Validate.JSON.format_(request.json, False)
+                if validate_format[1] != HTTP_202_ACCEPTED:
+                    return validate_format
+                
                 validate_json: tuple[str, int] = Validate.JSON.fields(fields)
                 if validate_json[1] != HTTP_202_ACCEPTED:
                     return validate_json
@@ -111,11 +115,23 @@ class Model(object):
                 if validate_update_format[1] != HTTP_202_ACCEPTED:
                     return validate_update_format
                 
+                udpate_document: dict[str, Any] = request.json['update']
+                
+                validate_if_include_data: tuple[dict, int] = Validate.JSON.need_data_in_update_json(udpate_document)
+                if validate_if_include_data[1] != HTTP_202_ACCEPTED:
+                    return validate_if_include_data
+                
                 validate_update_forbidden_fields: tuple[str, int] = Validate.JSON.forbidden_fields(
                     request.json['update'], forbidden_update_fields
                 )
                 if validate_update_forbidden_fields[1] != HTTP_202_ACCEPTED:
                     return validate_update_forbidden_fields
+                
+                update_document_fields: list[str] = [i for i in udpate_document.keys()]
+                
+                validate_fields_character: tuple[dict, int] = Validate.STRING.character(update_document_fields)
+                if validate_fields_character[1] != HTTP_202_ACCEPTED:
+                    return validate_fields_character
                 # |----------------------------------------------------------------------------------------------------|
                 
                 return func(*args, **kwargs)

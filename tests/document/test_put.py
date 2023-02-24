@@ -14,8 +14,8 @@ from typing import Any
 # | Set data |---------------------------------------------------------------------------------------------------------|
 credentials: dict[str] = {"username": "admin", "password": "123!Admin"}
 header: dict[str] = {"Authorization": f"Bearer {token_return(credentials['username'], credentials['password'])}"}
-database_name: str = "document-test"
-collection_name: str = "document-test"
+database_name: str = "document-test-put"
+collection_name: str = "document-test-put"
 document_json: dict[str] = {"testing": "mode", "hello": "world"}
 document_update: dict[str] = {"testing": "TESTING", "olah": "mundo"}
 # |--------------------------------------------------------------------------------------------------------------------|
@@ -90,6 +90,94 @@ def test_with_document_not_found() -> None:
     })
     assert response_assert(f"DOCUMENT WITH ID [{document_id}] NOT FOUND", response)
     assert status_code_assert(404, response)
+# |--------------------------------------------------------------------------------------------------------------------|
+
+# | Test Json Syntax |-------------------------------------------------------------------------------------------------|
+def test_empty_json() -> None:
+    response: requests.models.Response = put_function_document({})
+    assert response_assert("KEY ERROR - NEED [database] FIELD", response)
+    assert status_code_assert(400, response)
+
+
+def test_without_necessary_fields() -> None:
+    json_send_list: list[dict[str]] = [
+        {"collection": collection_name, "_id": document_id, "update": document_update},
+        {"database": database_name, "_id": document_id, "update": document_update},
+        {"database": database_name, "collection": collection_name, "update": document_update},
+        {"database": database_name, "collection": collection_name, "_id": document_id}
+    ]
+    
+    response_list: list[str] = ["database", "collection", "_id", "update"]
+    
+    for n, json_send in enumerate(json_send_list):
+        response: requests.models.Response = put_function_document(json_send)
+        assert response_assert(f"KEY ERROR - NEED [{response_list[n]}] FIELD", response)
+        assert status_code_assert(400, response)
+
+
+def test_sended_no_json() -> None:
+    send_json_list: list[int, float, list[str]] = [123, 1.123, ["testing", "mode"]]
+    for send_json in send_json_list:
+        response: requests.models.Response = put_function_document(send_json)
+        assert response_assert("ONLY JSON ARE ALLOWED", response)
+        assert status_code_assert(400, response)
+
+
+def test_no_json() -> None:
+    reponse: requests.models.Response = put_function_document(None)
+    assert status_code_assert(400, reponse)
+# |--------------------------------------------------------------------------------------------------------------------|
+
+# | Test Update Json Syntax |------------------------------------------------------------------------------------------|
+def test_empty_update_json() -> None:
+    json_send: dict[str] = {"database": database_name, "collection": collection_name, "_id": document_id, "update": {}}
+    response: requests.models.Response = put_function_document(json_send)
+    assert response_assert("NEED DATA IN UPDATE DOCUMENT", response)
+    assert status_code_assert(400, response)
+
+
+def test_sended_no_update_json() -> None:
+    send_json_list: list[str, int, float, list[str]] = ["test", 123, 1.231, ["testing", "mode"]]
+    for send_json in send_json_list:
+        response: requests.models.Response = put_function_document(send_json)
+        assert response_assert("ONLY JSON ARE ALLOWED", response)
+        assert status_code_assert(400, response)
+
+def test_update_document_field_less_than_4_char() -> None:
+    field_list: list[str] = ["t", "te", "tes"]
+    for field in field_list:
+        response: requests.models.Response = put_function_document(
+            {"database": database_name, "collection": collection_name, "_id": document_id, "update": {field: "testing"}}
+        )
+        assert response_assert(f"THE INFORMED FIELD [{field}] MUST BE MORE THAN 4 CHARACTERS", response)
+        assert status_code_assert(400, response)
+
+
+def test_forbidden_fields_json_update() -> None:
+    fields_list: list[str] = ["datetime", "_id", "user"]
+    for field in fields_list:
+        response: requests.models.Response = put_function_document(
+            {"database": database_name, "collection": collection_name, "_id": document_id, "update": {field: "testing"}}
+        )
+        if field == "_id":
+            assert response_assert(f"THE INFORMED FIELD [{field}] MUST BE MORE THAN 4 CHARACTERS", response)
+            assert status_code_assert(400, response)
+        else:
+            assert response_assert(f"UPDATING FIELD [{field}] IS NOT ALLOWED", response)
+            assert status_code_assert(403, response)
+
+
+def test_forbidden_character_in_document_update_fields() -> None:
+    for _char in "!\"#$%&'()*+,./:;<=>?@[\]^`{|}~ ":
+        json_send: dict[str] = {
+            "database": database_name, "collection": collection_name,
+            "_id": document_id, "update": {f"testi{_char}ng": "testing"}
+        }
+        response: requests.models.Response = put_function_document(json_send)
+        assert response_assert(f"CHARACTER [{_char}] IN [testi{_char}ng] NOT ALLOWED", response)
+        assert status_code_assert(400, response)
+# |--------------------------------------------------------------------------------------------------------------------|
+
 
 # | Reset |------------------------------------------------------------------------------------------------------------|
 """

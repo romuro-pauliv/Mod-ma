@@ -34,6 +34,10 @@ class Responses(object):
         def forbidden_fields_error(field: str) -> tuple[dict, int]:
             return response_structure(f"UPDATING FIELD [{field}] IS NOT ALLOWED", HTTP_403_FORBIDDEN)
         
+        @staticmethod
+        def need_data_in_json() -> tuple[dict, int]:
+            return response_structure("NEED DATA IN UPDATE DOCUMENT", HTTP_400_BAD_REQUEST)
+        
     class R2XX(object):
         @staticmethod
         def valid_field() -> tuple[str, int]:
