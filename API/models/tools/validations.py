@@ -28,15 +28,17 @@ class Validate(object):
             return json_status.Responses.R2XX.valid_field()
         
         @staticmethod
-        def format_(archive: dict[str, Any]) -> tuple[str, int]:
+        def format_(archive: dict[str, Any], min_char: bool = True) -> tuple[str, int]:
             # + Type verification +
             if not isinstance(archive, dict):
                 return json_status.Responses.R4XX.format_error()
             
             # + fields +
-            for key in archive.keys():
-                if len(key) < 4:
-                    return json_status.Responses.R4XX.characters_amount_model_error(key)
+            if min_char == True:
+                for key in archive.keys():
+                    if len(key) < 4:
+                        return json_status.Responses.R4XX.characters_amount_model_error(key)
+            
             return json_status.Responses.R2XX.valid_field()
         
         @staticmethod
@@ -50,6 +52,12 @@ class Validate(object):
             for field in archive:
                 if field in forbidden_fields:
                     return json_status.Responses.R4XX.forbidden_fields_error(field)
+            return json_status.Responses.R2XX.valid_field()
+        
+        @staticmethod
+        def need_data_in_update_json(archive: dict[str, Any]) -> tuple[dict, int]:
+            if len([i for i in archive.keys()]) < 1:
+                return json_status.Responses.R4XX.need_data_in_json()
             return json_status.Responses.R2XX.valid_field()
     # |================================================================================================================|
     

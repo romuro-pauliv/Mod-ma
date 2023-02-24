@@ -23,7 +23,7 @@ class Responses(object):
 
         @staticmethod
         def document_not_found(document_id: str) -> tuple[dict[str], int]:
-            return response_structure(f"DOCUMENT [{document_id}] NOT FOUND", HTTP_404_NOT_FOUND)
+            return response_structure(f"DOCUMENT WITH ID [{document_id}] NOT FOUND", HTTP_404_NOT_FOUND)
     
     class R2XX(object):
         @staticmethod

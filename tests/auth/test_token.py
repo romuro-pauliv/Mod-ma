@@ -124,7 +124,7 @@ in API be set in 20 seconds.
 token: str = token_return(credentials["username"], credentials["password"])
 
 def test_expired_signature_token() -> None:
-    time.sleep(25)
+    time.sleep(50)
     response: requests.models.Response = basic_function_requests(
         {header_token_config["field"]: f"{header_token_config['prefix']}{token}"}
     )

@@ -24,4 +24,4 @@ class Responses(object):
     class R2XX(object):
         @staticmethod
         def collection_created(collection_name: str) -> tuple[dict[str], int]:
-            return response_structure(f"[{collection_name}] COLLECTION CREATED", HTTP_201_CREATED)
+            return response_structure(f"[{collection_name}] CREATED", HTTP_201_CREATED)
