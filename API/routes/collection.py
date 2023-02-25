@@ -8,7 +8,7 @@
 # imports |------------------------------------------------------------------------------------------------------------|
 from API.status import *
 from API.db import create, read, update, delete
-from API.iam import IAM, Privileges
+from API.iam import Privileges
 from API.identity.check_permission import IAM as CheckIAM
 from API.models.routes.collection.decorators import Model
 from API.secure.token.IPT_token import required_token
