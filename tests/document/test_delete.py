@@ -66,7 +66,7 @@ def test_with_database_not_found() -> None:
     response: requests.models.Response = delete_function_document({
         "database": database_name, "collection": collection_name, "_id": document_id
     })
-    assert response_assert(f"DATABASE [{database_name}] OR COLLECTION [{collection_name}] NOT FOUND", response)
+    assert response_assert(f"DATABASE [{database_name}] NOT FOUND", response)
     assert status_code_assert(404, response)
 
 
@@ -75,7 +75,7 @@ def test_with_collection_not_found() -> None:
     response: requests.models.Response = delete_function_document({
         "database": database_name, "collection": collection_name, "_id": document_id
     })
-    assert response_assert(f"DATABASE [{database_name}] OR COLLECTION [{collection_name}] NOT FOUND", response)
+    assert response_assert(f"COLLECTION [{collection_name}] NOT FOUND", response)
     assert status_code_assert(404, response)
 
 

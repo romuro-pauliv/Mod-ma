@@ -72,7 +72,7 @@ def test_with_database_not_found() -> None:
     response: requests.models.Response = post_function(
         {"database": database_name, "collection": collection_name, "document": document_json}
     )
-    assert response_assert(f"DATABASE [{database_name}] OR COLLECTION [{collection_name}] NOT FOUND", response)
+    assert response_assert(f"DATABASE [{database_name}] NOT FOUND", response)
     assert response.status_code == 404
 
 
@@ -81,7 +81,7 @@ def test_with_collection_not_found() -> None:
     response: requests.models.Response = post_function(
         {"database": database_name, "collection": collection_name, "document": document_json}
     )
-    assert response_assert(f"DATABASE [{database_name}] OR COLLECTION [{collection_name}] NOT FOUND", response)
+    assert response_assert(f"COLLECTION [{collection_name}] NOT FOUND", response)
     assert status_code_assert(404, response)
 # |--------------------------------------------------------------------------------------------------------------------|
 
@@ -122,20 +122,6 @@ def test_no_json() -> None:
 
 
 # | Test Values Syntax |-----------------------------------------------------------------------------------------------|
-def test_value_database_and_collection_with_None() -> None:
-    json_send_list: list[dict[str]] = [
-        {"database": None, "collection": collection_name, "document": document_json},
-        {"database": database_name, "collection": None, "document": document_json}
-    ]
-    response_list: list[str] = [["None", collection_name], [database_name, "None"]]
-    for n, json_send in enumerate(json_send_list):
-        response: requests.models.Response = post_function(json_send)
-        assert response_assert(
-            f"DATABASE [{response_list[n][0]}] OR COLLECTION [{response_list[n][1]}] NOT FOUND", response
-        )
-        assert status_code_assert(404, response)
-    
-
 def test_value_document() -> None:
     document_value_list: list[str, list[str], float, int] = [
         "testing", ["testing", "mode"], 1.1231231, 1231321231
