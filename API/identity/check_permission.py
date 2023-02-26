@@ -8,8 +8,7 @@
 # | Imports |----------------------------------------------------------------------------------------------------------|
 from functools import wraps
 from typing import Callable, Any
-from flask import request, g
-from pymongo import MongoClient
+from flask import request
 
 from API.secure.token.IPT_token import IPToken
 from API.json.responses.iam import iam_status
