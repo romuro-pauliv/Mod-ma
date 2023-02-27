@@ -8,25 +8,22 @@
 # + imports +----------------------------------------------------------------------------------------------------------+
 from API.auth.register import exec_register
 from API.auth.login import exec_login
-
 from API.secure.token.IPT_token import required_token
-
-from API.iam import Privileges
+from API.identity.standard_privileges import IAM as AddPrivileges
 from API.secure.pam.pam import PAM
-
 from API.log.auth.decorator import LogAuth
 
 from flask import Blueprint, request
 # +--------------------------------------------------------------------------------------------------------------------+
 
 
-privileges = Privileges("admin").NewUser()
+standard_privileges = AddPrivileges.StandardPrivileges()
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 
 # Register route |-----------------------------------------------------------------------------------------------------|
 @bp.route("/register", methods=['POST'])
-@privileges.standart_privileges
+@standard_privileges.add
 def Register() -> tuple[dict[str], int]:
     return exec_register(request.headers.get("Register"))
 # |--------------------------------------------------------------------------------------------------------------------|

@@ -8,8 +8,8 @@
 # imports |------------------------------------------------------------------------------------------------------------|
 from API.status import *
 from API.db import create, read, delete
-from API.iam import Privileges
 from API.identity.check_permission import IAM as CheckIAM
+from API.identity.add import IAM as AddIAM
 from API.models.routes.database.decorators import Model
 from API.secure.token.IPT_token import required_token
 
@@ -21,14 +21,14 @@ bp = Blueprint('database', __name__, url_prefix='/database')
 # |--------------------------------------------------------------------------------------------------------------------|
 
 # | Privileges |-------------------------------------------------------------------------------------------------------|
-privileges_add = Privileges("admin").Add()
+add_privileges = AddIAM.Add("admin")
 # |--------------------------------------------------------------------------------------------------------------------|
 
 @bp.route('/', methods=["POST"])
 @required_token
 @Model.Create.database
 @CheckIAM.check_permission("create", "database")
-@privileges_add.database
+@add_privileges.new_database
 def create_database() -> tuple[dict[str], int]:
     return create().database(request.json["database"])
 
