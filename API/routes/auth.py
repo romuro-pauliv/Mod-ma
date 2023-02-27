@@ -9,7 +9,7 @@
 from API.auth.register import exec_register
 from API.auth.login import exec_login
 from API.secure.token.IPT_token import required_token
-from API.identity.standard_privileges import IAM as AddPrivileges
+from API.iam.standard_privileges import IAM as AddPrivileges
 from API.secure.pam.pam import PAM
 from API.log.auth.decorator import LogAuth
 
