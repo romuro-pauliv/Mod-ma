@@ -28,7 +28,7 @@ def status_code_assert(hypothetical_status_code: int, request_obj: requests.mode
 # |--------------------------------------------------------------------------------------------------------------------|
 
 # | Test database post |-----------------------------------------------------------------------------------------------|
-def test_database_post() -> None:
+def test_create_database() -> None:
     database_name: str = "iamtesting"
     send_json: dict[str] = {"database": database_name}
     response: requests.models.Response = requests.post(f"{root_route}{database}", headers=header, json=send_json)
@@ -39,7 +39,7 @@ def test_database_post() -> None:
 # |--------------------------------------------------------------------------------------------------------------------|
 
 # | Test collection post |---------------------------------------------------------------------------------------------|
-def test_collection_post() -> None:
+def test_create_collection() -> None:
     database_name_list: list[str] = mongo.list_database_names()
     collection_name: str = "testing"
     
@@ -57,7 +57,7 @@ def test_collection_post() -> None:
 # |--------------------------------------------------------------------------------------------------------------------|
 
 # | Testing document post |--------------------------------------------------------------------------------------------|
-def test_document_post() -> None:
+def test_create_document() -> None:
     database_name_list: list[str] = mongo.list_database_names()
     
     for database_name in database_name_list:
