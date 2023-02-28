@@ -2,7 +2,7 @@ import requests
 import threading
 from config import *
 from colorama import Fore, Style
-import urllib3
+from random import randint
 from datetime import timedelta
 
 def login_function(username: str, password: str) -> str:
@@ -22,6 +22,12 @@ def log_failed(request_id: int) -> str:
     print("REQUEST " + Fore.CYAN + f"[{request_id}]" + space_format(str(request_id), 6) + Style.RESET_ALL + " |---| "
           + Fore.RED + "FAILED" + Style.RESET_ALL)
 
+def turn(qnt_request: int) -> None:
+    print(Fore.CYAN + "|-------------------------------------------------------------------------------------------|")
+    print("| " + Style.RESET_ALL + "REQUEST TURN: " + Fore.MAGENTA + f"[{qnt_request}]" + Style.RESET_ALL)
+    print(Fore.CYAN + "|-------------------------------------------------------------------------------------------|")
+    print(Style.RESET_ALL)
+
 def send_request(request_id: int) -> int:
     try:
         status_code, elapsed = login_function("admin", "123!Admin")
@@ -30,16 +36,19 @@ def send_request(request_id: int) -> int:
     except requests.exceptions.ConnectionError:
         log_failed(request_id)
 
-def send_requests_concurrently(num_requests: int) -> None:
-    threads: list = []
-    for i in range(0, num_requests):
-        t = threading.Thread(target=send_request, args=(i+1,))
-        threads.append(t)
+def send_requests_concurrently() -> None:
+    while True:
+        request_qnt: int = randint(1, 40)
+        turn(request_qnt)
+        threads: list = []
+        for i in range(0, request_qnt):
+            t = threading.Thread(target=send_request, args=(i+1,))
+            threads.append(t)
         
-        t.start()
+            t.start()
     
-    for t in threads:
-        t.join()
+        for t in threads:
+            t.join()
 
 
-send_requests_concurrently(120)
+send_requests_concurrently()

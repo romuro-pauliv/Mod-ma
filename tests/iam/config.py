@@ -1,5 +1,5 @@
 # +--------------------------------------------------------------------------------------------------------------------|
-# |                                                                                                     test.config.py |
+# |                                                                                                 test.iam.config.py |
 # |                                                                                             Author: Pauliv, Rômulo |
 # |                                                                                          email: romulopauliv@bk.ru |
 # |                                                                                                    encoding: UTF-8 |
@@ -20,20 +20,11 @@ from dotenv import load_dotenv
 root_route: str = "http://127.0.0.1:5000"
 login_route: str = "/auth/login"
 register_route: str = "/auth/register"
+iam_route: str = "/auth/iam"
 
-create_database_route: str = "/tests/test-create-database"
-create_collection_route: str = "/tests/test-create-collection"
-create_document_route: str = "/tests/test-create-document"
-
-read_database_route: str = "/tests/test-read-database"
-read_collection_route: str = '/tests/test-read-collection'
-read_documents_route: str = '/tests/test-read-document'
-
-update_document_route: str = "/tests/test-update-document"
-
-delete_database_route: str = "/tests/test-delete-database"
-delete_collection_route: str = "/tests/test-delete-collection"
-delete_document_route: str = "/tests/test-delete-document"
+database: str = "/database/"
+collection: str = "/collection/"
+document: str = "/document/"
 # |====================================================================================================================|
 
 # MONGO CLIENT |=======================================================================================================|
@@ -58,7 +49,7 @@ def header_base64_register(username: str, password: str, email: str) -> str:
     return f"Basic {base64.b64encode(encode_register).decode()}"
 
 
-def token_return(username: str, password: str) -> str:
+def token_login(username: str, password: str) -> str:
     header: dict[str] = {"Authorization": header_base64_login(username, password)}
     return json.loads(requests.post(f"{root_route}{login_route}", headers=header).text)['token']
 
