@@ -8,6 +8,7 @@
 # | Imports |----------------------------------------------------------------------------------------------------------|
 from API.json.responses.auth.register_status import Responses as register_responses
 from API.json.responses.auth.login_status import Responses as login_responses
+from API.json.responses.auth.delete_account_status import Responses as delete_account_responses
 from API.db import get_db
 
 from werkzeug.security import check_password_hash
@@ -85,3 +86,16 @@ class Validate(object):
                 return login_responses.R4XX.incorrect_username_or_password()
             
             return login_responses.R2XX.successfully_login()
+        
+        @staticmethod
+        def verify_email(username: str, email: str) -> tuple[dict[str], int]:
+            document: dict[str] = get_db().USERS.REGISTER.find_one({"username": username})
+            try:
+                True if document["username"] else False
+            except TypeError:
+                return login_responses.R4XX.incorrect_username_or_password()
+            
+            if document['email'] != email:
+                return delete_account_responses.R4XX.incorrect_email(email)
+            
+            return delete_account_responses.R2XX.correct_credentials()

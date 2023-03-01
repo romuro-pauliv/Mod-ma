@@ -26,13 +26,6 @@ def delete_function(json_body: dict[str, Any]) -> requests.models.Response:
 
 def post_function_database(json_body: dict[str, Any]) -> requests.models.Response:
     return requests.post(f"{root_route}{database}", headers=header, json=json_body)
-
-def response_assert(hypothetical_response: str, request_obj: requests.models.Response) -> bool:
-    return (hypothetical_response == json.loads(request_obj.text)["response"])
-
-def status_code_assert(hypothetical_status_code: str, request_obj: requests.models.Response) -> bool:
-    return (hypothetical_status_code == request_obj.status_code)
-
 # | Test create database and collection |------------------------------------------------------------------------------|
 """
 The test below are about the real create database and collection
@@ -40,41 +33,41 @@ The test below are about the real create database and collection
 
 def test_create_database() -> None:
     response: requests.models.Response = post_function_database({"database": database_name})
-    assert response_assert(f"[{database_name}] CREATED", response)
-    assert status_code_assert(201, response)
+    assert json.loads(response.text)["response"] == f"[{database_name}] CREATED"
+    assert response.status_code == 201
 
 
 def test_create_collection() -> None:
     response: requests.models.Response = post_function({"database": database_name, "collection": collection_name})
-    assert response_assert(f"[{collection_name}] CREATED", response)
-    assert status_code_assert(201, response)
+    assert json.loads(response.text)["response"] == f"[{collection_name}] CREATED"
+    assert response.status_code == 201
 # |--------------------------------------------------------------------------------------------------------------------|
 
 # | Test Database and Collection not Found |---------------------------------------------------------------------------|
 def test_database_not_found() -> None:
     database_name: str = "testing1239281291"
     response: requests.models.Response = delete_function({"database": database_name, "collection": collection_name})
-    assert response_assert(f"DATABASE [{database_name}] NOT FOUND", response)
-    assert status_code_assert(404, response)
+    assert json.loads(response.text)["response"] == f"DATABASE [{database_name}] NOT FOUND"
+    assert response.status_code == 404
 
 
 def test_collection_not_found() -> None:
     collection_name: str = "testing1233821912"
     response: requests.models.Response = delete_function({"database": database_name, "collection": collection_name})
-    assert response_assert(f"COLLECTION [{collection_name}] NOT FOUND", response)
-    assert status_code_assert(404, response)
+    assert json.loads(response.text)["response"] == f"COLLECTION [{collection_name}] NOT FOUND"
+    assert response.status_code == 404
 # |--------------------------------------------------------------------------------------------------------------------|
 
 # | Test Json Syntax |-------------------------------------------------------------------------------------------------|
 def test_empty_json() -> None:
     response: requests.models.Response = delete_function({})
-    assert response_assert("KEY ERROR - NEED [database] FIELD", response)
-    assert status_code_assert(400, response)
+    assert json.loads(response.text)["response"] == "KEY ERROR - NEED [database] FIELD"
+    assert response.status_code == 400
 
 
 def test_no_json() -> None:
     response: requests.models.Response = delete_function(None)
-    assert status_code_assert(400, response)
+    assert response.status_code == 400
 
 
 def test_without_necessary_field() -> None:
@@ -82,23 +75,23 @@ def test_without_necessary_field() -> None:
     fields: list[str] = ["collection", "database"]
     for n, json_send in enumerate(json_send_list):
         response: requests.models.Response = delete_function(json_send)
-        assert response_assert(f'KEY ERROR - NEED [{fields[n]}] FIELD', response)
-        assert status_code_assert(400, response)
+        assert json.loads(response.text)["response"] == f'KEY ERROR - NEED [{fields[n]}] FIELD'
+        assert response.status_code == 400
 
 
 def test_no_json_sended() -> None:
     send_json_list: list[float, list, int] = [1.6171222, ["testing", "mode"], 1231232]
     for send_json in send_json_list:
         response: requests.models.Response = delete_function(send_json)
-        assert response_assert("ONLY JSON ARE ALLOWED", response)
-        assert status_code_assert(400, response)
+        assert json.loads(response.text)["response"] == "ONLY JSON ARE ALLOWED"
+        assert response.status_code == 400
 # |--------------------------------------------------------------------------------------------------------------------|
 
 # | Test real delete |-------------------------------------------------------------------------------------------------|
 def test_delete() -> None:
     response: requests.models.Response = delete_function({"database": database_name, "collection": collection_name})
-    assert response_assert(f"[{collection_name}] COLLECTION DELETED", response)
-    assert status_code_assert(202, response)
+    assert json.loads(response.text)["response"] == f"[{collection_name}] COLLECTION DELETED"
+    assert response.status_code == 202
 # |--------------------------------------------------------------------------------------------------------------------|
 
 # | Reset |------------------------------------------------------------------------------------------------------------|

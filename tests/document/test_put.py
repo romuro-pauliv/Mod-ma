@@ -31,15 +31,6 @@ def post_function_document(json_body: dict[str, Any]) -> requests.models.Respons
 
 def put_function_document(json_body: dict[str, Any]) -> requests.models.Response:
     return requests.put(f"{root_route}{document}", headers=header, json=json_body)
-
-def response_assert(hypothetical_response: str, request_obj: requests.models.Response) -> bool:
-    return (hypothetical_response == json.loads(request_obj.text)["response"])
-
-def response_assert_to_document_test(hypothetical_response: str, request_obj: requests.models.Response) -> bool:
-    return (hypothetical_response == json.loads(request_obj.text)["response"]['info'])
-
-def status_code_assert(hypothetical_status_code: str, request_obj: requests.models.Response) -> bool:
-    return (hypothetical_status_code == request_obj.status_code)
 # |--------------------------------------------------------------------------------------------------------------------|
 
 # + GET DOCUMENT ID |--------------------------------------------------------------------------------------------------|
@@ -69,8 +60,8 @@ def test_real_update() -> None:
     response: requests.models.Response = put_function_document(
         {"database": database_name, "collection": collection_name, "_id": document_id, "update": document_update}
     )
-    assert response_assert(f"DOCUMENT WITH ID [{document_id}] UPDATED", response)
-    assert status_code_assert(202, response)
+    assert json.loads(response.text)["response"] == f"DOCUMENT WITH ID [{document_id}] UPDATED"
+    assert response.status_code == 202
     
     real_document: dict[str] = mongo[database_name][collection_name].find_one({"olah": "mundo"})
     assert real_document["testing"] == "TESTING"
@@ -83,8 +74,8 @@ def test_with_database_not_found() -> None:
         "database": database_name, "collection": collection_name, "_id": document_id, "update": document_update
     })
     
-    assert response_assert(f"DATABASE [{database_name}] NOT FOUND", response)
-    assert status_code_assert(404, response)
+    assert json.loads(response.text)["response"] == f"DATABASE [{database_name}] NOT FOUND"
+    assert response.status_code == 404
 
 
 def test_with_collection_not_found() -> None:
@@ -92,8 +83,8 @@ def test_with_collection_not_found() -> None:
     response: requests.models.Response = put_function_document({
         "database": database_name, "collection": collection_name, "_id": document_id, "update": document_update
     })
-    assert response_assert(f"COLLECTION [{collection_name}] NOT FOUND", response)
-    assert status_code_assert(404, response)
+    assert json.loads(response.text)["response"] == f"COLLECTION [{collection_name}] NOT FOUND"
+    assert response.status_code == 404
 
 
 def test_with_document_not_found() -> None:
@@ -101,15 +92,15 @@ def test_with_document_not_found() -> None:
     response: requests.models.Response = put_function_document({
         "database": database_name, "collection": collection_name, "_id": document_id, "update": document_update
     })
-    assert response_assert(f"DOCUMENT WITH ID [{document_id}] NOT FOUND", response)
-    assert status_code_assert(404, response)
+    assert json.loads(response.text)["response"] == f"DOCUMENT WITH ID [{document_id}] NOT FOUND"
+    assert response.status_code == 404
 # |--------------------------------------------------------------------------------------------------------------------|
 
 # | Test Json Syntax |-------------------------------------------------------------------------------------------------|
 def test_empty_json() -> None:
     response: requests.models.Response = put_function_document({})
-    assert response_assert("KEY ERROR - NEED [database] FIELD", response)
-    assert status_code_assert(400, response)
+    assert json.loads(response.text)["response"] == "KEY ERROR - NEED [database] FIELD"
+    assert response.status_code == 400
 
 
 def test_without_necessary_fields() -> None:
@@ -124,37 +115,37 @@ def test_without_necessary_fields() -> None:
     
     for n, json_send in enumerate(json_send_list):
         response: requests.models.Response = put_function_document(json_send)
-        assert response_assert(f"KEY ERROR - NEED [{response_list[n]}] FIELD", response)
-        assert status_code_assert(400, response)
+        assert json.loads(response.text)["response"] == f"KEY ERROR - NEED [{response_list[n]}] FIELD"
+        assert response.status_code == 400
 
 
 def test_sended_no_json() -> None:
     send_json_list: list[int, float, list[str]] = [123, 1.123, ["testing", "mode"]]
     for send_json in send_json_list:
         response: requests.models.Response = put_function_document(send_json)
-        assert response_assert("ONLY JSON ARE ALLOWED", response)
-        assert status_code_assert(400, response)
+        assert json.loads(response.text)["response"] == "ONLY JSON ARE ALLOWED"
+        assert response.status_code == 400
 
 
 def test_no_json() -> None:
-    reponse: requests.models.Response = put_function_document(None)
-    assert status_code_assert(400, reponse)
+    response: requests.models.Response = put_function_document(None)
+    assert response.status_code == 400
 # |--------------------------------------------------------------------------------------------------------------------|
 
 # | Test Update Json Syntax |------------------------------------------------------------------------------------------|
 def test_empty_update_json() -> None:
     json_send: dict[str] = {"database": database_name, "collection": collection_name, "_id": document_id, "update": {}}
     response: requests.models.Response = put_function_document(json_send)
-    assert response_assert("NEED DATA IN UPDATE DOCUMENT", response)
-    assert status_code_assert(400, response)
+    assert json.loads(response.text)["response"] == "NEED DATA IN UPDATE DOCUMENT"
+    assert response.status_code == 400
 
 
 def test_sended_no_update_json() -> None:
     send_json_list: list[str, int, float, list[str]] = ["test", 123, 1.231, ["testing", "mode"]]
     for send_json in send_json_list:
         response: requests.models.Response = put_function_document(send_json)
-        assert response_assert("ONLY JSON ARE ALLOWED", response)
-        assert status_code_assert(400, response)
+        assert json.loads(response.text)["response"] == "ONLY JSON ARE ALLOWED"
+        assert response.status_code == 400
 
 
 def test_update_document_field_less_than_4_char() -> None:
@@ -163,8 +154,8 @@ def test_update_document_field_less_than_4_char() -> None:
         response: requests.models.Response = put_function_document(
             {"database": database_name, "collection": collection_name, "_id": document_id, "update": {field: "testing"}}
         )
-        assert response_assert(f"THE INFORMED FIELD [{field}] MUST BE MORE THAN 4 CHARACTERS", response)
-        assert status_code_assert(400, response)
+        assert json.loads(response.text)["response"] == f"THE INFORMED FIELD [{field}] MUST BE MORE THAN 4 CHARACTERS"
+        assert response.status_code == 400
 
 
 def test_forbidden_fields_json_update() -> None:
@@ -174,11 +165,11 @@ def test_forbidden_fields_json_update() -> None:
             {"database": database_name, "collection": collection_name, "_id": document_id, "update": {field: "testing"}}
         )
         if field == "_id":
-            assert response_assert(f"THE INFORMED FIELD [{field}] MUST BE MORE THAN 4 CHARACTERS", response)
-            assert status_code_assert(400, response)
+            assert json.loads(response.text)["response"] == f"THE INFORMED FIELD [{field}] MUST BE MORE THAN 4 CHARACTERS"
+            assert response.status_code == 400
         else:
-            assert response_assert(f"UPDATING FIELD [{field}] IS NOT ALLOWED", response)
-            assert status_code_assert(403, response)
+            assert json.loads(response.text)["response"] == f"UPDATING FIELD [{field}] IS NOT ALLOWED"
+            assert response.status_code == 403
 
 
 def test_forbidden_character_in_document_update_fields() -> None:
@@ -188,8 +179,8 @@ def test_forbidden_character_in_document_update_fields() -> None:
             "_id": document_id, "update": {f"testi{_char}ng": "testing"}
         }
         response: requests.models.Response = put_function_document(json_send)
-        assert response_assert(f"CHARACTER [{_char}] IN [testi{_char}ng] NOT ALLOWED", response)
-        assert status_code_assert(400, response)
+        assert json.loads(response.text)["response"] == f"CHARACTER [{_char}] IN [testi{_char}ng] NOT ALLOWED"
+        assert response.status_code == 400
 # |--------------------------------------------------------------------------------------------------------------------|
 
 

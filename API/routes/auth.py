@@ -7,6 +7,7 @@
 
 # + imports +----------------------------------------------------------------------------------------------------------+
 from API.auth.register import exec_register
+from API.auth.delete_account import exec_delete_account
 from API.auth.login import exec_login
 from API.secure.token.IPT_token import required_token
 from API.iam.standard_privileges import IAM as AddPrivileges
@@ -26,6 +27,12 @@ bp = Blueprint('auth', __name__, url_prefix='/auth')
 @standard_privileges.add
 def Register() -> tuple[dict[str], int]:
     return exec_register(request.headers.get("Register"))
+# |--------------------------------------------------------------------------------------------------------------------|
+
+# | Delete account |---------------------------------------------------------------------------------------------------|
+@bp.route("/register", methods=["DELETE"])
+def DeleteAccount() -> tuple[dict[str], int]:
+    return exec_delete_account(request.headers.get("Register"))
 # |--------------------------------------------------------------------------------------------------------------------|
 
 # Login route |--------------------------------------------------------------------------------------------------------|
