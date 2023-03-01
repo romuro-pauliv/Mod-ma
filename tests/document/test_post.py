@@ -27,15 +27,6 @@ def post_function_collection(json_body: dict[str, Any]) -> requests.models.Respo
 
 def post_function(json_body: dict[str, Any]) -> requests.models.Response:
     return requests.post(f"{root_route}{document}", headers=header, json=json_body)
-
-def response_assert(hypothetical_response: str, request_obj: requests.models.Response) -> bool:
-    return (hypothetical_response == json.loads(request_obj.text)["response"])
-
-def response_assert_to_document_test(hypothetical_response: str, request_obj: requests.models.Response) -> bool:
-    return (hypothetical_response == json.loads(request_obj.text)["response"]['info'])
-
-def status_code_assert(hypothetical_status_code: str, request_obj: requests.models.Response) -> bool:
-    return (hypothetical_status_code == request_obj.status_code)
 # |--------------------------------------------------------------------------------------------------------------------|
 
 # | Test create database, collection, and document |-------------------------------------------------------------------|
@@ -46,24 +37,24 @@ The test below are about the real create database, collection, and document
 
 def test_create_database() -> None:
     response: requests.models.Response = post_function_database({"database": database_name})
-    assert response_assert(f"[{database_name}] CREATED", response)
-    assert status_code_assert(201, response)
+    assert json.loads(response.text)["response"] == f"[{database_name}] CREATED"
+    assert response.status_code == 201
 
 
 def test_create_collection() -> None:
     response: requests.models.Response = post_function_collection(
         {"database": database_name, "collection": collection_name}
     )
-    assert response_assert(f"[{collection_name}] CREATED", response)
-    assert status_code_assert(201, response)
+    assert json.loads(response.text)["response"] == f"[{collection_name}] CREATED"
+    assert response.status_code == 201
 
 
 def test_create_document() -> None:
     response: requests.models.Response = post_function({
         "database": database_name, "collection": collection_name, "document": document_json
     })
-    assert response_assert_to_document_test("DOCUMENT CREATED", response)
-    assert status_code_assert(201, response)
+    assert json.loads(response.text)["response"]["info"] == "DOCUMENT CREATED"
+    assert response.status_code == 201
 
 
 # | Test database and collection not found |---------------------------------------------------------------------------|
@@ -72,7 +63,7 @@ def test_with_database_not_found() -> None:
     response: requests.models.Response = post_function(
         {"database": database_name, "collection": collection_name, "document": document_json}
     )
-    assert response_assert(f"DATABASE [{database_name}] NOT FOUND", response)
+    assert json.loads(response.text)["response"] == f"DATABASE [{database_name}] NOT FOUND"
     assert response.status_code == 404
 
 
@@ -81,15 +72,15 @@ def test_with_collection_not_found() -> None:
     response: requests.models.Response = post_function(
         {"database": database_name, "collection": collection_name, "document": document_json}
     )
-    assert response_assert(f"COLLECTION [{collection_name}] NOT FOUND", response)
-    assert status_code_assert(404, response)
+    assert json.loads(response.text)["response"] == f"COLLECTION [{collection_name}] NOT FOUND"
+    assert response.status_code == 404
 # |--------------------------------------------------------------------------------------------------------------------|
 
 # | Test Json Syntax |-------------------------------------------------------------------------------------------------|
 def test_empty_json() -> None:
     response: requests.models.Response = post_function({})
-    assert response_assert("KEY ERROR - NEED [database] FIELD", response)
-    assert status_code_assert(400, response)
+    assert json.loads(response.text)["response"] == "KEY ERROR - NEED [database] FIELD"
+    assert response.status_code == 400
 
 
 def test_without_necessary_field() -> None:
@@ -103,21 +94,21 @@ def test_without_necessary_field() -> None:
     
     for n, json_send in enumerate(json_send_list):
         response: requests.models.Response = post_function(json_send)
-        assert response_assert(f"KEY ERROR - NEED [{response_list[n]}] FIELD", response)
-        assert status_code_assert(400, response)
+        assert json.loads(response.text)["response"] == f"KEY ERROR - NEED [{response_list[n]}] FIELD"
+        assert response.status_code == 400
 
 
 def test_sended_no_json() -> None:
     json_send_list: list[float, int, list[str]] = [1.123231, 12312312, ["testing", "mode"]]
     for json_send in json_send_list:
         response: requests.models.Response = post_function(json_send)
-        assert response_assert("ONLY JSON ARE ALLOWED", response)
-        assert status_code_assert(400, response)
+        assert json.loads(response.text)["response"] == "ONLY JSON ARE ALLOWED"
+        assert response.status_code == 400
 
 
 def test_no_json() -> None:
     response: requests.models.Response = post_function(None)
-    assert status_code_assert(400, response)
+    assert response.status_code == 400
 # |--------------------------------------------------------------------------------------------------------------------|
 
 
@@ -130,8 +121,8 @@ def test_value_document() -> None:
         response: requests.models.Response = post_function({
             "database": database_name, "collection": collection_name, "document": document_value
         })
-        assert response_assert("ONLY JSON ARE ALLOWED", response)
-        assert status_code_assert(400, response)
+        assert json.loads(response.text)["response"] == "ONLY JSON ARE ALLOWED"
+        assert response.status_code == 400
 
 
 def test_field_document_less_than_4_characters() -> None:
@@ -139,8 +130,8 @@ def test_field_document_less_than_4_characters() -> None:
     response: requests.models.Response = post_function({
         "database": database_name, "collection": collection_name, "document": document_json
     })
-    assert response_assert("THE INFORMED FIELD [tes] MUST BE MORE THAN 4 CHARACTERS", response)
-    assert status_code_assert(400, response)
+    assert json.loads(response.text)["response"] == "THE INFORMED FIELD [tes] MUST BE MORE THAN 4 CHARACTERS"
+    assert response.status_code == 400
 
 
 def test_forbidden_fields() -> None:
@@ -150,21 +141,21 @@ def test_forbidden_fields() -> None:
             {"database": database_name, "collection": collection_name, "document": {field: "testing"}}
         )
         if len(field) < 4:
-            assert response_assert(f"THE INFORMED FIELD [{field}] MUST BE MORE THAN 4 CHARACTERS", response)
-            assert status_code_assert(400, response)
+            assert json.loads(response.text)["response"] == f"THE INFORMED FIELD [{field}] MUST BE MORE THAN 4 CHARACTERS"
+            assert response.status_code == 400
         else:
-            assert response_assert(f"UPDATING FIELD [{field}] IS NOT ALLOWED", response)
-            assert status_code_assert(403, response)
+            assert json.loads(response.text)["response"] == f"UPDATING FIELD [{field}] IS NOT ALLOWED"
+            assert response.status_code == 403
 
 
 def test_forbidden_character_fields() -> None:
-    for _char in "!\"#$%&'()*+,./:;<=>?@[\]^`{|}~ ":
+    for _char in "!\"#$%&'()*+,./:;<=>?@[\\]^`{|}~ ":
         response: requests.models.Response = post_function(
             {"database": database_name, "collection": collection_name, "document": {f"test{_char}": "testing"}}
         )
         
-        assert response_assert(f"CHARACTER [{_char}] IN [test{_char}] NOT ALLOWED", response)
-        assert status_code_assert(400, response)
+        assert json.loads(response.text)["response"] == f"CHARACTER [{_char}] IN [test{_char}] NOT ALLOWED"
+        assert response.status_code == 400
 # |--------------------------------------------------------------------------------------------------------------------|
 
 

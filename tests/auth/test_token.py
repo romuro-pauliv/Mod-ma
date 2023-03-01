@@ -26,12 +26,6 @@ header_token_config: dict[str] = {"field": "Authorization", "prefix": "Token "}
 # | functions |--------------------------------------------------------------------------------------------------------|
 def basic_function_requests(header: dict[str] | Any) -> requests.models.Response:
     return requests.post(f"{root_route}{test_token_route}", headers=header)
-
-def response_assert(hypothetical_response: str, request_obj: requests.models.Response) -> bool:
-    return (hypothetical_response == json.loads(request_obj.text)['response'])
-
-def status_code_assert(hypothetical_status_code: int, request_obj: requests.models.Response) -> bool:
-    return (hypothetical_status_code == request_obj.status_code)
 # |--------------------------------------------------------------------------------------------------------------------|
 
 
@@ -46,24 +40,24 @@ token: str = token_return(credentials["username"], credentials["password"])
 def test_without_header() -> None:
     response: requests.models.Response = basic_function_requests(None)
     
-    assert response_assert("A STRING WAS NOT IDENTIFIED IN THE TOKEN", response)
-    assert status_code_assert(400, response)
+    assert json.loads(response.text)["response"] == "A STRING WAS NOT IDENTIFIED IN THE TOKEN"
+    assert response.status_code == 400
 
 
 def test_invalid_token() -> None:
     response: requests.models.Response = basic_function_requests(
         {header_token_config["field"]: f"{header_token_config['prefix']}{token}a"})
     
-    assert response_assert("INVALID TOKEN", response)
-    assert status_code_assert(403, response)
+    assert json.loads(response.text)["response"] == "INVALID TOKEN"
+    assert response.status_code == 403
 
     
 def test_wrong_formatting_string_token() -> None:
     response: requests.models.Response = basic_function_requests(
         {header_token_config["field"]: f"{header_token_config['prefix']}wrong {token}"}
     )
-    assert response_assert("INVALID TOKEN", response)
-    assert status_code_assert(403, response)
+    assert json.loads(response.text)["response"] == "INVALID TOKEN"
+    assert response.status_code == 403
 
 
 def test_colon_error() -> None:
@@ -71,8 +65,8 @@ def test_colon_error() -> None:
         {header_token_config["field"]: f"{token}"}
     )
     
-    assert response_assert("WAS NOT IDENTIFIED [:] COLON IN THE CREDENTIALS", response)
-    assert status_code_assert(400, response)
+    assert json.loads(response.text)["response"] == "WAS NOT IDENTIFIED [:] COLON IN THE CREDENTIALS"
+    assert response.status_code == 400
 # |--------------------------------------------------------------------------------------------------------------------|
 
 
@@ -88,7 +82,7 @@ def test_token() -> None:
         {header_token_config['field']: f"{header_token_config['prefix']}{real_token}"}
     )
     assert response.text == "TEST OK"
-    assert status_code_assert(202, response)
+    assert response.status_code == 202
 # |--------------------------------------------------------------------------------------------------------------------|
 
 
@@ -110,8 +104,8 @@ def test_false_ip_address_token() -> None:
     response: requests.models.Response = basic_function_requests(
         {header_token_config['field']: f"{header_token_config['prefix']}{token_with_false_ip('142.250.219.206')}"}
     )
-    assert response_assert("IP ADDRESS DOES NOT MATCH", response)
-    assert status_code_assert(403, response)
+    assert json.loads(response.text)["response"] == "IP ADDRESS DOES NOT MATCH"
+    assert response.status_code == 403
 # |--------------------------------------------------------------------------------------------------------------------|
 
 
@@ -128,6 +122,6 @@ def test_expired_signature_token() -> None:
     response: requests.models.Response = basic_function_requests(
         {header_token_config["field"]: f"{header_token_config['prefix']}{token}"}
     )
-    assert response_assert("EXPIRED TOKEN", response)
-    assert status_code_assert(403, response)
+    assert json.loads(response.text)["response"] == "EXPIRED TOKEN"
+    assert response.status_code == 403
 # |--------------------------------------------------------------------------------------------------------------------|

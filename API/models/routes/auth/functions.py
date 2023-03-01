@@ -44,3 +44,11 @@ class Model(object):
     
     def login(self, username: str, password: str) -> tuple[dict[str], int]:
         return self.database_validation.verify_password(username, password)
+    
+    def delete_account(self, username: str, password: str, email: str) -> tuple[dict[str], int]:
+        valid_username_and_password: tuple[dict[str], int] = self.database_validation.verify_password(username, password)
+        if valid_username_and_password[1] != HTTP_202_ACCEPTED:
+            return valid_username_and_password
+        
+        valid_email: tuple[dict[str], int] = self.database_validation.verify_email(username, email)
+        return valid_email

@@ -30,12 +30,6 @@ def post_function_document(json_body: dict[str, Any]) -> requests.models.Respons
 
 def delete_function_document(json_body: dict[str, Any]) -> requests.models.Response:
     return requests.delete(f"{root_route}{document}", headers=header, json=json_body)
-
-def response_assert(hypothetical_response: str, request_obj: requests.models.Response) -> bool:
-    return (hypothetical_response == json.loads(request_obj.text)["response"])
-
-def status_code_assert(hypothetical_status_code: str, request_obj: requests.models.Response) -> bool:
-    return (hypothetical_status_code == request_obj.status_code)
 # |--------------------------------------------------------------------------------------------------------------------|
 
 # + GET DOCUMENT ID |--------------------------------------------------------------------------------------------------|
@@ -66,8 +60,8 @@ def test_with_database_not_found() -> None:
     response: requests.models.Response = delete_function_document({
         "database": database_name, "collection": collection_name, "_id": document_id
     })
-    assert response_assert(f"DATABASE [{database_name}] NOT FOUND", response)
-    assert status_code_assert(404, response)
+    assert json.loads(response.text)["response"] == f"DATABASE [{database_name}] NOT FOUND"
+    assert response.status_code == 404
 
 
 def test_with_collection_not_found() -> None:
@@ -75,8 +69,8 @@ def test_with_collection_not_found() -> None:
     response: requests.models.Response = delete_function_document({
         "database": database_name, "collection": collection_name, "_id": document_id
     })
-    assert response_assert(f"COLLECTION [{collection_name}] NOT FOUND", response)
-    assert status_code_assert(404, response)
+    assert json.loads(response.text)["response"] == f"COLLECTION [{collection_name}] NOT FOUND"
+    assert response.status_code == 404
 
 
 def test_with_document_not_found() -> None:
@@ -84,15 +78,15 @@ def test_with_document_not_found() -> None:
     response: requests.models.Response = delete_function_document({
         "database": database_name, "collection": collection_name, "_id": document_id
     })
-    assert response_assert(f"DOCUMENT WITH ID [{document_id}] NOT FOUND", response)
-    assert status_code_assert(404, response)
+    assert json.loads(response.text)["response"] == f"DOCUMENT WITH ID [{document_id}] NOT FOUND"
+    assert response.status_code == 404
 # |--------------------------------------------------------------------------------------------------------------------|
 
 # | Test Json Syntax |-------------------------------------------------------------------------------------------------|
 def test_empty_json() -> None:
     response: requests.models.Response = delete_function_document({})
-    assert response_assert("KEY ERROR - NEED [database] FIELD", response)
-    assert status_code_assert(400, response)
+    assert json.loads(response.text)["response"] == "KEY ERROR - NEED [database] FIELD"
+    assert response.status_code == 400
 
 
 def test_without_necessary_fields() -> None:
@@ -106,8 +100,8 @@ def test_without_necessary_fields() -> None:
     
     for n, json_send in enumerate(json_send_list):
         response: requests.models.Response = delete_function_document(json_send)
-        assert response_assert(f"KEY ERROR - NEED [{response_list[n]}] FIELD", response)
-        assert status_code_assert(400, response)
+        assert json.loads(response.text)["response"] == f"KEY ERROR - NEED [{response_list[n]}] FIELD"
+        assert response.status_code == 400
 
 
 def test_sended_no_json() -> None:
@@ -115,13 +109,13 @@ def test_sended_no_json() -> None:
     for json_send in json_send_list:
         response: requests.models.Response = delete_function_document(json_send)
         
-        assert response_assert("ONLY JSON ARE ALLOWED", response)
-        assert status_code_assert(400, response)
+        assert json.loads(response.text)["response"] == "ONLY JSON ARE ALLOWED"
+        assert response.status_code == 400
 
 
 def test_no_json() -> None:
-    reponse: requests.models.Response = delete_function_document(None)
-    assert status_code_assert(400, reponse)
+    response: requests.models.Response = delete_function_document(None)
+    assert response.status_code == 400
 # |--------------------------------------------------------------------------------------------------------------------|
 
 # | Test real delete |-------------------------------------------------------------------------------------------------|
@@ -129,8 +123,8 @@ def test_real_delete() -> None:
     response: requests.models.Response = delete_function_document({
         "database": database_name, "collection": collection_name, "_id": document_id
     })
-    assert response_assert(f"DOCUMENT WITH ID [{document_id}] DELETED", response)
-    assert status_code_assert(202, response)
+    assert json.loads(response.text)["response"] == f"DOCUMENT WITH ID [{document_id}] DELETED"
+    assert response.status_code == 202
 # |--------------------------------------------------------------------------------------------------------------------|
 
 # | Reset |------------------------------------------------------------------------------------------------------------|

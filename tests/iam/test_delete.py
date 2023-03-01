@@ -34,8 +34,8 @@ def test_delete_database() -> None:
         json_send: dict[str] = {"database": database_name}
         response: requests.models.Response = requests.delete(f'{root_route}{database}', headers=header, json=json_send)
         if credentials['username'] not in privileges['database']['delete']:
-            assert response_assert(f"USER [{credentials['username']}] REQUIRE PRIVILEGES", response)
-            assert status_code_assert(403, response)
+            assert json.loads(response.text)["response"] == f"USER [{credentials['username']}] REQUIRE PRIVILEGES"
+            assert response.status_code == 403
 # |--------------------------------------------------------------------------------------------------------------------|
 
 
@@ -48,7 +48,7 @@ def test_delete_collection() -> None:
                                                                  headers=header, json=json_send)
             if credentials['username'] not in privileges['collection']['delete']:
                 assert json.loads(response.text)['response'] == f"USER [{credentials['username']}] REQUIRE PRIVILEGES"
-                assert status_code_assert(403, response)
+                assert response.status_code == 403
 # |--------------------------------------------------------------------------------------------------------------------|
 
 
@@ -65,8 +65,8 @@ def test_delete_document() -> None:
                     response: requests.models.Response = requests.delete(f"{root_route}{document}",
                                                                          headers=header, json=send_json)
                     if credentials['username'] not in privileges[database_name][collection_name]['delete']:
-                        assert response_assert(f"USER [{credentials['username']}] REQUIRE PRIVILEGES", response)
-                        assert status_code_assert(403, response)
+                        assert json.loads(response.text)["response"] == f"USER [{credentials['username']}] REQUIRE PRIVILEGES"
+                        assert response.status_code == 403
                     
             except (KeyError, TypeError):
                 pass

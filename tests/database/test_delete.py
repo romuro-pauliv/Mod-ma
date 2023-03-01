@@ -23,12 +23,6 @@ def delete_function(json_body: dict[str, Any]) -> requests.models.Response:
 
 def post_function(json_body: dict[str, Any]) -> requests.models.Response:
     return requests.post(f"{root_route}{database}", headers=header, json=json_body)
-
-def response_assert(hypothetical_response: str, request_obj: requests.models.Response) -> bool:
-    return (hypothetical_response == json.loads(request_obj.text)["response"])
-
-def status_code_assert(hypothetical_status_code: str, request_obj: requests.models.Response) -> bool:
-    return (hypothetical_status_code == request_obj.status_code)
 # |--------------------------------------------------------------------------------------------------------------------|
 
 # | Test Delete Database |---------------------------------------------------------------------------------------------|
@@ -37,14 +31,14 @@ The tests below are about create and delete database
 """
 def test_create_database() -> None:
     response: requests.models.Response = post_function({"database": database_name})
-    assert response_assert(f"[{database_name}] CREATED", response)
-    assert status_code_assert(201, response)
+    assert json.loads(response.text)["response"] == f"[{database_name}] CREATED"
+    assert response.status_code == 201
 
 
 def test_delete_database() -> None:
     response: requests.models.Response = delete_function({"database": database_name})
-    assert response_assert(f"[{database_name}] DATABASE DELETED", response)
-    assert status_code_assert(202, response)
+    assert json.loads(response.text)["response"] == f"[{database_name}] DATABASE DELETED"
+    assert response.status_code == 202
 # |--------------------------------------------------------------------------------------------------------------------|
 
 # | Test delete non-exists database |----------------------------------------------------------------------------------|
@@ -54,8 +48,8 @@ The tests below are about delete database that no exists in MongoDB
 def test_delete_no_exists_database() -> None:
     database_name: str = "asjksiwujekusj23219sjais"
     response: requests.models.Response = delete_function({"database": database_name})
-    assert response_assert(f"DATABASE [{database_name}] NOT FOUND", response)
-    assert status_code_assert(404, response)
+    assert json.loads(response.text)["response"] == f"DATABASE [{database_name}] NOT FOUND"
+    assert response.status_code == 404
 # |--------------------------------------------------------------------------------------------------------------------|
 
 # | Tests String Syntax |----------------------------------------------------------------------------------------------|
@@ -66,8 +60,8 @@ def  test_database_name_no_string() -> None:
     database_name_list: list[list | int | dict] = [["testing", "mode", "hello"], 123321231231, {"mode": "testing"}]
     for database_name in database_name_list:
         response: requests.models.Response = delete_function({"database": database_name})
-        assert response_assert("ONLY STRING ARE ALLOWED", response)
-        assert status_code_assert(400, response)
+        assert json.loads(response.text)["response"] == "ONLY STRING ARE ALLOWED"
+        assert response.status_code == 400
 # |--------------------------------------------------------------------------------------------------------------------|
 
 # | Tests Json Syntax |------------------------------------------------------------------------------------------------|
@@ -78,17 +72,17 @@ def test_send_no_json() -> None:
     json_send_list: list[list | float | int] = [["testing", "mode"], 1.2321, 11232321]
     for json_send in json_send_list:
         response: requests.models.Response = delete_function(json_send)
-        assert response_assert("ONLY JSON ARE ALLOWED", response)
-        assert status_code_assert(400, response)
+        assert json.loads(response.text)["response"] == "ONLY JSON ARE ALLOWED"
+        assert response.status_code == 400
 
 
 def test_no_json_sended() -> None:
     response: requests.models.Response = delete_function(None)
-    assert status_code_assert(400, response)
+    assert response.status_code == 400
 
 
 def test_without_necessary_field() -> None:
     response: requests.models.Response = delete_function({"testing": database_name})
-    assert response_assert("KEY ERROR - NEED [database] FIELD", response)
-    assert status_code_assert(400, response)
+    assert json.loads(response.text)["response"] == "KEY ERROR - NEED [database] FIELD"
+    assert response.status_code == 400
 # |--------------------------------------------------------------------------------------------------------------------|
