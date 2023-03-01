@@ -134,7 +134,7 @@ def test_no_json_sended_filter() -> None:
 
 
 def test_forbidden_character_in_filter_fields() -> None:
-    for _char in "!\"#$%&'()*+,./:;<=>?@[\]^`{|}~ ":
+    for _char in "!\"#$%&'()*+,./:;<=>?@[\\]^`{|}~ ":
         response: requests.models.Response = get_function_document({
             "database": database_name, "collection": collection_name, "filter": {f"testing{_char}": "world"}
         })

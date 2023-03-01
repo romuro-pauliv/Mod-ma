@@ -173,7 +173,7 @@ def test_forbidden_fields_json_update() -> None:
 
 
 def test_forbidden_character_in_document_update_fields() -> None:
-    for _char in "!\"#$%&'()*+,./:;<=>?@[\]^`{|}~ ":
+    for _char in "!\"#$%&'()*+,./:;<=>?@[\\]^`{|}~ ":
         json_send: dict[str] = {
             "database": database_name, "collection": collection_name,
             "_id": document_id, "update": {f"testi{_char}ng": "testing"}

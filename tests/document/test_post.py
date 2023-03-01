@@ -149,7 +149,7 @@ def test_forbidden_fields() -> None:
 
 
 def test_forbidden_character_fields() -> None:
-    for _char in "!\"#$%&'()*+,./:;<=>?@[\]^`{|}~ ":
+    for _char in "!\"#$%&'()*+,./:;<=>?@[\\]^`{|}~ ":
         response: requests.models.Response = post_function(
             {"database": database_name, "collection": collection_name, "document": {f"test{_char}": "testing"}}
         )

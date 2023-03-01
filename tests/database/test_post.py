@@ -68,7 +68,7 @@ def test_database_name_less_than_4_characters() -> None:
 
 
 def test_database_name_with_forbidden_characters() -> None:
-    for _char in "!\"#$%&'()*+,./:;<=>?@[\]^`{|}~ ":
+    for _char in "!\"#$%&'()*+,./:;<=>?@[\\]^`{|}~ ":
         database_name: str = f"test{_char}ing"
         
         response: requests.models.Response = post_function({"database": database_name})

@@ -18,7 +18,7 @@ import pymongo.collection
 credentials: dict[str] = {"username": "usertest", "password": "123!UserTest", "email": "usertest@usertest.com"}
 credentials_to_syntax_test: dict[str] = {"username": "user_test", "email": "usertestuser@usertestuser.com"}
 header_config: dict[str] = {"field": "Register"}
-forbidden_character: str = "!\"#$%&'()*+,./:;<=>?@[\]^`{|}~ "
+forbidden_character: str = "!\"#$%&'()*+,./:;<=>?@[\\]^`{|}~ "
 # |--------------------------------------------------------------------------------------------------------------------|
 
 

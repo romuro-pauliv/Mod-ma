@@ -73,7 +73,7 @@ def test_collection_name_less_than_4_character() -> None:
 
 
 def test_collection_with_forbidden_character() -> None:
-    for _char in "!\"#$%&'()*+,./:;<=>?@[\]^`{|}~ ":
+    for _char in "!\"#$%&'()*+,./:;<=>?@[\\]^`{|}~ ":
         collection_name: str = f"test{_char}ing"
         
         response: requests.models.Response = post_function({"database": database_name, "collection": collection_name})
