@@ -22,12 +22,6 @@ header_config: dict[str] = {"field": "Authorization"}
 # | functions |--------------------------------------------------------------------------------------------------------|
 def basic_function_requests(header: dict[str] | Any) -> requests.models.Response:
     return requests.post(f"{root_route}{login_route}", headers=header)
-
-def response_assert(hypothetical_response: str, request_obj: requests.models.Response) -> bool:
-    return (hypothetical_response == json.loads(request_obj.text)['response'])
-
-def status_code_assert(hypothetical_status_code: int, request_obj: requests.models.Response) -> bool:
-    return (hypothetical_status_code == request_obj.status_code)
 # |--------------------------------------------------------------------------------------------------------------------|
 
 
@@ -203,7 +197,7 @@ def test_invalid_argument() -> None:
     ]
     
     for credentials_test in credentials_list:
-        response: requests.models.Request = basic_function_requests({header_config["field"]:
+        response: requests.models.Response = basic_function_requests({header_config["field"]:
             header_base64_login(
                 username=credentials_test["username"],
                 password=credentials_test["password"]

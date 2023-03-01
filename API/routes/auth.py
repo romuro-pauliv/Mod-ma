@@ -31,6 +31,7 @@ def Register() -> tuple[dict[str], int]:
 
 # | Delete account |---------------------------------------------------------------------------------------------------|
 @bp.route("/register", methods=["DELETE"])
+@required_token
 def DeleteAccount() -> tuple[dict[str], int]:
     return exec_delete_account(request.headers.get("Register"))
 # |--------------------------------------------------------------------------------------------------------------------|
