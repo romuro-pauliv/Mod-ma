@@ -8,9 +8,8 @@
 # | imports |---------------------------------------------------------------------------------------------------------|
 from API.db import get_db
 from API.secure.token.IPT_token import IPToken
-
+from API.json.responses.pam.pam_status import Responses
 from API.models.tools.validations import Validate
-
 from API.status import *
 
 from flask import request
@@ -44,7 +43,7 @@ class PAM(object):
     def json_validation(self) -> tuple[str, int]:
         # Verify if response is a json |-------------------------------------------------------------------------------|
         if not isinstance(self.json, dict):
-            return "ONLY JSON ARE ALLOWED", HTTP_400_BAD_REQUEST
+            return Responses.R4XX.only_json()
         # |------------------------------------------------------------------------------------------------------------|
 
         # Verify json fields |-----------------------------------------------------------------------------------------|
@@ -53,8 +52,8 @@ class PAM(object):
                 if self.json[field]:
                     pass
             except KeyError:
-                return "BAD REQUEST - KEY ERROR", HTTP_400_BAD_REQUEST
-        return "JSON VALID", HTTP_202_ACCEPTED
+                return Responses.R4XX.key_error()
+        return Responses.R2XX.json_valid()
     
     def user_validation(self) -> tuple[str, int]:
         # Avoid NoSQL Injection |--------------------------------------------------------------------------------------|
@@ -67,9 +66,9 @@ class PAM(object):
             return validate_character
         # |------------------------------------------------------------------------------------------------------------|
         if get_db().USERS.REGISTER.find_one({"username": self.json['user']}) is None:
-            return f"USER [{self.json['user']}] NOT FOUND", HTTP_404_NOT_FOUND
+            return Responses.R4XX.user_not_found(self.json["user"])
         
-        return "USER VALID", HTTP_202_ACCEPTED
+        return Responses.R2XX.user_valid()
     
     def command_validation(self) -> tuple[str, int]:
         # String validation |------------------------------------------------------------------------------------------|
@@ -78,8 +77,8 @@ class PAM(object):
             return validate_str
         # |------------------------------------------------------------------------------------------------------------|
         if not self.json["command"] in self.command_value:
-            return f"COMMAND NOT VALID - [{self.json['command']}]", HTTP_400_BAD_REQUEST
-        return "COMMAND VALID", HTTP_202_ACCEPTED
+            return Responses.R4XX.invalid_command(self.json["command"])
+        return Responses.R2XX.command_valid()
     
     def method_validation(self) -> tuple[str, int]:
         # String validation |------------------------------------------------------------------------------------------|
@@ -88,35 +87,35 @@ class PAM(object):
             return validate_str
         # |------------------------------------------------------------------------------------------------------------|
         if not self.json["method"] in self.method_value:
-            return f"CRUD METHOD NOT VALID - [{self.json['method']}]", HTTP_400_BAD_REQUEST
-        return "CRUD METHOD VALID", HTTP_202_ACCEPTED
+            return Responses.R4XX.invalid_crud_method(self.json["method"])
+        return Responses.R2XX.crud_method_valid()
     
     def arguments_validation(self) -> tuple[str, int]:
         # arguments list validation |----------------------------------------------------------------------------------|
         if not isinstance(self.json["arguments"], list):
-            return "INVALID OBJECT TYPE IN [ARGUMENTS] FIELD", HTTP_400_BAD_REQUEST
+            return Responses.R4XX.invalid_object_type_arguments()
         # |------------------------------------------------------------------------------------------------------------|
         
         # internal str | list arguments validation |-------------------------------------------------------------------|
         for arg_l in self.json["arguments"]:
             if not isinstance(arg_l, str):
                 if not isinstance(arg_l, list):
-                    return f"INVALID OBJECT TYPE IN ARGUMENTS - ONLY STRING AND LIST - {arg_l}", HTTP_400_BAD_REQUEST
+                    return Responses.R4XX.invalid_item_in_arguments(arg_l)
         # |------------------------------------------------------------------------------------------------------------|
         
         # str validation in privileges |-------------------------------------------------------------------------------|
         for arg_l in self.json['arguments']:
             if isinstance(arg_l, str):
                 if not arg_l in ["database", "collection"]:
-                    return f"INVALID PATH [{arg_l}]", HTTP_400_BAD_REQUEST
+                    return Responses.R4XX.invalid_path(arg_l)
             
             if isinstance(arg_l, list):
                 if len(arg_l) > 2:
-                    return f"INVALID PATH - THE LIST MUST HAVE ONLY 2 ARGUMENTS [{str(arg_l)}]", HTTP_400_BAD_REQUEST
+                    return Responses.R4XX.invalid_path_error_len_list(arg_l)
                 
                 for db_coll in arg_l:
                     if not isinstance(db_coll, str):
-                        return f"INVALID OBJECT TYPE - {str(db_coll)} - MUST BE A STRING", HTTP_400_BAD_REQUEST
+                        return Responses.R4XX.invalid_item_in_list(db_coll)
                 
                 # Extracting the privileges and configuring |----------------------------------------------------------|
                 privileges: dict[str, dict] = self.get_privileges()
@@ -126,15 +125,15 @@ class PAM(object):
                 # Check the database values in privileges |------------------------------------------------------------|
                 database_names: list[str] = [db_name for db_name in privileges.keys()]
                 if not arg_l[0] in database_names:
-                    return f"DATABASE [{arg_l[0]}] NOT FOUND", HTTP_404_NOT_FOUND 
+                    return Responses.R4XX.database_not_found(arg_l[0])
                 # |----------------------------------------------------------------------------------------------------|
                 
                 # Check the collection values in privileges |----------------------------------------------------------|
                 collection_names: list[str] = [coll_name for coll_name in privileges[arg_l[0]].keys()]
                 if not arg_l[1] in collection_names:
-                    return f"COLLECTION [{arg_l[1]}] NOT FOUND", HTTP_404_NOT_FOUND
+                    return Responses.R4XX.collection_not_found(arg_l[1])
                 # |----------------------------------------------------------------------------------------------------|
-        return "ARGUMENTS VALID", HTTP_202_ACCEPTED
+        return Responses.R2XX.arguments_valid()
     
     def exec_validation(self) -> tuple[Union[str, dict[str, Union[str, list]]], int]:
         # Func validation list |---------------------------------------------------------------------------------------|
@@ -165,7 +164,7 @@ class PAM(object):
         
         # Only "admin" have access to PAM |----------------------------------------------------------------------------|
         if not self.username in self.authorized_user:
-            return f"FORBIDDEN - USER [{self.authorized_user}] UNAUTHORIZED", HTTP_403_FORBIDDEN
+            return Responses.R4XX.unauthorized_request(self.username)
         # |------------------------------------------------------------------------------------------------------------|
         
         # Get privileges |---------------------------------------------------------------------------------------------|
@@ -205,4 +204,4 @@ class PAM(object):
         get_db().USERS.PRIVILEGES.delete_one({"command": "privileges"})
         get_db().USERS.PRIVILEGES.insert_one(privileges)
         
-        return "UPDATE PRIVILEGES", HTTP_202_ACCEPTED
+        return Responses.R2XX.update_privileges()
