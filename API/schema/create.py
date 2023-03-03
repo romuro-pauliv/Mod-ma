@@ -10,7 +10,7 @@ from typing import Optional
 from colorama import Fore, Style
 from pymongo.mongo_client import MongoClient
 
-from schema_data import new_user_privileges
+from schema_data import new_user_privileges, pam
 
 import datetime
 
@@ -113,6 +113,23 @@ def prompt_assemble_new_user_privileges(func: MongoClient) -> None:
         "datetime": ['UTC', datetime.datetime.utcnow()],
     }
     json_send.update(new_user_privileges)
+    
+    func().USERS.PRIVILEGES.insert_one(json_send)
+    
+    print(Fore.GREEN + " CREATED" + Style.RESET_ALL)
+
+
+def prompt_PAM(func: MongoClient) -> None:
+    space: str = " "*(25-len("PAM Document"))
+    print(">>> " + Fore.MAGENTA + "IAM: " + Fore.CYAN + "PAM Document" + space + 
+          Style.RESET_ALL + " |---|", end="")
+    
+    json_send: dict[str] = {
+        "command": "pam",
+        "datetime": ['UTC', datetime.datetime.utcnow()],
+    }
+    
+    json_send.update(pam)
     
     func().USERS.PRIVILEGES.insert_one(json_send)
     

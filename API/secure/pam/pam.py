@@ -22,7 +22,7 @@ class PAM(object):
         # | json and username request |--------------------------------------------------------------------------------|
         self.json: dict[str, Any] = json
         self.username: str = IPToken.Tools.get_username_per_token(request.headers.get("Authorization"))
-        self.authorized_user: list[str] = ["admin"]
+        self.authorized_user: list[str] = get_db().USERS.PRIVILEGES.find_one({"command": "pam"})['pam_users']
         # |------------------------------------------------------------------------------------------------------------|
         
         # | json model configuration |---------------------------------------------------------------------------------|
@@ -110,7 +110,7 @@ class PAM(object):
                     return Responses.R4XX.invalid_path(arg_l)
             
             if isinstance(arg_l, list):
-                if len(arg_l) > 2:
+                if len(arg_l) > 2 or len(arg_l) < 2:
                     return Responses.R4XX.invalid_path_error_len_list(arg_l)
                 
                 for db_coll in arg_l:
@@ -178,25 +178,41 @@ class PAM(object):
                 # Append command |-------------------------------------------------------------------------------------|
                 if self.json['command'] == "append":
                     if self.json['user'] not in privileges[args][self.json['method']]:
-                        privileges[args][self.json['method']].append(self.json['user'])
+                        if self.username in privileges[args][self.json['method']]:
+                            privileges[args][self.json['method']].append(self.json['user'])
+                        else:
+                            return Responses.R4XX.unauthorized_modification(
+                                self.username, args, None, self.json['method'])
                 # |----------------------------------------------------------------------------------------------------|
                 
                 # Remove command |-------------------------------------------------------------------------------------|
                 elif self.json['command'] == "remove":
                     if self.json['user'] in privileges[args][self.json['method']]:
-                        privileges[args][self.json['method']].remove(self.json['user'])
+                        if self.username in privileges[args][self.json['method']]:
+                            privileges[args][self.json['method']].remove(self.json['user'])
+                        else:
+                            return Responses.R4XX.unauthorized_modification(
+                                self.username, args, None, self.json['method'])
                 # |----------------------------------------------------------------------------------------------------|
             if isinstance(args, list):
                 # Append command |-------------------------------------------------------------------------------------|
                 if self.json["command"] == "append":
                     if self.json["user"] not in privileges[args[0]][args[1]][self.json["method"]]:
-                        privileges[args[0]][args[1]][self.json["method"]].append(self.json['user'])
+                        if self.username in privileges[args[0]][args[1]][self.json["method"]]:
+                            privileges[args[0]][args[1]][self.json["method"]].append(self.json['user'])
+                        else:
+                            return Responses.R4XX.unauthorized_modification(
+                                self.username, args[0], args[1], self.json["method"])
                 # |----------------------------------------------------------------------------------------------------|
                 
                 # Remove command |-------------------------------------------------------------------------------------|
                 if self.json["command"] == "remove":
                     if self.json["user"] in privileges[args[0]][args[1]][self.json["method"]]:
-                        privileges[args[0]][args[1]][self.json["method"]].remove(self.json["user"])
+                        if self.username in privileges[args[0]][args[1]][self.json["method"]]:
+                            privileges[args[0]][args[1]][self.json["method"]].remove(self.json["user"])
+                        else:
+                            Responses.R4XX.unauthorized_modification(
+                                self.username, args[0], args[1], self.json["method"])
                 # |----------------------------------------------------------------------------------------------------|
                 
         # Update |-----------------------------------------------------------------------------------------------------|

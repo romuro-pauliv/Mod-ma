@@ -16,7 +16,7 @@ class Reponses(object):
         def name_not_allowed(database_name: str) -> tuple[dict, int]:
             return response_structure(f"FORBIDDEN - NAME [{database_name}] NOT ALLOWED", HTTP_403_FORBIDDEN)
         
-        @ staticmethod
+        @staticmethod
         def name_in_use(database_name: str) -> tuple[dict, int]:
             return response_structure(f"FORBIDDEN - NAME [{database_name}] IN USE", HTTP_403_FORBIDDEN)
     

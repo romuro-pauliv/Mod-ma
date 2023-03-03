@@ -71,6 +71,22 @@ class Responses(object):
         def unauthorized_request(username: str) -> tuple[dict[str], int]:
             return response_structure(f"FORBIDDEN - USER [{username}] UNAUTHORIZED", HTTP_403_FORBIDDEN)
         
+        @staticmethod
+        def unauthorized_modification(user: str,
+                                      database: str,
+                                      collection: str | None,
+                                      method_: str) -> tuple[dict[str], int]:
+            if collection != None:
+                return response_structure(
+                    f"FORBIDDEN - USER [{user}] DOEST NOT HAVE PERMISSION ON [{database} - {collection} -> {method_}]",
+                    HTTP_403_FORBIDDEN
+                )
+            else:
+                return response_structure(
+                    f"FORBIDDEN - USER [{user}] DOEST NOT HAVE PERMISSION ON [{database} -> {method_}]",
+                    HTTP_403_FORBIDDEN
+                )
+        
     class R2XX(object):
         def json_valid() -> tuple[str, int]:
             return "JSON VALID", HTTP_202_ACCEPTED
