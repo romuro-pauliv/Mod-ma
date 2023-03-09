@@ -65,7 +65,7 @@ class Responses(object):
         
         @staticmethod
         def collection_not_found(collection_name: str) -> tuple[dict[str], int]:
-            return response_structure(f"DATABASE [{collection_name}] NOT FOUND", HTTP_404_NOT_FOUND)
+            return response_structure(f"COLLECTION [{collection_name}] NOT FOUND", HTTP_404_NOT_FOUND)
         
         @staticmethod
         def unauthorized_request(username: str) -> tuple[dict[str], int]:

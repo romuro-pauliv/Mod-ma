@@ -180,6 +180,124 @@ def test_invalid_method() -> None:
         assert response.status_code == 400
 # |--------------------------------------------------------------------------------------------------------------------|
 
+# | Test Arguments Value |---------------------------------------------------------------------------------------------|
+def test_no_list_in_arguments() -> None:
+    argument_value_list: list[int, str, float, dict[str]] = [12, "database", 1.12, {"testing": "mothod"}]
+    
+    for arguments in argument_value_list:
+        send_json: dict[str] = {
+            "user": register_pamtest["username"],
+            "command": "append",
+            "method": "create",
+            "arguments": arguments
+        }
+        
+        response: requests.models.Response = PAM_function(admin_header, send_json)
+        
+        assert json.loads(response.text)["response"] == f"INVALID OBJECT TYPE IN [ARGUMENTS] FIELD"
+        assert response.status_code == 400
+
+
+def test_no_str_or_list_in_arguments_items() -> None:
+    arguments_item_list: list[int, float, dict] = [1, 1.12, {"testing": "mode"}]
+    
+    for arguments in arguments_item_list:
+        send_json: dict[str] = {
+            "user": register_pamtest["username"],
+            "command": "append",
+            "method": "create",
+            "arguments": [arguments]
+        }
+        
+        response: requests.models.Response = PAM_function(admin_header, send_json)
+        
+        assert json.loads(response.text)["response"] == \
+            f"INVALID ITEM TYPE IN ARGUMENTS - ONLY STRING OR LIST - [{str(arguments)}]"
+        assert response.status_code == 400
+
+
+def test_invalid_str_path_arguments() -> None:
+    arguments_path_list: list[str] = ["testing", "mode", "databasea", "colection"]
+    
+    for arguments in arguments_path_list:
+        send_json: dict[str] = {
+            "user": register_pamtest["username"],
+            "command": "append",
+            "method": "create",
+            "arguments": [arguments]
+        }
+        
+        response: requests.models.Response = PAM_function(admin_header, send_json)
+        
+        assert json.loads(response.text)["response"] == f"INVALID PATH [{arguments}]"
+        assert response.status_code == 400
+
+
+def test_invalid_list_len_path_arguments() -> None:
+    arguments_path_list: list[list[str]] = [["testing"], ["testing", "mode", "test"], []]
+    
+    for arguments in arguments_path_list:
+        send_json: dict[str] = {
+            "user": register_pamtest["username"],
+            "command": "append",
+            "method": "create",
+            "arguments": [arguments]
+        }
+        
+        response: requests.models.Response = PAM_function(admin_header, send_json)
+        
+        assert json.loads(response.text)["response"] == \
+            f"INVALID PATH - THE LIST MUST HAVE ONLY 2 ARGUMENTS [{str(arguments)}]"
+        assert response.status_code == 400
+
+
+def test_invalid_list_item_in_arguments() -> None:
+    arguments_path_list: list[list[int, float]] = [[21, "mode"], [{"testing": "mode"}, 1.2321], [[], []]]
+    
+    for arguments in arguments_path_list:
+        send_json: dict[str] = {
+            "user": register_pamtest["username"],
+            "command": "append",
+            "method": "create",
+            "arguments": [arguments]
+        }
+        
+        response: requests.models.Response = PAM_function(admin_header, send_json)
+        
+        assert json.loads(response.text)["response"] == \
+            f"INVALID OBJECT TYPE IN LIST - {[str(arguments[0])]} - MUST BE A STRING"
+        assert response.status_code == 400
+
+
+def test_arguments_database_not_found() -> None:
+    database_name: str = "databasenotfound123321"
+    send_json: dict[str] = {
+        "user": register_pamtest["username"],
+        "command": "append",
+        "method": "create",
+        "arguments": [[database_name, "collection"]]
+    }
+    
+    response: requests.models.Response = PAM_function(admin_header, send_json)
+    
+    assert json.loads(response.text)["response"] == f"DATABASE [{database_name}] NOT FOUND"
+    assert response.status_code == 404
+
+
+def test_arguments_collection_not_found() -> None:
+    collection_name: str = "collectionnotfound12321"
+    send_json: dict[str] = {
+        "user": register_pamtest["username"],
+        "command": "append",
+        "method": "create",
+        "arguments": [["PERSON", collection_name]]
+    }
+    
+    response: requests.models.Response = PAM_function(admin_header, send_json)
+    
+    assert json.loads(response.text)["response"] == f"COLLECTION [{collection_name}] NOT FOUND"
+    assert response.status_code == 404
+# |--------------------------------------------------------------------------------------------------------------------|
 
 
 # | RESET USER |-------------------------------------------------------------------------------------------------------|
