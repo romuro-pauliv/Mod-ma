@@ -300,6 +300,26 @@ def test_arguments_collection_not_found() -> None:
 # |--------------------------------------------------------------------------------------------------------------------|
 
 
+# | Unauthorized PAM user |--------------------------------------------------------------------------------------------|
+def test_unauthorized_pam_user() -> None:
+    new_user_header: dict[str] = {
+        "Authorization": f"Basic {token_login(register_pamtest['username'], register_pamtest['password'])}"
+    }
+    
+    send_json: dict[str] = {
+        "user": "admin",
+        "command": "remove",
+        "method": "create",
+        "arguments": ["database"]
+    }
+    
+    response: requests.models.Response = PAM_function(new_user_header, send_json)
+    
+    assert json.loads(response.text)["response"] == f"FORBIDDEN - USER [{register_pamtest['username']}] UNAUTHORIZED"
+    assert response.status_code == 403
+# |--------------------------------------------------------------------------------------------------------------------|
+
+
 # | RESET USER |-------------------------------------------------------------------------------------------------------|
 def test_reset_pamtest() -> None:
     header: dict[str] = {
@@ -312,6 +332,5 @@ def test_reset_pamtest() -> None:
     }
     
     response: requests.models.Response = requests.delete(f"{root_route}{register_route}", headers=header)
-    
     assert response.status_code == 202
 # |--------------------------------------------------------------------------------------------------------------------|
