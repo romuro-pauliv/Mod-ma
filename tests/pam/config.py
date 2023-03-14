@@ -21,6 +21,10 @@ root_route: str = "http://127.0.0.1:5000"
 login_route: str = "/auth/login"
 register_route: str = "/auth/register"
 iam_route: str = "/auth/iam"
+
+database: str = "/database/"
+collection: str = "/collection/"
+document: str = "/document/"
 # |====================================================================================================================|
 
 # MONGO CLIENT |=======================================================================================================|
