@@ -132,6 +132,12 @@ class BaseFunctions(object):
             
             return requests.post(f"{root_route}{database}", headers=header, json=send_json)
         
+        def read(credentials: dict[str]) -> requests.models.Response:
+            token: str = token_login(credentials["username"], credentials["password"])
+            header: dict[str] = {"Authorization": f"Bearer {token}"}
+            
+            return requests.get(f"{root_route}{database}", headers=header)
+        
         def delete(credentials: dict[str], database_name: str) -> requests.models.Response:
             token: str = token_login(credentials["username"], credentials["password"])
             header: dict[str] = {"Authorization": f"Bearer {token}"}
@@ -181,41 +187,154 @@ def test_user_in_standard_privileges() -> None:
 def test_database_create() -> None:
     database_name: str = "testing123321123321"
     
-    # | Create without privileges
+    # | Adjust privileges |--------------------------------------------------------------------------------------------|
+    if Base.pamtest_credentials["username"] in Base.Privileges.get_privileges_list(["database", "create"]):
+        pam_response: requests.models.Response = Base.Privileges.add_or_remove_privileges(
+            Base.admin_credentials, Base.pamtest_credentials["username"], "create", "remove", ["database"]
+        )
+        
+        assert json.loads(pam_response.text)["response"] == "UPDATE PRIVILEGES"
+        assert pam_response.status_code == 202
+    
+    # | Create without privileges |------------------------------------------------------------------------------------|
     response: requests.models.Response = Base.Database.create(Base.pamtest_credentials, database_name)
     assert json.loads(response.text)["response"] == f"USER [{Base.pamtest_credentials['username']}] REQUIRE PRIVILEGES"
     assert response.status_code == 403
     
-    # | Add privileges
+    # | Add privileges to pamtest |------------------------------------------------------------------------------------|
     pam_response: requests.models.Response = Base.Privileges.add_or_remove_privileges(
         Base.admin_credentials, Base.pamtest_credentials["username"], "create", "append", ["database"]
     )
     assert json.loads(pam_response.text)["response"] == "UPDATE PRIVILEGES"
     assert pam_response.status_code == 202
     
-    # | Create with privileges
+    # | Add privileges to synthetic users |----------------------------------------------------------------------------|
+    for user in [key_user for key_user in Base.synthetic_user.keys()]:
+        synthetic_user_response: requests.models.Response = Base.Privileges.add_or_remove_privileges(
+            Base.admin_credentials, Base.synthetic_user[user]["username"], "create", "append", ["database"]
+        )
+        
+        assert json.loads(synthetic_user_response.text)["response"] == "UPDATE PRIVILEGES"
+        assert synthetic_user_response.status_code == 202
+    
+    # | Create with privileges |---------------------------------------------------------------------------------------|
     response: requests.models.Response = Base.Database.create(Base.pamtest_credentials, database_name)
     assert json.loads(response.text)["response"] == f"[{database_name}] CREATED"
     assert response.status_code == 201
     
-    # | Verify privileges
+    # | Verify privileges |--------------------------------------------------------------------------------------------|
     assert Base.Privileges.vefiry_privileges(Base.pamtest_credentials["username"], ["database", "create"]) == True
     before_user_privileges: list[str] = Base.Privileges.get_privileges_list(["database", "create"])
     
-    # | Remove Privileges
+    # | Remove pamtest Privileges |------------------------------------------------------------------------------------|
     pam_response: requests.models.Response = Base.Privileges.add_or_remove_privileges(
         Base.admin_credentials, Base.pamtest_credentials["username"], "create", "remove", ["database"]
     )
     assert json.loads(pam_response.text)["response"] == "UPDATE PRIVILEGES"
     assert pam_response.status_code == 202
     
+    # Verify Privileges |----------------------------------------------------------------------------------------------|
     before_user_privileges.remove(Base.pamtest_credentials["username"])
     assert before_user_privileges == Base.Privileges.get_privileges_list(["database", "create"])
+    
+    # | Create without privileges |------------------------------------------------------------------------------------|
+    response: requests.models.Response = Base.Database.create(Base.pamtest_credentials, database_name)
+    assert json.loads(response.text)["response"] == f"USER [{Base.pamtest_credentials['username']}] REQUIRE PRIVILEGES"
+    assert response.status_code == 403
+    
+    # | Remove synthetic_user Privileges |-----------------------------------------------------------------------------|
+    for user in [key_user for key_user in Base.synthetic_user.keys()]:
+        pam_response: requests.models.Response = Base.Privileges.add_or_remove_privileges(
+            Base.admin_credentials, Base.synthetic_user[user]["username"], "create", "remove", ["database"]
+        )
         
-    # | Delete database
+        assert json.loads(pam_response.text)["response"] == "UPDATE PRIVILEGES"
+        assert pam_response.status_code == 202
+    
+    # Verify synthetic_user Privileges |-------------------------------------------------------------------------------|
+    for user in [key_user for key_user in Base.synthetic_user.keys()]:
+        before_user_privileges.remove(Base.synthetic_user[user]["username"])
+    
+    assert before_user_privileges == Base.Privileges.get_privileges_list(["database", "create"])
+    
+    # | Delete database |----------------------------------------------------------------------------------------------|
     response: requests.models.Response = Base.Database.delete(Base.admin_credentials, database_name)
     assert json.loads(response.text)["response"] == f"[{database_name}] DATABASE DELETED"
     assert response.status_code == 202
+
+
+def test_database_read() -> None:
+    # Adjust privileges |----------------------------------------------------------------------------------------------|
+    if Base.pamtest_credentials["username"] in Base.Privileges.get_privileges_list(["database", "read"]):
+        pam_response: requests.models.Response = Base.Privileges.add_or_remove_privileges(
+            Base.admin_credentials, Base.pamtest_credentials["username"], "read", "remove", ["database"]
+        )
+        
+        assert json.loads(pam_response.text)["response"] == "UPDATE PRIVILEGES"
+        assert pam_response.status_code == 202
+    
+    # | Read without privileges |--------------------------------------------------------------------------------------|
+    response: requests.models.Response = Base.Database.read(Base.pamtest_credentials)
+    assert json.loads(response.text)["response"] == f"USER [{Base.pamtest_credentials['username']}] REQUIRE PRIVILEGES"
+    assert response.status_code == 403
+    
+    # | Add Privileges to pamtest |------------------------------------------------------------------------------------|
+    pam_response: requests.models.Response = Base.Privileges.add_or_remove_privileges(
+        Base.admin_credentials, Base.pamtest_credentials["username"], "read", "append", ["database"]
+    )
+    assert json.loads(pam_response.text)["response"] == "UPDATE PRIVILEGES"
+    assert pam_response.status_code == 202
+    
+    # | Add Privileges to synthetic users |----------------------------------------------------------------------------|
+    for user in [key_user for key_user in Base.synthetic_user.keys()]:
+        pam_response: requests.models.Response = Base.Privileges.add_or_remove_privileges(
+            Base.admin_credentials, Base.synthetic_user[user]["username"], "read", "append", ["database"]
+        )
+        
+        assert json.loads(pam_response.text)["response"] == "UPDATE PRIVILEGES"
+        assert pam_response.status_code == 202
+    
+    # | Read with privileges |-----------------------------------------------------------------------------------------|
+    response: requests.models.Response = Base.Database.read(Base.pamtest_credentials)
+    assert isinstance(json.loads(response.text), list) == True
+    assert response.status_code == 200
+    
+    # | Verify Privileges |--------------------------------------------------------------------------------------------|
+    assert Base.Privileges.vefiry_privileges(Base.pamtest_credentials["username"], ["database", "read"]) == True
+    before_user_privileges: list[str] = Base.Privileges.get_privileges_list(["database", "read"])
+    
+    # | Remove pamtest Privileges |------------------------------------------------------------------------------------|
+    pam_response: requests.models.Response = Base.Privileges.add_or_remove_privileges(
+        Base.admin_credentials, Base.pamtest_credentials["username"], "read", "remove", ["database"]
+    )
+    assert json.loads(pam_response.text)["response"] == "UPDATE PRIVILEGES"
+    assert pam_response.status_code == 202
+    
+    # | Verify Privileges |--------------------------------------------------------------------------------------------|
+    before_user_privileges.remove(Base.pamtest_credentials["username"])
+    assert before_user_privileges == Base.Privileges.get_privileges_list(["database", "read"])
+    
+    # | Read without privileges |--------------------------------------------------------------------------------------|
+    response: requests.models.Response = Base.Database.read(Base.pamtest_credentials)
+    assert json.loads(response.text)["response"] == f"USER [{Base.pamtest_credentials['username']}] REQUIRE PRIVILEGES"
+    assert response.status_code == 403
+    
+    # | Remove synthetic_user Privileges |-----------------------------------------------------------------------------|
+    for user in [key_user for key_user in Base.synthetic_user.keys()]:
+        pam_response: requests.models.Response = Base.Privileges.add_or_remove_privileges(
+            Base.admin_credentials, Base.synthetic_user[user]["username"], "read", "remove", ["database"]
+        )
+        assert json.loads(pam_response.text)["response"] == "UPDATE PRIVILEGES"
+        assert pam_response.status_code == 202
+    
+    # | Verify synthetic_user Privileges |-----------------------------------------------------------------------------|
+    for user in [key_user for key_user in Base.synthetic_user.keys()]:
+        before_user_privileges.remove(Base.synthetic_user[user]["username"])
+    
+    assert before_user_privileges == Base.Privileges.get_privileges_list(["database", "read"])
+
+    
+    
 # |--------------------------------------------------------------------------------------------------------------------|
 
 
