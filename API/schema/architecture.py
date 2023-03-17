@@ -52,6 +52,7 @@ def create_architecture() -> None:
                           func=get_db)
         prompt_assemble_privileges("admin", get_db)
         prompt_assemble_new_user_privileges(get_db)
+        prompt_PAM(get_db)
     else:
          prompt_admin_user("exists", "admin")
 # |====================================================================================================================|

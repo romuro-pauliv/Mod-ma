@@ -20,3 +20,7 @@ new_user_privileges: dict[str, Union[list[str], dict[str, list[str]]]] = {
       "PRODUCTS": ["read"] 
     }
 }
+
+pam: dict[str, list[str]] = {
+    "pam_users": ["admin"]
+}

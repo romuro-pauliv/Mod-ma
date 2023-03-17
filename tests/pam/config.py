@@ -37,7 +37,6 @@ load_dotenv(dotenv_path=Path(json_dt['dotenv']))
 mongo = MongoClient(os.getenv('MONGO_URI'))
 # |====================================================================================================================|
 
-
 # PRE FUNCTION |-------------------------------------------------------------------------------------------------------|
 def header_base64_login(username: str, password: str) -> str:
     encode_pass: bytes = f"{username}:{password}".encode()

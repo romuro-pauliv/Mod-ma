@@ -1,26 +1,25 @@
 # +--------------------------------------------------------------------------------------------------------------------|
-# |                                                                                      API.json.reponses.database.py |
+# |                                                                         API.secure.pam.validation.response_json.py |
 # |                                                                                             Author: Pauliv, Rômulo |
 # |                                                                                          email: romulopauliv@bk.ru |
 # |                                                                                                    encoding: UTF-8 |
 # +--------------------------------------------------------------------------------------------------------------------|
 
 # | Imports |----------------------------------------------------------------------------------------------------------|
-from API.status import *
-from API.json.tools.tools import response_structure
+from API.json.responses.pam.pam_status import Responses
 # |--------------------------------------------------------------------------------------------------------------------|
 
-class Reponses(object):
-    class R4XX(object):
-        @staticmethod
-        def name_not_allowed(database_name: str) -> tuple[dict, int]:
-            return response_structure(f"FORBIDDEN - NAME [{database_name}] NOT ALLOWED", HTTP_403_FORBIDDEN)
-        
-        @staticmethod
-        def name_in_use(database_name: str) -> tuple[dict, int]:
-            return response_structure(f"FORBIDDEN - NAME [{database_name}] IN USE", HTTP_403_FORBIDDEN)
+required_fields: list[str] = ["user", "command", "method", "arguments"]
+
+def json_validation(json_md: dict[str]) -> tuple[dict[str], int]:
+    if not isinstance(json_md, dict):
+        return Responses.R4XX.only_json()
     
-    class R2XX(object):
-        @staticmethod
-        def create(database_name: str) -> tuple[dict, str]:
-            return response_structure(f"[{database_name}] CREATED", HTTP_201_CREATED)
+    for field in required_fields:
+        try:
+            if json_md[field]:
+                pass
+        except KeyError:
+            return Responses.R4XX.key_error()
+        
+    return Responses.R2XX.json_valid()
