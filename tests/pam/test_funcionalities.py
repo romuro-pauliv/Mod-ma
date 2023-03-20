@@ -149,7 +149,34 @@ class BaseFunctions(object):
             send_json: dict[str] = {"database": database_name}
             
             return requests.delete(f"{root_route}{database}", headers=header, json=send_json)
-
+    
+    class Collection:
+        @staticmethod
+        def create(credentials: dict[str], database_name: str, collection_name: str) -> requests.models.Response:
+            token: str = token_login(credentials["username"], credentials["password"])
+            header: dict[str] = {"Authorization": f"Bearer {token}"}
+            
+            send_json: dict[str] = {"database": database_name, "collection": collection_name}
+            
+            return requests.post(f"{root_route}{collection}", headers=header, json=send_json)
+        
+        @staticmethod
+        def read(credentials: dict[str], database_name: str) -> requests.models.Response:
+            token: str = token_login(credentials["username"], credentials["password"])
+            header: dict[str] = {"Authorization": f"Bearer {token}"}
+            
+            send_json: dict[str] = {"database": database_name}
+            
+            return requests.get(f"{root_route}{collection}", headers=header, json=send_json)
+        
+        @staticmethod
+        def delete(credentials: dict[str], database_name: str, collection_name: str) -> requests.models.Response:
+            token: str = token_login(credentials["username"], credentials["password"])
+            header: dict[str] = {"Authorization": f"Bearer {token}"}
+            
+            send_json: dict[str] = {"database": database_name, "collection": collection_name}
+            
+            return requests.delete(f"{root_route}{collection}", headers=header, json=send_json)
 
 # |====================================================================================================================|
 # | TESTS |============================================================================================================|
@@ -425,6 +452,95 @@ def test_database_delete() -> None:
     assert response.status_code == 202
     
 # |--------------------------------------------------------------------------------------------------------------------|
+
+# COLLECTION |---------------------------------------------------------------------------------------------------------|
+def test_collection_create() -> None:
+    database_name: str = "testing12333212321"
+    collection_name: str = "testing123321232321"
+    
+    # | Adjust privileges |--------------------------------------------------------------------------------------------|
+    if Base.pamtest_credentials["username"] in Base.Privileges.get_privileges_list(["collection", "create"]):
+        pam_response: requests.models.Response = Base.Privileges.add_or_remove_privileges(
+            Base.admin_credentials, Base.pamtest_credentials["username"], "create", "remove", ["collection"]
+        )
+        
+        assert json.loads(pam_response.text)["response"] == "UPDATE PRIVILEGES"
+        assert pam_response.status_code == 202
+    
+    # | Create Database to tests |-------------------------------------------------------------------------------------|
+    response: requests.models.Response = Base.Database.create(Base.admin_credentials, database_name)
+    assert json.loads(response.text)["response"] == f"[{database_name}] CREATED"
+    assert response.status_code == 201
+    
+    # Create collection without privileges |---------------------------------------------------------------------------|
+    response: requests.models.Response = Base.Collection.create(
+        Base.pamtest_credentials, database_name, collection_name
+    )
+    assert json.loads(response.text)["response"] == f"USER [{Base.pamtest_credentials['username']}] REQUIRE PRIVILEGES"
+    assert response.status_code == 403
+    
+    # Add privileges to pamtest \--------------------------------------------------------------------------------------|
+    pam_response: requests.models.Response = Base.Privileges.add_or_remove_privileges(
+        Base.admin_credentials, Base.pamtest_credentials["username"], "create", "append", ["collection"]
+    )
+    assert json.loads(pam_response.text)["response"] == "UPDATE PRIVILEGES"
+    assert pam_response.status_code == 202
+
+    # | Add privileges to synthetic users |----------------------------------------------------------------------------|
+    for user in [key_user for key_user in Base.synthetic_user.keys()]:
+        synthetic_user_response: requests.models.Response = Base.Privileges.add_or_remove_privileges(
+            Base.admin_credentials, Base.synthetic_user[user]["username"], "create", "append", ["collection"]
+        )
+        assert json.loads(synthetic_user_response.text)["response"] == "UPDATE PRIVILEGES"
+        assert synthetic_user_response.status_code == 202
+
+    # | Create with privileges |---------------------------------------------------------------------------------------|
+    response: requests.models.Response = Base.Collection.create(
+        Base.admin_credentials, database_name, collection_name
+    )
+    assert json.loads(response.text)["response"] == f"[{collection_name}] CREATED"
+    assert response.status_code == 201
+    
+    # | Verify Privileges |--------------------------------------------------------------------------------------------|
+    assert Base.Privileges.vefiry_privileges(Base.pamtest_credentials["username"], ["collection", "create"]) == True
+    before_user_privileges: list[str] = Base.Privileges.get_privileges_list(["collection", "create"])
+    
+    # | Remove pamtest Privileges |------------------------------------------------------------------------------------|
+    pam_response: requests.models.Response = Base.Privileges.add_or_remove_privileges(
+        Base.admin_credentials, Base.pamtest_credentials["username"], "create", "remove", ["collection"]
+    )
+    assert json.loads(pam_response.text)["response"] == "UPDATE PRIVILEGES"
+    assert pam_response.status_code == 202
+    
+    # | Verify Privileges |--------------------------------------------------------------------------------------------|
+    before_user_privileges.remove(Base.pamtest_credentials["username"])
+    assert before_user_privileges == Base.Privileges.get_privileges_list(["collection", "create"])
+    
+    # | Create without privileges |------------------------------------------------------------------------------------|
+    response: requests.models.Response = Base.Collection.create(
+        Base.pamtest_credentials, database_name, collection_name
+    )
+    assert json.loads(response.text)["response"] == f"USER [{Base.pamtest_credentials['username']}] REQUIRE PRIVILEGES"
+    assert response.status_code == 403
+    
+    # | Remove synthetic user privileges |-----------------------------------------------------------------------------|
+    for user in [key_user for key_user in Base.synthetic_user.keys()]:
+        pam_response: requests.models.Response = Base.Privileges.add_or_remove_privileges(
+            Base.admin_credentials, Base.synthetic_user[user]["username"], "create", "remove", ["collection"]
+        )
+        assert json.loads(pam_response.text)["response"] == 'UPDATE PRIVILEGES'
+        assert pam_response.status_code == 202
+    
+    # | Verify synthetic_user Privileges |-----------------------------------------------------------------------------|
+    for user in [key_user for key_user in Base.synthetic_user.keys()]:
+        before_user_privileges.remove(Base.synthetic_user[user]["username"])
+    
+    assert before_user_privileges == Base.Privileges.get_privileges_list(["collection", "create"])
+    
+    # | Delete Database |----------------------------------------------------------------------------------------------|
+    response: requests.models.Response = Base.Database.delete(Base.admin_credentials, database_name)
+    assert json.loads(response.text)["response"] == f"[{database_name}] DATABASE DELETED"
+    assert response.status_code == 202
 
 
 # | DELETE USERS |-----------------------------------------------------------------------------------------------------|
