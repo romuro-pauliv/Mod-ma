@@ -623,7 +623,98 @@ def test_collection_read() -> None:
     response: requests.models.Response = Base.Database.delete(Base.admin_credentials, database_name)
     assert json.loads(response.text)["response"] == f"[{database_name}] DATABASE DELETED"
     assert response.status_code == 202
+
+
+def test_collection_delete() -> None:
+    database_name: str = "testing123123123812931"
+    collection_name: str = "testing1238312382311"
     
+    # | Adjust privileges |--------------------------------------------------------------------------------------------|
+    if Base.pamtest_credentials["username"] in Base.Privileges.get_privileges_list(["collection", "delete"]):
+        pam_response: requests.models.Response = Base.Privileges.add_or_remove_privileges(
+            Base.admin_credentials, Base.pamtest_credentials["username"], "delete", "remove", ["collection"]
+        )
+        assert json.loads(pam_response.text)["response"] == "UPDATE PRIVILEGES"
+        assert pam_response.status_code == 202
+    
+    # | Create Database and collection to tests |----------------------------------------------------------------------|
+    response: requests.models.Response = Base.Database.create(Base.admin_credentials, database_name)
+    assert json.loads(response.text)["response"] == f"[{database_name}] CREATED"
+    assert response.status_code == 201
+    
+    response: requests.models.Response = Base.Collection.create(Base.admin_credentials, database_name, collection_name)
+    assert json.loads(response.text)["response"] == f"[{collection_name}] CREATED"
+    assert response.status_code == 201
+    
+    # | Delete without privileges |------------------------------------------------------------------------------------|
+    response: requests.models.Response = Base.Collection.delete(Base.pamtest_credentials, database_name, collection_name)
+    assert json.loads(response.text)["response"] == f"USER [{Base.pamtest_credentials['username']}] REQUIRE PRIVILEGES"
+    assert response.status_code == 403
+    
+    # | Add privileges to pamtest |------------------------------------------------------------------------------------|
+    pam_response: requests.models.Response = Base.Privileges.add_or_remove_privileges(
+        Base.admin_credentials, Base.pamtest_credentials["username"], "delete", "append", ["collection"]
+    )
+    assert json.loads(pam_response.text)["response"] == "UPDATE PRIVILEGES"
+    assert pam_response.status_code == 202
+    
+    # | Add privileges to synthetic users |----------------------------------------------------------------------------|
+    for user in [key_user for key_user in Base.synthetic_user.keys()]:
+        synthetic_user_response: requests.models.Response = Base.Privileges.add_or_remove_privileges(
+            Base.admin_credentials, Base.synthetic_user[user]["username"], "delete", "append", ["collection"]
+        )
+        assert json.loads(synthetic_user_response.text)["response"] == "UPDATE PRIVILEGES"
+        assert synthetic_user_response.status_code == 202
+    
+    # | Delete with Privileges |---------------------------------------------------------------------------------------|
+    response: requests.models.Response = Base.Collection.delete(Base.pamtest_credentials, database_name, collection_name)
+    assert json.loads(response.text)["response"] == f"[{collection_name}] COLLECTION DELETED"
+    assert response.status_code == 202
+    
+    # | Verify Privileges |--------------------------------------------------------------------------------------------|
+    assert Base.Privileges.vefiry_privileges(Base.pamtest_credentials["username"], ["collection", "delete"]) == True
+    before_user_privileges: list[str] = Base.Privileges.get_privileges_list(["collection", "delete"])
+    
+    # | Remove pamtest privileges |------------------------------------------------------------------------------------|
+    pam_response: requests.models.Response = Base.Privileges.add_or_remove_privileges(
+        Base.admin_credentials, Base.pamtest_credentials["username"], "delete", "remove", ["collection"]
+    )
+    assert json.loads(pam_response.text)["response"] == "UPDATE PRIVILEGES"
+    assert pam_response.status_code == 202
+    
+    # | Verify Privileges |--------------------------------------------------------------------------------------------|
+    before_user_privileges.remove(Base.pamtest_credentials["username"])
+    assert before_user_privileges == Base.Privileges.get_privileges_list(["collection", "delete"])
+    
+    # | Create collection to test again |------------------------------------------------------------------------------|
+    response: requests.models.Response = Base.Collection.create(Base.admin_credentials, database_name, collection_name)
+    assert json.loads(response.text)["response"] == f"[{collection_name}] CREATED"
+    assert response.status_code == 201
+    
+    # | Delete without privileges |------------------------------------------------------------------------------------|
+    response: requests.models.Response = Base.Collection.delete(Base.pamtest_credentials, database_name, collection_name)
+    assert json.loads(response.text)["response"] == f"USER [{Base.pamtest_credentials['username']}] REQUIRE PRIVILEGES"
+    assert response.status_code == 403
+    
+    # | Remove synthetic user Privileges |-----------------------------------------------------------------------------|
+    for user in [key_user for key_user in Base.synthetic_user.keys()]:
+        pam_response: requests.models.Response = Base.Privileges.add_or_remove_privileges(
+            Base.admin_credentials, Base.synthetic_user[user]["username"], "delete", "remove", ["collection"]
+        )
+        assert json.loads(pam_response.text)["response"] == "UPDATE PRIVILEGES"
+        assert pam_response.status_code == 202
+    
+    # | Verify synthetic user privileges |-----------------------------------------------------------------------------|
+    for user in [key_user for key_user in Base.synthetic_user.keys()]:
+        before_user_privileges.remove(Base.synthetic_user[user]["username"])
+    
+    assert before_user_privileges == Base.Privileges.get_privileges_list(["collection", "delete"])
+    
+    # | Delete Database |----------------------------------------------------------------------------------------------|
+    response: requests.models.Response = Base.Database.delete(Base.admin_credentials, database_name)
+    assert json.loads(response.text)["response"] == f"[{database_name}] DATABASE DELETED"
+    assert response.status_code == 202
+            
 # | DELETE USERS |-----------------------------------------------------------------------------------------------------|
 def test_delete_pamtest_user() -> None:
     response: requests.models.Response = Base.Register.delete_user(Base.pamtest_credentials)
