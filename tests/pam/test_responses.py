@@ -18,7 +18,6 @@ def PAM_function(header: dict[str], send_json: dict[str, str | list[str]]) -> re
 
 # | Admin Credentials |------------------------------------------------------------------------------------------------|
 cred_admin: dict[str] = {"username": "admin", "password": "123!Admin"}
-admin_header: dict[str] = {"Authorization": f"Basic {token_login(cred_admin['username'], cred_admin['password'])}"}
 # |--------------------------------------------------------------------------------------------------------------------|
 
 # | New user to test pam functionalities |-----------------------------------------------------------------------------|
@@ -43,11 +42,13 @@ def test_pam_register() -> None:
 
 # | Json Test |--------------------------------------------------------------------------------------------------------|
 def test_no_json() -> None:
+    admin_header: dict[str] = {"Authorization": f"Basic {token_login(cred_admin['username'], cred_admin['password'])}"}
     response: requests.models.Response = PAM_function(admin_header, None)    
     assert response.status_code == 400
 
 
 def test_send_no_json() -> None:
+    admin_header: dict[str] = {"Authorization": f"Basic {token_login(cred_admin['username'], cred_admin['password'])}"}
     send_json_list: list[str, list[str], float, int] = ["test", ["test", "mode"], 1.12, 123]
     
     for send_json in send_json_list:
@@ -58,6 +59,7 @@ def test_send_no_json() -> None:
 
 
 def test_required_fields() -> None:
+    admin_header: dict[str] = {"Authorization": f"Basic {token_login(cred_admin['username'], cred_admin['password'])}"}
     send_json_list: list[dict[str]] = [
         {"command": "append", "method": "create", "arguments": "database"},
         {"user": "pamtest", "method": "create", "arguments": "database"},
@@ -75,6 +77,7 @@ def test_required_fields() -> None:
 
 # | Test in User Value |-----------------------------------------------------------------------------------------------|
 def test_no_str_in_username() -> None:
+    admin_header: dict[str] = {"Authorization": f"Basic {token_login(cred_admin['username'], cred_admin['password'])}"}
     user_list: list[list[str], dict[str], float] = [["testing", "mode"], {"testing": "mode"}, 1.12321]
     
     for user in user_list:
@@ -87,6 +90,7 @@ def test_no_str_in_username() -> None:
 
 
 def test_forbidden_character_in_username() -> None:
+    admin_header: dict[str] = {"Authorization": f"Basic {token_login(cred_admin['username'], cred_admin['password'])}"}
     for _char in "!\"#$%&'()*+,./:;<=>?@[\\]^`{|}~ ":
         user: str = f"pam{_char}test"
         
@@ -99,6 +103,7 @@ def test_forbidden_character_in_username() -> None:
 
 
 def test_username_not_found() -> None:
+    admin_header: dict[str] = {"Authorization": f"Basic {token_login(cred_admin['username'], cred_admin['password'])}"}
     user_list: list[str] = ["pamtest1231231921312931", "testingpam8191273"]
     
     for user in user_list:
@@ -112,6 +117,7 @@ def test_username_not_found() -> None:
 
 # | Test in Command Value |--------------------------------------------------------------------------------------------|
 def test_no_str_in_command() -> None:
+    admin_header: dict[str] = {"Authorization": f"Basic {token_login(cred_admin['username'], cred_admin['password'])}"}
     command_list: list[list[str], dict[str], float] = [["testing", "mode"], {"testing": "mode"}, 1.12312]
     
     for command in command_list:
@@ -129,6 +135,7 @@ def test_no_str_in_command() -> None:
 
 
 def test_invalid_command() -> None:
+    admin_header: dict[str] = {"Authorization": f"Basic {token_login(cred_admin['username'], cred_admin['password'])}"}
     command_list: list[str] = ["removed", "added", "appended", "testing"]
     
     for command in command_list:
@@ -147,6 +154,7 @@ def test_invalid_command() -> None:
 
 # | Test in Method Value |---------------------------------------------------------------------------------------------|
 def test_no_str_in_method() -> None:
+    admin_header: dict[str] = {"Authorization": f"Basic {token_login(cred_admin['username'], cred_admin['password'])}"}
     method_list: list[list[str], dict[str], float] = [["testing", "mode"], {"testing": "mode"}, 1.123321]
     
     for method_ in method_list:
@@ -164,6 +172,7 @@ def test_no_str_in_method() -> None:
 
 
 def test_invalid_method() -> None:
+    admin_header: dict[str] = {"Authorization": f"Basic {token_login(cred_admin['username'], cred_admin['password'])}"}
     method_list: list[str] = ["created", "reading", "putting", "deleted"]
     
     for method_ in method_list:
@@ -182,6 +191,7 @@ def test_invalid_method() -> None:
 
 # | Test Arguments Value |---------------------------------------------------------------------------------------------|
 def test_no_list_in_arguments() -> None:
+    admin_header: dict[str] = {"Authorization": f"Basic {token_login(cred_admin['username'], cred_admin['password'])}"}
     argument_value_list: list[int, str, float, dict[str]] = [12, "database", 1.12, {"testing": "mothod"}]
     
     for arguments in argument_value_list:
@@ -199,6 +209,7 @@ def test_no_list_in_arguments() -> None:
 
 
 def test_no_str_or_list_in_arguments_items() -> None:
+    admin_header: dict[str] = {"Authorization": f"Basic {token_login(cred_admin['username'], cred_admin['password'])}"}
     arguments_item_list: list[int, float, dict] = [1, 1.12, {"testing": "mode"}]
     
     for arguments in arguments_item_list:
@@ -217,6 +228,7 @@ def test_no_str_or_list_in_arguments_items() -> None:
 
 
 def test_invalid_str_path_arguments() -> None:
+    admin_header: dict[str] = {"Authorization": f"Basic {token_login(cred_admin['username'], cred_admin['password'])}"}
     arguments_path_list: list[str] = ["testing", "mode", "databasea", "colection"]
     
     for arguments in arguments_path_list:
@@ -234,6 +246,7 @@ def test_invalid_str_path_arguments() -> None:
 
 
 def test_invalid_list_len_path_arguments() -> None:
+    admin_header: dict[str] = {"Authorization": f"Basic {token_login(cred_admin['username'], cred_admin['password'])}"}
     arguments_path_list: list[list[str]] = [["testing"], ["testing", "mode", "test"], []]
     
     for arguments in arguments_path_list:
@@ -252,6 +265,7 @@ def test_invalid_list_len_path_arguments() -> None:
 
 
 def test_invalid_list_item_in_arguments() -> None:
+    admin_header: dict[str] = {"Authorization": f"Basic {token_login(cred_admin['username'], cred_admin['password'])}"}
     arguments_path_list: list[list[int, float]] = [[21, "mode"], [{"testing": "mode"}, 1.2321], [[], []]]
     
     for arguments in arguments_path_list:
@@ -270,6 +284,7 @@ def test_invalid_list_item_in_arguments() -> None:
 
 
 def test_arguments_database_not_found() -> None:
+    admin_header: dict[str] = {"Authorization": f"Basic {token_login(cred_admin['username'], cred_admin['password'])}"}
     database_name: str = "databasenotfound123321"
     send_json: dict[str] = {
         "user": register_pamtest["username"],
@@ -285,6 +300,7 @@ def test_arguments_database_not_found() -> None:
 
 
 def test_arguments_collection_not_found() -> None:
+    admin_header: dict[str] = {"Authorization": f"Basic {token_login(cred_admin['username'], cred_admin['password'])}"}
     collection_name: str = "collectionnotfound12321"
     send_json: dict[str] = {
         "user": register_pamtest["username"],
